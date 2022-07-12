@@ -31,7 +31,7 @@ class Facet extends Model
             ->where('value', '<>', '')
             ->groupBy('value');
 
-            $values = $query->get()->pluck('total', 'value');
+            $values = $query->get()->pluck('total', 'value')->toArray();
 
             if (is_array($this->subjectIds)) {
                 $query = DB::table('facetrows')
@@ -41,7 +41,10 @@ class Facet extends Model
                 ->groupBy('value')
                 ->whereIn('subject_id', $this->subjectIds);
 
-                $values = $values->merge($query->get()->pluck('total', 'value'));
+                $values = array_replace(
+                    $values,
+                    $query->get()->pluck('total', 'value')->toArray()
+                );
             }
 
             return $values;
@@ -57,12 +60,18 @@ class Facet extends Model
                 'value' => $value,
                 'selected' => in_array($value, $filteredValues),
                 'total' => $total,
-                'slug' =>  sprintf('%s_%s', Str::slug($this->fieldname), Str::slug($value))
+                'slug' =>  sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-'))
             ]);
         }
 
-
         return $result;
+    }
+
+    public function getNonMissingValues()
+    {
+        return $this->getValues()->filter(function($value) {
+            return $value->total > 0;
+        });
     }
 
     public function hasValues()
@@ -80,5 +89,4 @@ class Facet extends Model
     {
         return last(explode('.', $this->fieldname));
     }
-
 }

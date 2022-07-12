@@ -7,7 +7,7 @@ use Mgussekloo\FacetFilter\Models\FacetRow;
 
 use Illuminate\Http\Request;
 
-use Illuminate\Support\Facades\DB;
+use DB;
 
 class Indexer
 {
@@ -45,7 +45,7 @@ class Indexer
                 }
 
                 foreach ($values as $value) {
-                    FacetRow::create([
+                    FacetRow::updateOrCreate([
                         'facet_id' => $facet->id,
                         'subject_id' => $model->id,
                         'value' => $value
