@@ -1,0 +1,27 @@
+{
+    "name": "mgussekloo/laravel-facet-filter",
+    "autoload": {
+        "psr-4": {
+            "Mgussekloo\\FacetFilter\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Martijn Gussekloo",
+            "email": "1426964+mgussekloo@users.noreply.github.com"
+        }
+    ],
+    "require": {
+        "spatie/laravel-package-tools": "^1.9.2"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Mgussekloo\\FacetFilter\\FacetFilterServiceProvider"
+            ],
+            "aliases": {
+                "FacetFilter": "Mgussekloo\\FacetFilter\\FacetFilterFacade"
+            }
+        }
+    }
+}
