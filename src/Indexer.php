@@ -45,7 +45,7 @@ class Indexer
                 }
 
                 foreach ($values as $value) {
-                    FacetRow::updateOrCreate([
+                    FacetRow::create([
                         'facet_id' => $facet->id,
                         'subject_id' => $model->id,
                         'value' => $value
