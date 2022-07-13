@@ -4,7 +4,9 @@ namespace Mgussekloo\FacetFilter\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-use Illuminate\Support\Facades\DB;
+use Mgussekloo\FacetFilter\Collections\FacetCollection;
+
+use DB;
 use Str;
 use Cache;
 use FacetFilter;
@@ -79,14 +81,19 @@ class Facet extends Model
         return $this->getValues()->isNotEmpty();
     }
 
-    public function limitToIds($ids = [])
+    public function limitToSubjectIds($subjectIds = [])
     {
-        $this->subjectIds = $ids;
+        $this->subjectIds = $subjectIds;
         return $this;
     }
 
     public function getParamName()
     {
         return last(explode('.', $this->fieldname));
+    }
+
+    public function newCollection(array $models = [])
+    {
+        return new FacetCollection($models);
     }
 }

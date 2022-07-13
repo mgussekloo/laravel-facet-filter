@@ -11,14 +11,11 @@ class FacetFilter
 	public static $facets = [];
 	public $filterParam = 'filter';
 
-	public function getFacets($subjectType, $limitIds = null)
+	public function getFacets($subjectType)
 	{
+
 		if (!isset(self::$facets[$subjectType])) {
 			self::$facets[$subjectType] = Facet::where('subject_type', $subjectType)->get();
-		}
-
-		if (!is_null($limitIds)) {
-			return self::$facets[$subjectType]->map->limitToIds($limitIds);
 		}
 
 		return self::$facets[$subjectType];
@@ -35,6 +32,5 @@ class FacetFilter
             return [$facet->getParamName() => []];
         })->toArray();
 	}
-
 
 }
