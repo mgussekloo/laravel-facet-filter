@@ -31,16 +31,25 @@ class FacetFilter
 	e.g. /?filter[main-color][0]=green will result in:
 	[ 'main-color' => [ 'green' ], 'size' => [ ] ]
 	*/
-	public function getFilterFromRequest($subjectType, $paramName = 'filter')
+	public function getFilterFromParam($subjectType, $paramName = 'filter')
 	{
-		return array_replace($this->getEmptyFilter($subjectType), (array)request()->input($paramName));
+		$arr = (array)request()->input($paramName);
+		return $this->getFilterFromArr($subjectType, $arr);
+	}
+
+	public function getFilterFromArr($subjectType, $arr)
+	{
+		$emptyFilter = $this->getFacets($subjectType)->mapWithKeys(function($facet) {
+			return [$facet->getParamName() => [ ]];
+		})->toArray();
+
+		return array_replace($emptyFilter, $arr);
 	}
 
 	public function getEmptyFilter($subjectType)
 	{
-		return $this->getFacets($subjectType)->mapWithKeys(function($facet) {
-            return [$facet->getParamName() => []];
-        })->toArray();
+		return $this->getFilterFromArr($subjectType, []);
 	}
+
 
 }

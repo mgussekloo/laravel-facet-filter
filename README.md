@@ -125,7 +125,6 @@ class IndexFacets extends Command
 namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Http\Request;
 
 use App\Models\Product;
 
@@ -134,7 +133,7 @@ class HomeController extends BaseController
 
 	public function home()
 	{
-		$filter = Product::getFilterFromRequest();
+		$filter = Product::getFilterFromParam();
 		/* Returns an array with the current filter, based on all the available facets for this model,
 		and the specified (optional) GET parameter (default is "filter"). A facet's title is
 		its key in the GET parameter.
@@ -196,8 +195,8 @@ so that the package can keep track of selected facets.
 ### Use facets in a query
 
 ``` php
-	$filter = Product::getFilterFromRequest();
-	/* You can grab the filter from the request or build it yourself.
+	$filter = Product::getFilterFromParam();
+	/* You can grab the filter from the request GET param or build it yourself.
 	It is a nested array with facet titles for keys.
 	e.g. [ 'main-color' => [ 'green', 'red' ], 'size' => [ ] ]
 	*/

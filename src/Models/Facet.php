@@ -20,7 +20,8 @@ class Facet extends Model
         'subject_type',
     ];
 
-    public $subjectIds = [];
+    public $subjectIds = null;
+    public $filter = null;
     public $options = null;
 
     public function getOptions()
@@ -39,7 +40,7 @@ class Facet extends Model
             ->where('facet_id', $this->id)
             ->where('value', '<>', '')
             ->groupBy('value')
-            ->when(!empty($this->subjectIds), function($query) {
+            ->when(!is_null($this->subjectIds), function($query) {
                 $query->whereIn('subject_id', $this->subjectIds);
             });
 
@@ -50,8 +51,11 @@ class Facet extends Model
 
             $options = collect([]);
 
-            $filter = FacetFilter::getFilterFromRequest($this->subject_type);
-            $filteredValues = $filter[$this->getParamName()];
+            if (is_null($this->filter)) {
+                $this->filter = FacetFilter::getFilterFromParam($this->subject_type);
+            }
+
+            $filteredValues = $this->filter[$this->getParamName()];
 
             foreach ($values as $value => $total) {
                 $options->push((object)[
@@ -79,9 +83,15 @@ class Facet extends Model
         return $this->getOptions()->isNotEmpty();
     }
 
-    public function limitToSubjectIds($subjectIds = [])
+    public function limitToSubjectIds($subjectIds)
     {
         $this->subjectIds = $subjectIds;
+        return $this;
+    }
+
+    public function setFilter($filter)
+    {
+        $this->filter = $filter;
         return $this;
     }
 

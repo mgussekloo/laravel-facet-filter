@@ -16,29 +16,33 @@ trait Facettable {
 
     public function scopeFacetsMatchFilter($query, $filter)
     {
-        $query->whereHas('facetrows', function($query) use ($filter) {
-            foreach (self::getFacets() as $facet) {
-                $key = $facet->getParamName();
-                $filterArr = array_filter($filter[$key]);
-                if (!empty($filterArr)) {
-                    $values = (array)$filter[$key];
+        foreach (self::getFacets() as $facet) {
 
-                    $query->where(function($query) use ($facet, $values) {
-                        $query->where('facet_id', $facet->id)->whereIn('value', $values);
-                    });
-                }
+            $key = $facet->getParamName();
+            $filterArr = array_filter($filter[$key]);
+            if (!empty($filterArr)) {
+                $values = (array)$filter[$key];
+
+                $query->whereHas('facetrows', function($query) use ($filter, $facet, $values) {
+                    $query->where('facet_id', $facet->id)->whereIn('value', $values);
+                });
             }
-        });
-    }
-
-    public static function getFilterFromRequest($paramName = 'filter')
-    {
-        return FacetFilter::getFilterFromRequest(self::class, $paramName);
+        }
     }
 
     public static function getFacets()
     {
         return FacetFilter::getFacets(self::class);
+    }
+
+    public static function getFilterFromParam($paramName = 'filter')
+    {
+        return FacetFilter::getFilterFromParam(self::class, $paramName);
+    }
+
+    public static function getFilterFromArr($arr)
+    {
+        return FacetFilter::getFilterFromArr(self::class, $arr);
     }
 
     public static function getEmptyFilter()
