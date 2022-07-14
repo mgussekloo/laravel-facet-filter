@@ -4,8 +4,6 @@ namespace Mgussekloo\FacetFilter\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-use Mgussekloo\FacetFilter\Collections\FacetCollection;
-
 use DB;
 use Str;
 use Cache;
@@ -20,12 +18,12 @@ class Facet extends Model
         'subject_type',
     ];
 
-    public $subjectIds = null;
-    public $filter = null;
+    public $currentQuery = null;
     public $options = null;
 
     public function getOptions()
     {
+
         if (is_null($this->options)) {
             $query = DB::table('facetrows')
             ->select('value',  DB::raw('0 as total'))
@@ -35,19 +33,30 @@ class Facet extends Model
 
             $values = $query->get()->pluck('total', 'value')->toArray();
 
-            $query = DB::table('facetrows')
-            ->select('value',  DB::raw('count(*) as total'))
-            ->where('facet_id', $this->id)
-            ->where('value', '<>', '')
-            ->groupBy('value')
-            ->when(!is_null($this->subjectIds), function($query) {
-                $query->whereIn('subject_id', $this->subjectIds);
-            });
+            // now, find out totals of the values in this facet
+            // but *within* the current query / filter operation.
+            // we need to apply all the filters EXCEPT the one involving this facet.
+            if (!is_null($this->currentQuery)) {
+                list($query, $facets, $filter) = $this->currentQuery;
+                $key = $this->getParamName();
+                if (isset($filter[$key])) {
+                    // dd($filter, $key);
+                    $filter[$key] = [];
+                    $query = FacetFilter::constrainQueryWithFacetFilter($query, $facets, $filter);
+                    $subjectIds = $query->get()->pluck('id')->toArray();
+                }
 
-            $values = array_replace(
-                $values,
-                $query->get()->pluck('total', 'value')->toArray()
-            );
+                // now get the facet counts
+                $query = DB::table('facetrows')
+                ->select('value',  DB::raw('count(*) as total'))
+                ->where('facet_id', $this->id)
+                ->where('value', '<>', '')
+                ->groupBy('value')
+                ->whereIn('subject_id', $subjectIds);
+
+                $updatedValues = $query->get()->pluck('total', 'value')->toArray();
+                $values = array_replace($values, $updatedValues);
+            }
 
             $options = collect([]);
 
@@ -83,25 +92,14 @@ class Facet extends Model
         return $this->getOptions()->isNotEmpty();
     }
 
-    public function limitToSubjectIds($subjectIds)
+    public function setCurrentQuery($query, $facets, $filter)
     {
-        $this->subjectIds = $subjectIds;
-        return $this;
-    }
-
-    public function setFilter($filter)
-    {
-        $this->filter = $filter;
+        $this->currentQuery = [$query, $facets, $filter];
         return $this;
     }
 
     public function getParamName()
     {
         return Str::slug($this->title);
-    }
-
-    public function newCollection(array $models = [])
-    {
-        return new FacetCollection($models);
     }
 }

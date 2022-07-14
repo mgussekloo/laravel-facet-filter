@@ -9,6 +9,8 @@ use FacetFilter;
 
 trait Facettable {
 
+    public static $facets = null;
+
     public function facetrows()
     {
         return $this->hasMany(FacetRow::class, 'subject_id');
@@ -16,23 +18,23 @@ trait Facettable {
 
     public function scopeFacetsMatchFilter($query, $filter)
     {
-        foreach (self::getFacets() as $facet) {
+        $queryCopy = clone $query;
 
-            $key = $facet->getParamName();
-            $filterArr = array_filter($filter[$key]);
-            if (!empty($filterArr)) {
-                $values = (array)$filter[$key];
+        $facets = self::getFacets();
+        FacetFilter::constrainQueryWithFacetFilter($query, $facets, $filter);
 
-                $query->whereHas('facetrows', function($query) use ($filter, $facet, $values) {
-                    $query->where('facet_id', $facet->id)->whereIn('value', $values);
-                });
-            }
-        }
+        $facets->map->setCurrentQuery($queryCopy, $facets, $filter);
+
+        return $query;
     }
 
     public static function getFacets()
     {
-        return FacetFilter::getFacets(self::class);
+        if (is_null(self::$facets)) {
+            self::$facets = FacetFilter::getFacets(self::class);
+        }
+
+        return self::$facets;
     }
 
     public static function getFilterFromParam($paramName = 'filter')

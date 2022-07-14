@@ -15,7 +15,6 @@ class FacetFilter
 	*/
 	public function getFacets($subjectType)
 	{
-
 		if (!isset(self::$facets[$subjectType])) {
 			self::$facets[$subjectType] = Facet::where('subject_type', $subjectType)->get();
 		}
@@ -51,5 +50,21 @@ class FacetFilter
 		return $this->getFilterFromArr($subjectType, []);
 	}
 
+	public function constrainQueryWithFacetFilter($query, $facets, $filter)
+    {
+        foreach ($facets as $facet) {
+            $key = $facet->getParamName();
+
+            if (isset($filter[$key])) {
+                $values = (array)$filter[$key];
+                if (!empty($values)) {
+                    $query->whereHas('facetrows', function($query) use ($values, $facet) {
+                        $query->where('facet_id', $facet->id)->whereIn('value', $values);
+                    });
+                }
+            }
+        }
+        return $query;
+	}
 
 }

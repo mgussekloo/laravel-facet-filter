@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class FacetRow extends Model
 {
-
 	protected $table = 'facetrows';
 
     protected $fillable = [
