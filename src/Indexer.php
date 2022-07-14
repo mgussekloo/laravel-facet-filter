@@ -12,47 +12,55 @@ use DB;
 class Indexer
 {
 
-	public $subjectType;
-	public $models;
+	public $models = null;
+
+	public function __construct($models)
+	{
+		$this->models = $models;
+	}
 
 	public function resetIndex()
 	{
         DB::table('facetrows')->truncate();
+        return $this;
 	}
 
 	public function buildIndex()
 	{
-		$facets = FacetFilter::getFacets($this->subjectType);
+		if (!is_null($this->models) && $this->models->isNotEmpty()) {
+			$subjectType = get_class($this->models->first());
 
-        foreach ($this->models as $model) {
-            foreach ($facets as $facet) {
-                $values = [];
+			$facets = FacetFilter::getFacets($subjectType);
 
-                $fields = explode('.', $facet->fieldname);
+	        foreach ($this->models as $model) {
+	            foreach ($facets as $facet) {
+	                $values = [];
 
-                if (count($fields) == 1) {
-                    $values = collect([$model->{$fields[0]}]);
-                } else {
-                    $last_key = array_key_last($fields);
+	                $fields = explode('.', $facet->fieldname);
 
-                    $values = collect([$model]);
-                    foreach ($fields as $key => $field) {
-                        $values = $values->pluck($field);
-                        if ($key !== $last_key) {
-                            $values = $values->flatten(1);
-                        }
-                    }
-                }
+	                if (count($fields) == 1) {
+	                    $values = collect([$model->{$fields[0]}]);
+	                } else {
+	                    $last_key = array_key_last($fields);
 
-                foreach ($values as $value) {
-                    FacetRow::create([
-                        'facet_id' => $facet->id,
-                        'subject_id' => $model->id,
-                        'value' => $value
-                    ]);
-                }
-            }
-        }
-	}
+	                    $values = collect([$model]);
+	                    foreach ($fields as $key => $field) {
+	                        $values = $values->pluck($field);
+	                        if ($key !== $last_key) {
+	                            $values = $values->flatten(1);
+	                        }
+	                    }
+	                }
+
+	                foreach ($values as $value) {
+	                    FacetRow::create([
+	                        'facet_id' => $facet->id,
+	                        'subject_id' => $model->id,
+	                        'value' => $value
+	                    ]);
+	                }
+	            }
+	        }
+		}
 
 }

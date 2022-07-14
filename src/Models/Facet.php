@@ -20,13 +20,12 @@ class Facet extends Model
         'subject_type',
     ];
 
-    public $subjectIds;
+    public $subjectIds = [];
+    public $options = null;
 
-    public function getValues()
+    public function getOptions()
     {
-        $cacheKey = implode('_', ['facet', $this->id, md5(serialize($this->subjectIds))]);
-
-        $values = Cache::remember($cacheKey, 3600, function() {
+        if (is_null($this->options)) {
             $query = DB::table('facetrows')
             ->select('value',  DB::raw('0 as total'))
             ->where('facet_id', $this->id)
@@ -35,50 +34,49 @@ class Facet extends Model
 
             $values = $query->get()->pluck('total', 'value')->toArray();
 
-            if (is_array($this->subjectIds)) {
-                $query = DB::table('facetrows')
-                ->select('value',  DB::raw('count(*) as total'))
-                ->where('facet_id', $this->id)
-                ->where('value', '<>', '')
-                ->groupBy('value')
-                ->whereIn('subject_id', $this->subjectIds);
+            $query = DB::table('facetrows')
+            ->select('value',  DB::raw('count(*) as total'))
+            ->where('facet_id', $this->id)
+            ->where('value', '<>', '')
+            ->groupBy('value')
+            ->when(!empty($this->subjectIds), function($query) {
+                $query->whereIn('subject_id', $this->subjectIds);
+            });
 
-                $values = array_replace(
-                    $values,
-                    $query->get()->pluck('total', 'value')->toArray()
-                );
+            $values = array_replace(
+                $values,
+                $query->get()->pluck('total', 'value')->toArray()
+            );
+
+            $options = collect([]);
+
+            $filter = FacetFilter::getFilterFromRequest($this->subject_type);
+            $filteredValues = $filter[$this->getParamName()];
+
+            foreach ($values as $value => $total) {
+                $options->push((object)[
+                    'value' => $value,
+                    'selected' => in_array($value, $filteredValues),
+                    'total' => $total,
+                    'slug' =>  sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-'))
+                ]);
             }
 
-            return $values;
-        });
-
-        $result = collect([]);
-
-        $filter = FacetFilter::getFilterFromRequest($this->subject_type);
-        $filteredValues = $filter[$this->getParamName()];
-
-        foreach ($values as $value => $total) {
-            $result->push((object)[
-                'value' => $value,
-                'selected' => in_array($value, $filteredValues),
-                'total' => $total,
-                'slug' =>  sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-'))
-            ]);
+            $this->options = $options;
         }
-
-        return $result;
+        return $this->options;
     }
 
-    public function getNonMissingValues()
+    public function getNonMissingOptions()
     {
-        return $this->getValues()->filter(function($value) {
+        return $this->getOptions()->filter(function($value) {
             return $value->total > 0;
         });
     }
 
-    public function hasValues()
+    public function hasOptions()
     {
-        return $this->getValues()->isNotEmpty();
+        return $this->getOptions()->isNotEmpty();
     }
 
     public function limitToSubjectIds($subjectIds = [])
@@ -89,7 +87,7 @@ class Facet extends Model
 
     public function getParamName()
     {
-        return last(explode('.', $this->fieldname));
+        return Str::slug($this->title);
     }
 
     public function newCollection(array $models = [])

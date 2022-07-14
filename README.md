@@ -1,96 +1,219 @@
+# Laravel Facet Filter
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/support-ukraine.svg?t=1" />](https://supportukrainenow.org)
-
-# :package_description
-
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/:vendor_slug/:package_slug/run-tests?label=tests)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/workflow/status/:vendor_slug/:package_slug/Check%20&%20fix%20styling?label=code%20style)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3A"Check+%26+fix+styling"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-<!--delete-->
 ---
-This repo can be used to scaffold a Laravel package. Follow these steps to get started:
 
-1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton.
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files.
-3. Have fun creating your package.
-4. If you need help creating a package, consider picking up our <a href="https://laravelpackage.training">Laravel Package Training</a> video course.
----
-<!--/delete-->
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+This package intends to make it easy to implement facet filtering in a Laravel project.
+Since I couldn't find many alternatives, I decided to release this package as a way to help others.
 
-## Support us
+## Is this better than using Algolia / Meilisearch / whatever?
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/:package_name.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/:package_name)
+Probably not.
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
+## Todo
 
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+There is lots of room for improvement in this package. Please feel free to help out.
 
 ## Installation
 
-You can install the package via composer:
+This package can be installed through Composer.
 
-```bash
-composer require :vendor_slug/:package_slug
+``` bash
+composer require mgussekloo/laravel-facet-filter
 ```
 
-You can publish and run the migrations with:
+## Prepare your project
 
-```bash
-php artisan vendor:publish --tag=":package_slug-migrations"
-php artisan migrate
+### Publish and run the migrations
+
+``` bash
+php artisan vendor:publish --provider="mgussekloo\laravel-facet-filter"
 ```
 
-You can publish the config file with:
+### Update your model
 
-```bash
-php artisan vendor:publish --tag=":package_slug-config"
+Add the trait to your model.
+
+``` php
+
+use Illuminate\Database\Eloquent\Model;
+use Mgussekloo\FacetFilter\Traits\Facettable;
+
+class Product extends Model
+{
+    use Facettable;
+
+	protected $fillable = ['name', 'color'];
+
+	public function sizes() {
+		return $this->hasMany('sizes');
+	}
+}
+
 ```
 
-This is the contents of the published config file:
+### Define the facets
 
-```php
-return [
-];
+Insert the facet definitions into the "facets" table. You can use a helper method on your facettable model. As an example, consider this custom command.
+Remember that you only need to insert the definitions once.
+
+``` php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+
+use App\Models\Product;
+
+class DefineFacets extends Command
+{
+
+    public function handle()
+    {
+    	Master::defineFacet(
+    		'Main color',
+    		'color'
+    	);
+    	/* Creates an entry in the "facets" table. Takes the title and the field on the model
+    	that contains the value to index.
+    	The title will be visible as the key in the GET parameter. */
+
+    	Master::defineFacet(
+    		'Size',
+    		'sizes.name'
+    	);
+    	/* You can use dot notation to get a field from related models. */
+    }
+}
+
 ```
 
-Optionally, you can publish the views using
+### Build the index
 
-```bash
-php artisan vendor:publish --tag=":package_slug-views"
+Build an index for the facets, using the "facetrows" table. The indexer provided takes a Laravel collection of models and iterates over each facet, and each model.
+You could write a scheduled command that initially resets the index, and then processes chunks of models only when necessary.
+
+``` php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+
+use App\Models\Product;
+use Mgussekloo\FacetFilter\Indexer;
+
+class IndexFacets extends Command
+{
+
+    public function handle()
+    {
+    	$products = Product::with(['sizes'])->get();
+
+        $indexer = new Indexer($products);
+
+        $indexer->resetIndex(); // clears the index
+        $indexer->buildIndex(); // process all supplied models
+    }
+}
+
+```
+## Getting the facets
+
+### Use the available facets, and the applied filter, to build a facet filter in your frontend.
+
+``` php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Http\Request;
+
+use App\Models\Product;
+
+class HomeController extends BaseController
+{
+
+	public function home()
+	{
+		$filter = Product::getFilterFromRequest();
+		/* Returns an array with the current filter, based on all the available facets for this model,
+		and the specified (optional) GET parameter (default is "filter"). A facet's title is
+		its key in the GET parameter.
+
+		e.g. /?filter[main-color][0]=green will result in:
+		[ 'main-color' => [ 'green' ], 'size' => [ ] ]
+		*/
+
+		$facets = Product::getFacets();
+		/* Returns a Laravel collection of the available facets. */
+
+		$facetsInQueryResult = $facets->limitToSubjectIds([1,2,3]);
+		/* Sometimes you want the facet information for a subset of models
+		(e.g. if you're refining results with facet filtering).
+		You can use limitToSubjectIds(), which takes an array of model ID's. */
+
+		$singleFacet = $facets->firstWhere('fieldname', 'color');
+		/* $facets is a regular laravel collectio, so it's easy to iterate all of them, or find the one you need.
+		Each facet has a method to get a Laravel collection of option objects, to help you build your frontend. */
+
+		return view('home')->with([
+			'filter' => $filter,
+			'facets' => $facets,
+			'facet' => $singleFacet
+		]);
+	}
+}
+
 ```
 
-## Usage
+### Frontend example
 
-```php
-$variable = new VendorName\Skeleton();
-echo $variable->echoPhrase('Hello, VendorName!');
+You'll have to build the frontend yourself. Here's an example of how a frontend may look.
+Make sure you set the correct GET-param, e.g. "?filter[main-color][0]=green",
+so that the package can keep track of selected facets.
+
+``` html
+@php
+    $paramName = $facet->getParamName();
+@endphp
+
+<h2>{{ $facet->title }}</h2>
+@foreach ($facet->getOptions() as $option)
+    <div class="facet-checkbox-pill">
+        <input
+            wire:model="filter.{{ $paramName }}"
+            type="checkbox"
+            id="{{ $option->slug }}"
+            value="{{ $option->value }}"
+            {{ $option->total == 0 ? 'disabled' : '' }}
+        />
+        <label for="{{ $option->slug }}" class="{{ $option->selected ? 'selected' : '' }}">
+            {{ $option->value }} ({{ $option->total }})
+        </label>
+    </div>
+@endforeach
 ```
 
-## Testing
+### Use facets in a query
 
-```bash
-composer test
+``` php
+	$filter = Product::getFilterFromRequest();
+	/* You can grab the filter from the request or build it yourself.
+	It is a nested array with facet titles for keys.
+	e.g. [ 'main-color' => [ 'green', 'red' ], 'size' => [ ] ]
+	*/
+
+	$products = Product::where('discounted', true)->facetsMatchFilter($filter);
+	/* Apply the filter to a query using the facetsMatchFilter() scope on the model */
+
+	$subjectIds = $products->pluck('id');
+	$facets = Product::getFacets()->limitToSubjectIds($subjectIds);
+	/* Sometimes you want the facet information for a subset of models
+	(e.g. if you're refining results with facet filtering).
+	You can use limitToSubjectIds(), which takes an array of model ID's. */
+
 ```
-
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](https://github.com/:author_username/.github/blob/main/CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-- [:author_name](https://github.com/:author_username)
-- [All Contributors](../../contributors)
 
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+

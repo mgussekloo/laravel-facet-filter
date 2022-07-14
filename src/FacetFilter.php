@@ -9,8 +9,10 @@ class FacetFilter
 {
 
 	public static $facets = [];
-	public $filterParam = 'filter';
 
+	/*
+	Returns a Laravel collection of the available facets.
+	*/
 	public function getFacets($subjectType)
 	{
 
@@ -21,9 +23,17 @@ class FacetFilter
 		return self::$facets[$subjectType];
 	}
 
-	public function getFilterFromRequest($subjectType)
+	/*
+	Returns an array with the current filter, based on all the available facets for this model,
+	and the specified (optional) GET parameter (default is "filter"). A facet's title is
+	its key in the GET parameter.
+
+	e.g. /?filter[main-color][0]=green will result in:
+	[ 'main-color' => [ 'green' ], 'size' => [ ] ]
+	*/
+	public function getFilterFromRequest($subjectType, $paramName = 'filter')
 	{
-		return array_merge($this->getEmptyFilter($subjectType), (array)request()->input($this->filterParam));
+		return array_replace($this->getEmptyFilter($subjectType), (array)request()->input($paramName));
 	}
 
 	public function getEmptyFilter($subjectType)

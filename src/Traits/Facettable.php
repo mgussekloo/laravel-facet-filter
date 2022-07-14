@@ -2,6 +2,7 @@
 
 namespace Mgussekloo\FacetFilter\Traits;
 
+use Mgussekloo\FacetFilter\Models\Facet;
 use Mgussekloo\FacetFilter\Models\FacetRow;
 
 use FacetFilter;
@@ -16,8 +17,7 @@ trait Facettable {
     public function scopeFacetsMatchFilter($query, $filter)
     {
         $query->whereHas('facetrows', function($query) use ($filter) {
-            // $queryOr = false;
-            foreach (FacetFilter::getFacets(self::class) as $facet) {
+            foreach (self::getFacets() as $facet) {
                 $key = $facet->getParamName();
                 $filterArr = array_filter($filter[$key]);
                 if (!empty($filterArr)) {
@@ -30,5 +30,32 @@ trait Facettable {
             }
         });
     }
+
+    public static function getFilterFromRequest($paramName = 'filter')
+    {
+        return FacetFilter::getFilterFromRequest(self::class, $paramName);
+    }
+
+    public static function getFacets()
+    {
+        return FacetFilter::getFacets(self::class);
+    }
+
+    public static function getEmptyFilter()
+    {
+        return FacetFilter::getEmptyFilter(self::class);
+    }
+
+    public static function defineFacet($title, $fieldName, $facetType = 'simple')
+    {
+        Facet::create([
+            'subject_type' => self::class,
+            'facet_type' => $facetType,
+            'title' => $title,
+            'fieldname' => $fieldName
+        ]);
+
+    }
+
 
 }
