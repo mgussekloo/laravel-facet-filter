@@ -149,7 +149,7 @@ class HomeController extends BaseController
 		*/
 
 		$facets = Product::getFacets();
-		/* Returns a Laravel collection of the available facets for this product. */
+		/* Returns a Laravel collection of the available facets for this model. */
 
 		$facetsInQueryResult = $facets->limitToSubjectIds([1,2,3]);
 		/* Sometimes you want the facet information for a subset of models
@@ -191,7 +191,6 @@ back.
 			type="checkbox"
 			id="{{ $option->slug }}"
 			value="{{ $option->value }}"
-			{{ $option->total == 0 ? 'disabled' : '' }}
 		/>
 		<label for="{{ $option->slug }}" class="{{ $option->selected ? 'selected' : '' }}">
 			{{ $option->value }} ({{ $option->total }})
