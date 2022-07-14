@@ -151,11 +151,6 @@ class HomeController extends BaseController
 		$facets = Product::getFacets();
 		/* Returns a Laravel collection of the available facets for this model. */
 
-		$facetsInQueryResult = $facets->limitToSubjectIds([1,2,3]);
-		/* Sometimes you want the facet information for a subset of models
-		(e.g. if you're refining results with facet filtering).
-		You can use limitToSubjectIds(), which takes an array of model ID's. */
-
 		$singleFacet = $facets->firstWhere('fieldname', 'color');
 		/* $facets is a regular laravel collectio, so it's easy to iterate all of them, or find the one you need.
 		Each facet has a method to get a Laravel collection of option objects, to help you build your frontend. */
@@ -210,12 +205,6 @@ back.
 
 	$products = Product::where('discounted', true)->facetsMatchFilter($filter);
 	/* Apply the filter to a query using the facetsMatchFilter() scope on the model */
-
-	$subjectIds = $products->pluck('id');
-	$facets = Product::getFacets()->limitToSubjectIds($subjectIds);
-	/* Sometimes you want the facet information for a subset of models
-	(e.g. if you're refining results with facet filtering).
-	You can use limitToSubjectIds(), which takes an array of model ID's. */
 ```
 
 ## License
