@@ -1,19 +1,17 @@
 # Laravel Facet Filter
 
----
-
 This package intends to make it easy to implement facet filtering in a Laravel project.
 Since I couldn't find many alternatives, I decided to release this package as a way to help others.
 
-## Is this better than using Algolia / Meilisearch / whatever?
+### Is this better than using Algolia / Meilisearch / whatever?
 
 Probably not.
 
-## Todo
+### Todo
 
 There is lots of room for improvement in this package. Please feel free to help out.
 
-## Installation
+### Installation
 
 This package can be installed through Composer.
 
@@ -21,7 +19,7 @@ This package can be installed through Composer.
 composer require mgussekloo/laravel-facet-filter
 ```
 
-## Prepare your project
+## Usage - prepare your project
 
 ### Publish and run the migrations
 
@@ -116,9 +114,11 @@ class IndexFacets extends Command
 }
 
 ```
-## Getting the facets
+## Usage - using the facets
 
-### Use the available facets, and the applied filter, to build a facet filter in your frontend.
+### Get the facets
+
+Get a list of facets, so you can show them in a frontend as a facet filter.
 
 ``` php
 
@@ -142,8 +142,14 @@ class HomeController extends BaseController
 		[ 'main-color' => [ 'green' ], 'size' => [ ] ]
 		*/
 
+		$anotherFilter = Product::getFilterFromArr(request()->all());
+		/* Maybe you want to use this notation instead...
+
+		e.g. /?main-color=[green]&size=[s,m]
+		*/
+
 		$facets = Product::getFacets();
-		/* Returns a Laravel collection of the available facets. */
+		/* Returns a Laravel collection of the available facets for this product. */
 
 		$facetsInQueryResult = $facets->limitToSubjectIds([1,2,3]);
 		/* Sometimes you want the facet information for a subset of models
@@ -166,9 +172,11 @@ class HomeController extends BaseController
 
 ### Frontend example
 
-You'll have to build the frontend yourself. Here's an example of how a frontend may look.
-Make sure you set the correct GET-param, e.g. "?filter[main-color][0]=green",
-so that the package can keep track of selected facets.
+You'll have to build the frontend yourself. Here's an example of how this may work.
+Each facet has a getOptions() method that returns all the possible options for that particular facet.
+
+In order to select a facet, send the correct GET-param, e.g. "?filter[main-color][0]=green"
+back.
 
 ``` html
 @php
@@ -192,12 +200,12 @@ so that the package can keep track of selected facets.
 @endforeach
 ```
 
-### Use facets in a query
+### Use facet filtering in a query
 
 ``` php
 	$filter = Product::getFilterFromParam();
-	/* You can grab the filter from the request GET param or build it yourself.
-	It is a nested array with facet titles for keys.
+	/* You can grab the filter from the request GET param (the default being "filter")
+	or build it yourself. Make sure it's a nested array with facet titles for keys.
 	e.g. [ 'main-color' => [ 'green', 'red' ], 'size' => [ ] ]
 	*/
 
