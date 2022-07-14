@@ -38,7 +38,7 @@ use Mgussekloo\FacetFilter\Traits\Facettable;
 
 class Product extends Model
 {
-    use Facettable;
+	use Facettable;
 
 	protected $fillable = ['name', 'color'];
 
@@ -65,22 +65,22 @@ use App\Models\Product;
 class DefineFacets extends Command
 {
 
-    public function handle()
-    {
-    	Master::defineFacet(
-    		'Main color',
-    		'color'
-    	);
-    	/* Creates an entry in the "facets" table. Takes the title and the field on the model
-    	that contains the value to index.
-    	The title will be visible as the key in the GET parameter. */
+	public function handle()
+	{
+		Master::defineFacet(
+			'Main color',
+			'color'
+		);
+		/* Creates an entry in the "facets" table. Takes the title and the field on the model
+		that contains the value to index.
+		The title will be visible as the key in the GET parameter. */
 
-    	Master::defineFacet(
-    		'Size',
-    		'sizes.name'
-    	);
-    	/* You can use dot notation to get a field from related models. */
-    }
+		Master::defineFacet(
+			'Size',
+			'sizes.name'
+		);
+		/* You can use dot notation to get a field from related models. */
+	}
 }
 
 ```
@@ -102,15 +102,15 @@ use Mgussekloo\FacetFilter\Indexer;
 class IndexFacets extends Command
 {
 
-    public function handle()
-    {
-    	$products = Product::with(['sizes'])->get();
+	public function handle()
+	{
+		$products = Product::with(['sizes'])->get();
 
-        $indexer = new Indexer($products);
+		$indexer = new Indexer($products);
 
-        $indexer->resetIndex(); // clears the index
-        $indexer->buildIndex(); // process all supplied models
-    }
+		$indexer->resetIndex(); // clears the index
+		$indexer->buildIndex(); // process all supplied models
+	}
 }
 
 ```
@@ -180,23 +180,23 @@ back.
 
 ``` html
 @php
-    $paramName = $facet->getParamName();
+	$paramName = $facet->getParamName();
 @endphp
 
 <h2>{{ $facet->title }}</h2>
 @foreach ($facet->getOptions() as $option)
-    <div class="facet-checkbox-pill">
-        <input
-            wire:model="filter.{{ $paramName }}"
-            type="checkbox"
-            id="{{ $option->slug }}"
-            value="{{ $option->value }}"
-            {{ $option->total == 0 ? 'disabled' : '' }}
-        />
-        <label for="{{ $option->slug }}" class="{{ $option->selected ? 'selected' : '' }}">
-            {{ $option->value }} ({{ $option->total }})
-        </label>
-    </div>
+	<div class="facet-checkbox-pill">
+		<input
+			wire:model="filter.{{ $paramName }}"
+			type="checkbox"
+			id="{{ $option->slug }}"
+			value="{{ $option->value }}"
+			{{ $option->total == 0 ? 'disabled' : '' }}
+		/>
+		<label for="{{ $option->slug }}" class="{{ $option->selected ? 'selected' : '' }}">
+			{{ $option->value }} ({{ $option->total }})
+		</label>
+	</div>
 @endforeach
 ```
 
@@ -217,7 +217,6 @@ back.
 	/* Sometimes you want the facet information for a subset of models
 	(e.g. if you're refining results with facet filtering).
 	You can use limitToSubjectIds(), which takes an array of model ID's. */
-
 ```
 
 ## License
