@@ -1,15 +1,11 @@
 # Laravel Facet Filter
 
 This package intends to make it easy to implement facet filtering in a Laravel project.
-Since I couldn't find many alternatives, I decided to release this package as a way to help others.
-
-### Is this better than using Algolia / Meilisearch / whatever?
-
-Probably not.
+Since I couldn't find many alternatives I provide this package as a way to help others.
 
 ### Todo
 
-There is lots of room for improvement in this package. Please feel free to help out.
+There is certainly room for improvement in this package. Feel free to contribute!
 
 ### Installation
 
