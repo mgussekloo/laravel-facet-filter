@@ -152,8 +152,8 @@ class HomeController extends BaseController
         /* Returns a Laravel collection of the facets for this model. */
         $facets = Product::getFacets();
 
-        /* $facets is a regular laravel collectio, so it's easy to iterate all of them, or find the one you need.
-        Each facet has a method to get a Laravel collection of option objects, to help you build your frontend. */
+        /* Since it's a Laravel collection, you can iterate or find the one you need easily.
+        Each facet has a method to get a Laravel collection of the available options, to help you build your frontend. */
         $singleFacet = $facets->firstWhere('fieldname', 'color');
 
         return view('home')->with([
@@ -166,11 +166,9 @@ class HomeController extends BaseController
 
 ### Frontend example
 
-You'll have to build the frontend yourself. Here's an example of how this may work.
-Each facet has a getOptions() method that returns all the possible options for that particular facet.
-
-In order to select a facet, send the correct GET-param, e.g. "?filter[main-color][0]=green"
-back.
+You'll have to build the frontend yourself, this is just an example. You're
+responsible for setting the correct GET-parameter when a user toggles a facet option.
+This example uses Laravel Livewire's wire:model directive.
 
 ``` html
 @php
@@ -196,15 +194,14 @@ back.
 ### Use facet filtering in a query
 
 ``` php
-/* Returns an array with the current filter, based on all the available facets for this model,
-and the specified (optional) GET parameter (default is "filter"). A facet's title is
-its key in the GET parameter.
+/* Get the empty filter array for this model, and fill it with the GET parameter (default is "filter").
+A facet's title is its key in the GET parameter.
 e.g. /?filter[main-color][0]=green will result in:
 [ 'main-color' => [ 'green' ], 'size' => [ ] ]
 */
 $filter = Product::getFilterFromParam();
 
-/* Maybe you want to use this notation instead...
+/* You can also use another array to fill the filter array.
 e.g. /?main-color=[green]&size=[s,m]
 */
 $anotherFilter = Product::getFilterFromArr(request()->all());
