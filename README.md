@@ -25,6 +25,7 @@ composer require mgussekloo/laravel-facet-filter
 
 ``` bash
 php artisan vendor:publish --tag="facet-filter-migrations"
+php artisan migrate
 ```
 
 ### Update your model
