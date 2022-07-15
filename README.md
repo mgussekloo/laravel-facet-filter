@@ -118,9 +118,9 @@ class IndexFacets extends Command
         }
 
         $indexer->buildIndex();
+
         if ($products->hasMorePages()) {}
-            $currentPage = $currentPage + 1;
-            // next iteration
+            // next iteration, increase currentPage with one
         } else {
             // stop iterating
         }
