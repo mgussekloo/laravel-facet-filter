@@ -60,8 +60,6 @@ trait Facettable {
             'title' => $title,
             'fieldname' => $fieldName
         ]);
-
     }
-
 
 }
