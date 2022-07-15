@@ -1,10 +1,12 @@
 {
     "name": "mgussekloo/laravel-facet-filter",
+    "description": "Implement facet filtering in a Laravel project.",
     "autoload": {
         "psr-4": {
             "Mgussekloo\\FacetFilter\\": "src/"
         }
     },
+    "license": "MIT",
     "authors": [
         {
             "name": "Martijn Gussekloo",
@@ -23,5 +25,7 @@
                 "FacetFilter": "Mgussekloo\\FacetFilter\\FacetFilterFacade"
             }
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
