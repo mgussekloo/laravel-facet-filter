@@ -25,38 +25,42 @@ class Facet extends Model
     {
 
         if (is_null($this->options)) {
-            $query = DB::table('facetrows')
-            ->select('value',  DB::raw('0 as total'))
-            ->where('facet_id', $this->id)
-            ->where('value', '<>', '')
-            ->groupBy('value');
+            $values = Cache::remember('facet_' . $this->id, 60, function() {
+                $query = DB::table('facetrows')
+                ->select('value',  DB::raw('0 as total'))
+                ->where('facet_id', $this->id)
+                ->where('value', '<>', '')
+                ->groupBy('value');
 
-            $values = $query->get()->pluck('total', 'value')->toArray();
+                return $query->get()->pluck('total', 'value')->toArray();
+            });
 
             // now, find out totals of the values in this facet
             // but *within* the current query / filter operation.
             // we need to apply all the filters EXCEPT the one involving this facet.
+            $subjectIds = null;
             if (!is_null($this->currentQuery)) {
                 list($query, $facets, $filter) = $this->currentQuery;
                 $key = $this->getParamName();
-                if (isset($filter[$key])) {
-                    // dd($filter, $key);
+                if (isset($filter[$key]) && !empty($filter[$key])) {
                     $filter[$key] = [];
                     $query = FacetFilter::constrainQueryWithFacetFilter($query, $facets, $filter);
-                    $subjectIds = $query->get()->pluck('id')->toArray();
+                    $subjectIds = $query->select('id')->get()->pluck('id')->toArray();
                 }
-
-                // now get the facet counts
-                $query = DB::table('facetrows')
-                ->select('value',  DB::raw('count(*) as total'))
-                ->where('facet_id', $this->id)
-                ->where('value', '<>', '')
-                ->groupBy('value')
-                ->whereIn('subject_id', $subjectIds);
-
-                $updatedValues = $query->get()->pluck('total', 'value')->toArray();
-                $values = array_replace($values, $updatedValues);
             }
+
+            // now get the facet counts
+            $query = DB::table('facetrows')
+            ->select('value',  DB::raw('count(*) as total'))
+            ->where('facet_id', $this->id)
+            ->where('value', '<>', '')
+            ->groupBy('value')
+            ->when(is_array($subjectIds), function($query) use ($subjectIds) {
+                $query->whereIn('subject_id', $subjectIds);
+            });
+
+            $updatedValues = $query->get()->pluck('total', 'value')->toArray();
+            $values = array_replace($values, $updatedValues);
 
             $options = collect([]);
 
