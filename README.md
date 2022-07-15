@@ -117,7 +117,7 @@ class IndexFacets extends Command
 
         $indexer = new Indexer($products);
 
-        if ($currentPage == 0) {
+        if ($currentPage == 1) {
             $indexer->resetIndex();
         }
 
