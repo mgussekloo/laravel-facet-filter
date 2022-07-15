@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 use DB;
 use Str;
-use Cache;
 use FacetFilter;
 
 class Facet extends Model
@@ -25,15 +24,13 @@ class Facet extends Model
     {
 
         if (is_null($this->options)) {
-            $values = Cache::remember('facet_' . $this->id, 60, function() {
-                $query = DB::table('facetrows')
-                ->select('value',  DB::raw('0 as total'))
-                ->where('facet_id', $this->id)
-                ->where('value', '<>', '')
-                ->groupBy('value');
+            $query = DB::table('facetrows')
+            ->select('value',  DB::raw('0 as total'))
+            ->where('facet_id', $this->id)
+            ->where('value', '<>', '')
+            ->groupBy('value');
 
-                return $query->get()->pluck('total', 'value')->toArray();
-            });
+            $values = $query->get()->pluck('total', 'value')->toArray();
 
             // now, find out totals of the values in this facet
             // but *within* the current query / filter operation.
@@ -44,9 +41,9 @@ class Facet extends Model
                 $key = $this->getParamName();
                 if (isset($filter[$key]) && !empty($filter[$key])) {
                     $filter[$key] = [];
-                    $query = FacetFilter::constrainQueryWithFacetFilter($query, $facets, $filter);
-                    $subjectIds = $query->select('id')->get()->pluck('id')->toArray();
                 }
+                $query = FacetFilter::constrainQueryWithFacetFilter($query, $facets, $filter);
+                $subjectIds = $query->select('id')->get()->pluck('id')->toArray();
             }
 
             // now get the facet counts
@@ -55,8 +52,8 @@ class Facet extends Model
             ->where('facet_id', $this->id)
             ->where('value', '<>', '')
             ->groupBy('value')
-            ->when(is_array($subjectIds), function($query) use ($subjectIds) {
-                $query->whereIn('subject_id', $subjectIds);
+            ->when(!is_null($subjectIds), function($query) use ($subjectIds) {
+                $query->whereIn('subject_id', (array)$subjectIds);
             });
 
             $updatedValues = $query->get()->pluck('total', 'value')->toArray();
