@@ -66,13 +66,13 @@ class DefineFacets extends Command
     {
         /* Creates a row in the "facets" table. Takes the title and the field on the model
         that contains the value to index. The title will be visible as the key in the GET parameter. */
-        Master::defineFacet(
+        Product::defineFacet(
             'Main color',
             'color'
         );
 
         /* You can use dot notation to get a value from related models. */
-        Master::defineFacet(
+        Product::defineFacet(
             'Size',
             'sizes.name'
         );
