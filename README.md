@@ -51,8 +51,8 @@ class Product extends Model
 
 ### Define the facets
 
-Insert the facet definitions into the "facets" table. You can use a helper method on your facettable model. As an example, consider this custom command.
-Remember that you only need to insert the definitions once.
+Insert the facet definitions into the "facets" table. Remember that you only need to insert the definitions once.
+You can insert the rows any way you want, but the Facettable trait includes a handy defineFacet method.
 
 ``` php
 
@@ -67,19 +67,18 @@ class DefineFacets extends Command
 
 	public function handle()
 	{
+		/* Creates a row in the "facets" table. Takes the title and the field on the model
+		that contains the value to index. The title will be visible as the key in the GET parameter. */
 		Master::defineFacet(
 			'Main color',
 			'color'
 		);
-		/* Creates an entry in the "facets" table. Takes the title and the field on the model
-		that contains the value to index.
-		The title will be visible as the key in the GET parameter. */
 
+		/* You can use dot notation to get a value from related models. */
 		Master::defineFacet(
 			'Size',
 			'sizes.name'
 		);
-		/* You can use dot notation to get a field from related models. */
 	}
 }
 
@@ -88,7 +87,7 @@ class DefineFacets extends Command
 ### Build the index
 
 Build an index for the facets, using the "facetrows" table. The indexer provided takes a Laravel collection of models and iterates over each facet, and each model.
-You could write a scheduled command that initially resets the index, and then processes chunks of models only when necessary.
+You can do this once, or come up with a solution that does this periodically.
 
 ``` php
 
@@ -104,12 +103,35 @@ class IndexFacets extends Command
 
 	public function handle()
 	{
+		/* Build the whole index once */
 		$products = Product::with(['sizes'])->get();
 
 		$indexer = new Indexer($products);
 
 		$indexer->resetIndex(); // clears the index
 		$indexer->buildIndex(); // process all supplied models
+
+		/* Or come up with way to build it in chunks, e.g. in a scheduled command.
+		Each iteration, do this: */
+
+		$perPage = 1000;
+		$currentPage = ...;
+
+        $products = Product::with(['sizes'])->paginate($perPage, ['*'], 'page', $currentPage);
+
+        $indexer = new Indexer($products);
+
+        if ($currentPage == 0) {
+            $indexer->resetIndex();
+        }
+
+        $indexer->buildIndex();
+        if ($products->hasMorePages()) {}
+        	$currentPage = $currentPage + 1;
+        	// next iteration
+    	} else {
+    		// stop iterating
+    	}
 	}
 }
 
@@ -133,30 +155,14 @@ class HomeController extends BaseController
 
 	public function home()
 	{
-		$filter = Product::getFilterFromParam();
-		/* Returns an array with the current filter, based on all the available facets for this model,
-		and the specified (optional) GET parameter (default is "filter"). A facet's title is
-		its key in the GET parameter.
-
-		e.g. /?filter[main-color][0]=green will result in:
-		[ 'main-color' => [ 'green' ], 'size' => [ ] ]
-		*/
-
-		$anotherFilter = Product::getFilterFromArr(request()->all());
-		/* Maybe you want to use this notation instead...
-
-		e.g. /?main-color=[green]&size=[s,m]
-		*/
-
+		/* Returns a Laravel collection of the facets for this model. */
 		$facets = Product::getFacets();
-		/* Returns a Laravel collection of the available facets for this model. */
 
-		$singleFacet = $facets->firstWhere('fieldname', 'color');
 		/* $facets is a regular laravel collectio, so it's easy to iterate all of them, or find the one you need.
 		Each facet has a method to get a Laravel collection of option objects, to help you build your frontend. */
+		$singleFacet = $facets->firstWhere('fieldname', 'color');
 
 		return view('home')->with([
-			'filter' => $filter,
 			'facets' => $facets,
 			'facet' => $singleFacet
 		]);
@@ -197,14 +203,25 @@ back.
 ### Use facet filtering in a query
 
 ``` php
-	$filter = Product::getFilterFromParam();
-	/* You can grab the filter from the request GET param (the default being "filter")
-	or build it yourself. Make sure it's a nested array with facet titles for keys.
-	e.g. [ 'main-color' => [ 'green', 'red' ], 'size' => [ ] ]
+	/* Returns an array with the current filter, based on all the available facets for this model,
+	and the specified (optional) GET parameter (default is "filter"). A facet's title is
+	its key in the GET parameter.
+	e.g. /?filter[main-color][0]=green will result in:
+	[ 'main-color' => [ 'green' ], 'size' => [ ] ]
 	*/
+	$filter = Product::getFilterFromParam();
 
+	/* Maybe you want to use this notation instead...
+	e.g. /?main-color=[green]&size=[s,m]
+	*/
+	$anotherFilter = Product::getFilterFromArr(request()->all());
+
+	/* Apply the filter to a query using the facetsMatchFilter() scope on the model. */
 	$products = Product::where('discounted', true)->facetsMatchFilter($filter);
-	/* Apply the filter to a query using the facetsMatchFilter() scope on the model */
+
+	/* After running a query with facetsMatchFilter(), grabbing the facets will take the applied
+	filter into account automagically. */
+	$facets = Product::getFacets();
 ```
 
 ## License
