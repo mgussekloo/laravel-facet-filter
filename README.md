@@ -32,21 +32,19 @@ php artisan vendor:publish --provider="mgussekloo\laravel-facet-filter"
 Add the trait to your model.
 
 ``` php
-
 use Illuminate\Database\Eloquent\Model;
 use Mgussekloo\FacetFilter\Traits\Facettable;
 
 class Product extends Model
 {
-	use Facettable;
+    use Facettable;
 
-	protected $fillable = ['name', 'color'];
+    protected $fillable = ['name', 'color'];
 
-	public function sizes() {
-		return $this->hasMany('sizes');
-	}
+    public function sizes() {
+        return $this->hasMany('sizes');
+    }
 }
-
 ```
 
 ### Define the facets
@@ -55,7 +53,6 @@ Insert the facet definitions into the "facets" table. Remember that you only nee
 You can insert the rows any way you want, but the Facettable trait includes a handy defineFacet method.
 
 ``` php
-
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -65,23 +62,22 @@ use App\Models\Product;
 class DefineFacets extends Command
 {
 
-	public function handle()
-	{
-		/* Creates a row in the "facets" table. Takes the title and the field on the model
-		that contains the value to index. The title will be visible as the key in the GET parameter. */
-		Master::defineFacet(
-			'Main color',
-			'color'
-		);
+    public function handle()
+    {
+        /* Creates a row in the "facets" table. Takes the title and the field on the model
+        that contains the value to index. The title will be visible as the key in the GET parameter. */
+        Master::defineFacet(
+            'Main color',
+            'color'
+        );
 
-		/* You can use dot notation to get a value from related models. */
-		Master::defineFacet(
-			'Size',
-			'sizes.name'
-		);
-	}
+        /* You can use dot notation to get a value from related models. */
+        Master::defineFacet(
+            'Size',
+            'sizes.name'
+        );
+    }
 }
-
 ```
 
 ### Build the index
@@ -90,7 +86,6 @@ Build an index for the facets, using the "facetrows" table. The indexer provided
 You can do this once, or come up with a solution that does this periodically.
 
 ``` php
-
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -101,21 +96,21 @@ use Mgussekloo\FacetFilter\Indexer;
 class IndexFacets extends Command
 {
 
-	public function handle()
-	{
-		/* Build the whole index once */
-		$products = Product::with(['sizes'])->get();
+    public function handle()
+    {
+        /* Build the whole index once */
+        $products = Product::with(['sizes'])->get();
 
-		$indexer = new Indexer($products);
+        $indexer = new Indexer($products);
 
-		$indexer->resetIndex(); // clears the index
-		$indexer->buildIndex(); // process all supplied models
+        $indexer->resetIndex(); // clears the index
+        $indexer->buildIndex(); // process all supplied models
 
-		/* Or come up with way to build it in chunks, e.g. in a scheduled command.
-		Each iteration, do this: */
+        /* Or come up with way to build it in chunks, e.g. in a scheduled command.
+        Each iteration, do this: */
 
-		$perPage = 1000;
-		$currentPage = ...;
+        $perPage = 1000;
+        $currentPage = ...;
 
         $products = Product::with(['sizes'])->paginate($perPage, ['*'], 'page', $currentPage);
 
@@ -127,15 +122,15 @@ class IndexFacets extends Command
 
         $indexer->buildIndex();
         if ($products->hasMorePages()) {}
-        	$currentPage = $currentPage + 1;
-        	// next iteration
-    	} else {
-    		// stop iterating
-    	}
-	}
+            $currentPage = $currentPage + 1;
+            // next iteration
+        } else {
+            // stop iterating
+        }
+    }
 }
-
 ```
+
 ## Usage - using the facets
 
 ### Get the facets
@@ -143,7 +138,6 @@ class IndexFacets extends Command
 Get a list of facets, so you can show them in a frontend as a facet filter.
 
 ``` php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controller as BaseController;
@@ -153,22 +147,21 @@ use App\Models\Product;
 class HomeController extends BaseController
 {
 
-	public function home()
-	{
-		/* Returns a Laravel collection of the facets for this model. */
-		$facets = Product::getFacets();
+    public function home()
+    {
+        /* Returns a Laravel collection of the facets for this model. */
+        $facets = Product::getFacets();
 
-		/* $facets is a regular laravel collectio, so it's easy to iterate all of them, or find the one you need.
-		Each facet has a method to get a Laravel collection of option objects, to help you build your frontend. */
-		$singleFacet = $facets->firstWhere('fieldname', 'color');
+        /* $facets is a regular laravel collectio, so it's easy to iterate all of them, or find the one you need.
+        Each facet has a method to get a Laravel collection of option objects, to help you build your frontend. */
+        $singleFacet = $facets->firstWhere('fieldname', 'color');
 
-		return view('home')->with([
-			'facets' => $facets,
-			'facet' => $singleFacet
-		]);
-	}
+        return view('home')->with([
+            'facets' => $facets,
+            'facet' => $singleFacet
+        ]);
+    }
 }
-
 ```
 
 ### Frontend example
@@ -181,47 +174,47 @@ back.
 
 ``` html
 @php
-	$paramName = $facet->getParamName();
+    $paramName = $facet->getParamName();
 @endphp
 
 <h2>{{ $facet->title }}</h2>
 @foreach ($facet->getOptions() as $option)
-	<div class="facet-checkbox-pill">
-		<input
-			wire:model="filter.{{ $paramName }}"
-			type="checkbox"
-			id="{{ $option->slug }}"
-			value="{{ $option->value }}"
-		/>
-		<label for="{{ $option->slug }}" class="{{ $option->selected ? 'selected' : '' }}">
-			{{ $option->value }} ({{ $option->total }})
-		</label>
-	</div>
+    <div class="facet-checkbox-pill">
+        <input
+            wire:model="filter.{{ $paramName }}"
+            type="checkbox"
+            id="{{ $option->slug }}"
+            value="{{ $option->value }}"
+        />
+        <label for="{{ $option->slug }}" class="{{ $option->selected ? 'selected' : '' }}">
+            {{ $option->value }} ({{ $option->total }})
+        </label>
+    </div>
 @endforeach
 ```
 
 ### Use facet filtering in a query
 
 ``` php
-	/* Returns an array with the current filter, based on all the available facets for this model,
-	and the specified (optional) GET parameter (default is "filter"). A facet's title is
-	its key in the GET parameter.
-	e.g. /?filter[main-color][0]=green will result in:
-	[ 'main-color' => [ 'green' ], 'size' => [ ] ]
-	*/
-	$filter = Product::getFilterFromParam();
+/* Returns an array with the current filter, based on all the available facets for this model,
+and the specified (optional) GET parameter (default is "filter"). A facet's title is
+its key in the GET parameter.
+e.g. /?filter[main-color][0]=green will result in:
+[ 'main-color' => [ 'green' ], 'size' => [ ] ]
+*/
+$filter = Product::getFilterFromParam();
 
-	/* Maybe you want to use this notation instead...
-	e.g. /?main-color=[green]&size=[s,m]
-	*/
-	$anotherFilter = Product::getFilterFromArr(request()->all());
+/* Maybe you want to use this notation instead...
+e.g. /?main-color=[green]&size=[s,m]
+*/
+$anotherFilter = Product::getFilterFromArr(request()->all());
 
-	/* Apply the filter to a query using the facetsMatchFilter() scope on the model. */
-	$products = Product::where('discounted', true)->facetsMatchFilter($filter);
+/* Apply the filter to a query using the facetsMatchFilter() scope on the model. */
+$products = Product::where('discounted', true)->facetsMatchFilter($filter);
 
-	/* After running a query with facetsMatchFilter(), grabbing the facets will take the applied
-	filter into account automagically. */
-	$facets = Product::getFacets();
+/* After running a query with facetsMatchFilter(), grabbing the facets will take the applied
+filter into account automagically. */
+$facets = Product::getFacets();
 ```
 
 ## License
