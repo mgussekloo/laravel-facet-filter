@@ -1,6 +1,13 @@
 {
     "name": "mgussekloo/laravel-facet-filter",
     "description": "Implement facet filtering in a Laravel project.",
+    "keywords": [
+        "facet",
+        "filter",
+        "search"
+        "navigation",
+        "laravel"
+    ],
     "autoload": {
         "psr-4": {
             "Mgussekloo\\FacetFilter\\": "src/"
