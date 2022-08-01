@@ -1,11 +1,11 @@
 # Laravel Facet Filter
 
-This package intends to make it easy to implement facet filtering in a Laravel project.
-Since I couldn't find many alternatives I provide this package as a way to help others.
+This package intends to make it easy to implement facet filtering in Laravel projects.
+It doesn't have any external dependencies (such as Algolia or Meilisearch).
 
-### Todo
+### Contributing
 
-There is certainly room for improvement in this package. Feel free to contribute!
+Feel free to contribute to this package!
 
 ### Installation
 
@@ -15,7 +15,7 @@ This package can be installed through Composer.
 composer require mgussekloo/laravel-facet-filter
 ```
 
-## Usage - prepare your project
+## Prepare your project
 
 ### Publish and run the migrations
 
@@ -128,55 +128,33 @@ class IndexFacets extends Command
 }
 ```
 
-## Usage - using the facets
+## Using the facets
 
 ### Get the facets
 
-Get a list of facets, so you can show them in a frontend as a facet filter.
+Get a list of facets, and show them in the frontend.
 
 ``` php
-namespace App\Http\Controllers;
+/* Returns a Laravel collection of the facets for this model. */
+$facets = Product::getFacets();
 
-use Illuminate\Routing\Controller as BaseController;
+/* Since it's a Laravel collection, you can iterate or find the one you need easily.
+Each facet has a method to get a Laravel collection of the available options, to help you build your frontend. */
+$singleFacet = $facets->firstWhere('fieldname', 'color');
 
-use App\Models\Product;
-
-class HomeController extends BaseController
-{
-
-    public function home()
-    {
-        /* Returns a Laravel collection of the facets for this model. */
-        $facets = Product::getFacets();
-
-        /* Since it's a Laravel collection, you can iterate or find the one you need easily.
-        Each facet has a method to get a Laravel collection of the available options, to help you build your frontend. */
-        $singleFacet = $facets->firstWhere('fieldname', 'color');
-
-        return view('home')->with([
-            'facets' => $facets,
-            'facet' => $singleFacet
-        ]);
-    }
-}
 ```
 
-### Frontend example
-
-You'll have to build the frontend yourself, this is just an example. You're
-responsible for setting the correct GET-parameter when a user toggles a facet option.
-This example uses Laravel Livewire's wire:model directive.
+There is no frontend included in this package, you will have to build it yourself.
+Set the correct GET-parameter when a user toggles a facet option.
+This example uses Laravel Livewire's wire:model directive, which makes it pretty easy.
 
 ``` html
-@php
-    $paramName = $facet->getParamName();
-@endphp
 
 <h2>{{ $facet->title }}</h2>
 @foreach ($facet->getOptions() as $option)
     <div class="facet-checkbox-pill">
         <input
-            wire:model="filter.{{ $paramName }}"
+            wire:model="filter.{{ $facet->getParamName() }}"
             type="checkbox"
             id="{{ $option->slug }}"
             value="{{ $option->value }}"
@@ -190,24 +168,22 @@ This example uses Laravel Livewire's wire:model directive.
 
 ### Use facet filtering in a query
 
+Now you can apply the facet filter to your query. You will need a key-value array of a models facets.
+
 ``` php
-/* Get the empty filter array for this model, and fill it with the GET parameter (default is "filter").
-A facet's title is its key in the GET parameter.
-e.g. /?filter[main-color][0]=green will result in:
-[ 'main-color' => [ 'green' ], 'size' => [ ] ]
-*/
+/* Get the filter from the GET parameter (default is "filter").
+The key is the facet title, e.g. /?filter[main-color][0]=green will result in:
+[ 'main-color' => [ 'green' ], 'size' => [ ] ] */
 $filter = Product::getFilterFromParam();
 
-/* You can also use another array to fill the filter array.
-e.g. /?main-color=[green]&size=[s,m]
-*/
+/* If you prefer a different setup... e.g. /?main-color=[green]&size=[s,m] */
 $anotherFilter = Product::getFilterFromArr(request()->all());
 
-/* Apply the filter to a query using the facetsMatchFilter() scope on the model. */
-$products = Product::where('discounted', true)->facetsMatchFilter($filter);
+/* Apply the filter to a query. */
+$products = Product->facetsMatchFilter($filter);
 
-/* After running a query with facetsMatchFilter(), grabbing the facets will take the applied
-filter into account automagically. */
+/* Afterwards, grabbing the facets will take the applied filter into account automagically so
+the correct totals show in your frontend. */
 $facets = Product::getFacets();
 ```
 
