@@ -180,7 +180,7 @@ $filter = Product::getFilterFromParam();
 $anotherFilter = Product::getFilterFromArr(request()->all());
 
 /* Apply the filter to a query. */
-$products = Product->facetsMatchFilter($filter);
+$products = Product::facetsMatchFilter($filter);
 
 /* Afterwards, grabbing the facets will take the applied filter into account automagically so
 the correct totals show in your frontend. */
