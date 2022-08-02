@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('value')->nullable();
 
             $table->timestamps();
+
+            $table->index(['facet_id','value','subject_id']);
         });
     }
 

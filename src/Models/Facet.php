@@ -51,10 +51,11 @@ class Facet extends Model
             ->select('value',  DB::raw('count(*) as total'))
             ->where('facet_id', $this->id)
             ->where('value', '<>', '')
-            ->groupBy('value')
             ->when(!is_null($subjectIds), function($query) use ($subjectIds) {
                 $query->whereIn('subject_id', (array)$subjectIds);
-            });
+            })
+            ->groupBy('value');
+
 
             $updatedValues = $query->get()->pluck('total', 'value')->toArray();
             $values = array_replace($values, $updatedValues);
