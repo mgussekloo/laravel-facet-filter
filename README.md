@@ -1,7 +1,7 @@
 # Laravel Facet Filter
 
 This package intends to make it easy to implement facet filtering in Laravel projects.
-It doesn't have any external dependencies (such as Algolia or Meilisearch).
+It relies on a local index and doesn't require a search engine, such as Algolia or Meilisearch.
 
 ### Contributing
 
