@@ -176,9 +176,6 @@ The key is the facet title, e.g. /?filter[main-color][0]=green will result in:
 [ 'main-color' => [ 'green' ], 'size' => [ ] ] */
 $filter = Product::getFilterFromParam();
 
-/* If you prefer a different setup... e.g. /?main-color=[green]&size=[s,m] */
-$anotherFilter = Product::getFilterFromArr(request()->all());
-
 /* Apply the filter to a query. */
 $products = Product::facetsMatchFilter($filter);
 
