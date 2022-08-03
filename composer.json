@@ -27,10 +27,7 @@
         "laravel": {
             "providers": [
                 "Mgussekloo\\FacetFilter\\FacetFilterServiceProvider"
-            ],
-            "aliases": {
-                "FacetFilter": "Mgussekloo\\FacetFilter\\FacetFilterFacade"
-            }
+            ]
         }
     },
     "minimum-stability": "dev",

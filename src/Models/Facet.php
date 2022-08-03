@@ -4,9 +4,10 @@ namespace Mgussekloo\FacetFilter\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Mgussekloo\FacetFilter\Facades\FacetFilter;
+
 use DB;
 use Str;
-use FacetFilter;
 
 class Facet extends Model
 {
@@ -17,61 +18,67 @@ class Facet extends Model
         'subject_type',
     ];
 
-    public $currentQuery = null;
     public $options = null;
+    public $lastQuery = null;
+    public $filter = null;
 
     public function getOptions()
     {
-
         if (is_null($this->options)) {
-            $query = DB::table('facetrows')
+            $facetName = $this->getParamName();
+            $subjectType = $this->subject_type;
+
+            $values = DB::table('facetrows')
             ->select('value',  DB::raw('0 as total'))
             ->where('facet_id', $this->id)
             ->where('value', '<>', '')
-            ->groupBy('value');
+            ->groupBy('value')
+            ->get()
+            ->pluck('total', 'value')->toArray();
 
-            $values = $query->get()->pluck('total', 'value')->toArray();
+            // find out totals of the values in this facet
+            // *within* the current query / filter operation.
+            // in short: apply all the filters EXCEPT the one involving this facet.
+            // https://stackoverflow.com/questions/27550841/calculating-product-counts-efficiently-in-faceted-search-with-php-mysql
 
-            // now, find out totals of the values in this facet
-            // but *within* the current query / filter operation.
-            // we need to apply all the filters EXCEPT the one involving this facet.
-            $subjectIds = null;
-            if (!is_null($this->currentQuery)) {
-                list($query, $facets, $filter) = $this->currentQuery;
-                $key = $this->getParamName();
-                if (isset($filter[$key]) && !empty($filter[$key])) {
-                    $filter[$key] = [];
+            $idsInFilteredQuery = null;
+            if (!is_null($this->lastQuery)) {
+                list($query, $filter) = $this->lastQuery;
+
+                if (isset($filter[$facetName])) {
+                    $filter[$facetName] = [];
                 }
-                $query = FacetFilter::constrainQueryWithFacetFilter($query, $facets, $filter);
-                $subjectIds = $query->select('id')->get()->pluck('id')->toArray();
+
+                $idsInFilteredQuery = FacetFilter::getIdsInFilteredQuery($subjectType, $query, $filter);
             }
 
-            // now get the facet counts
-            $query = DB::table('facetrows')
+            // update the facet counts
+            $updatedValues =
+            DB::table('facetrows')
             ->select('value',  DB::raw('count(*) as total'))
             ->where('facet_id', $this->id)
             ->where('value', '<>', '')
-            ->when(!is_null($subjectIds), function($query) use ($subjectIds) {
-                $query->whereIn('subject_id', (array)$subjectIds);
+            ->when(!is_null($idsInFilteredQuery), function($query) use ($idsInFilteredQuery) {
+                $query->whereIn('subject_id', (array)$idsInFilteredQuery);
             })
-            ->groupBy('value');
+            ->groupBy('value')
+            ->get()
+            ->pluck('total', 'value')->toArray();
 
-
-            $updatedValues = $query->get()->pluck('total', 'value')->toArray();
             $values = array_replace($values, $updatedValues);
 
-            $options = collect([]);
-
             if (is_null($this->filter)) {
-                $this->filter = FacetFilter::getFilterFromParam($this->subject_type);
+                $this->filter = FacetFilter::getFilterFromParam($subjectType);
             }
 
-            $filteredValues = $this->filter[$this->getParamName()];
+            $selectedValues = (isset($this->filter[$facetName])) ? $this->filter[$facetName] : [];
+
+            $options = collect([]);
 
             foreach ($values as $value => $total) {
                 $options->push((object)[
                     'value' => $value,
-                    'selected' => in_array($value, $filteredValues),
+                    'selected' => in_array($value, $selectedValues),
                     'total' => $total,
                     'slug' =>  sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-'))
                 ]);
@@ -94,14 +101,20 @@ class Facet extends Model
         return $this->getOptions()->isNotEmpty();
     }
 
-    public function setCurrentQuery($query, $facets, $filter)
-    {
-        $this->currentQuery = [$query, $facets, $filter];
-        return $this;
-    }
-
     public function getParamName()
     {
         return Str::slug($this->title);
+    }
+
+    public function setLastQuery($query, $filter)
+    {
+        $this->lastQuery = [clone $query, $filter];
+        // $this->filter = $filter;
+        return $this;
+    }
+
+    public function setFilter($filter) {
+        $this->filter = $filter;
+        return $this;
     }
 }

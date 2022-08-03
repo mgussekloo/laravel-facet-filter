@@ -5,11 +5,9 @@ namespace Mgussekloo\FacetFilter\Traits;
 use Mgussekloo\FacetFilter\Models\Facet;
 use Mgussekloo\FacetFilter\Models\FacetRow;
 
-use FacetFilter;
+use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
 trait Facettable {
-
-    public static $facets = null;
 
     public function facetrows()
     {
@@ -18,23 +16,17 @@ trait Facettable {
 
     public function scopeFacetsMatchFilter($query, $filter)
     {
-        $queryCopy = clone $query;
+        self::getFacets()->map->setLastQuery($query, $filter);
 
-        $facets = self::getFacets();
-        FacetFilter::constrainQueryWithFacetFilter($query, $facets, $filter);
-
-        $facets->map->setCurrentQuery($queryCopy, $facets, $filter);
+        FacetFilter::resetIdsInFilteredQuery();
+        FacetFilter::constrainQueryWithFilter(self::class, $query, $filter);
 
         return $query;
     }
 
     public static function getFacets()
     {
-        if (is_null(self::$facets)) {
-            self::$facets = FacetFilter::getFacets(self::class);
-        }
-
-        return self::$facets;
+        return FacetFilter::getFacets(self::class);
     }
 
     public static function getFilterFromParam($paramName = 'filter')

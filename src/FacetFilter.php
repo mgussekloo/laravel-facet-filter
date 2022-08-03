@@ -9,6 +9,7 @@ class FacetFilter
 {
 
 	public static $facets = [];
+	public static $idsInFilteredQuery = [];
 
 	/*
 	Returns a Laravel collection of the available facets.
@@ -50,9 +51,11 @@ class FacetFilter
 		return $this->getFilterFromArr($subjectType, []);
 	}
 
-	public function constrainQueryWithFacetFilter($query, $facets, $filter)
-    {
-        foreach ($facets as $facet) {
+	public function constrainQueryWithFilter($subjectType, $query, $filter)
+	{
+		$facets = self::getFacets($subjectType);
+
+		foreach ($facets as $facet) {
             $key = $facet->getParamName();
 
             if (isset($filter[$key])) {
@@ -64,7 +67,25 @@ class FacetFilter
                 }
             }
         }
+
         return $query;
+	}
+
+	public function resetIdsInFilteredQuery()
+	{
+		self::$idsInFilteredQuery = [];
+	}
+
+	public function getIdsInFilteredQuery($subjectType, $query, $filter)
+	{
+		$cacheKey = implode('_', [$subjectType, md5(serialize($filter))]);
+
+		if (!isset(self::$idsInFilteredQuery[$cacheKey])) {
+			$query = FacetFilter::constrainQueryWithFilter($subjectType, $query, $filter);
+	        self::$idsInFilteredQuery[$cacheKey] = $query->select('id')->get()->pluck('id')->toArray();
+		}
+
+		return self::$idsInFilteredQuery[$cacheKey];
 	}
 
 }
