@@ -42,14 +42,17 @@ class Facet extends Model
             // https://stackoverflow.com/questions/27550841/calculating-product-counts-efficiently-in-faceted-search-with-php-mysql
 
             $idsInFilteredQuery = null;
+
             if (!is_null($this->lastQuery)) {
                 list($query, $filter) = $this->lastQuery;
 
-                if (isset($filter[$facetName])) {
-                    $filter[$facetName] = [];
-                }
+                // if (!empty(array_filter(array_values($filter)))) {
+                    if (isset($filter[$facetName])) {
+                        $filter[$facetName] = [];
+                    }
 
-                $idsInFilteredQuery = FacetFilter::getIdsInFilteredQuery($subjectType, $query, $filter);
+                    $idsInFilteredQuery = FacetFilter::getIdsInFilteredQuery($subjectType, $query, $filter);
+                // }
             }
 
             // update the facet counts
