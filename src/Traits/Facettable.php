@@ -24,9 +24,9 @@ trait Facettable {
         return $query;
     }
 
-    public static function getFacets()
+    public static function getFacets($filter = null)
     {
-        return FacetFilter::getFacets(self::class);
+        return FacetFilter::getFacets(self::class, $filter);
     }
 
     public static function getFilterFromParam($paramName = 'filter')

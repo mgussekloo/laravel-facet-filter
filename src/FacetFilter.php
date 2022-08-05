@@ -14,11 +14,17 @@ class FacetFilter
 	/*
 	Returns a Laravel collection of the available facets.
 	*/
-	public function getFacets($subjectType)
+	public function getFacets($subjectType, $filter = null)
 	{
+		if (is_null($filter)) {
+			$filter = self::getFilterFromParam($subjectType);
+		}
+
 		if (!isset(self::$facets[$subjectType])) {
 			self::$facets[$subjectType] = Facet::where('subject_type', $subjectType)->get();
 		}
+
+		self::$facets[$subjectType]->map->setFilter($filter);
 
 		return self::$facets[$subjectType];
 	}

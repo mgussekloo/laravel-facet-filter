@@ -46,13 +46,11 @@ class Facet extends Model
             if (!is_null($this->lastQuery)) {
                 list($query, $filter) = $this->lastQuery;
 
-                // if (!empty(array_filter(array_values($filter)))) {
-                    if (isset($filter[$facetName])) {
-                        $filter[$facetName] = [];
-                    }
+                if (isset($filter[$facetName])) {
+                    $filter[$facetName] = [];
+                }
 
-                    $idsInFilteredQuery = FacetFilter::getIdsInFilteredQuery($subjectType, $query, $filter);
-                // }
+                $idsInFilteredQuery = FacetFilter::getIdsInFilteredQuery($subjectType, $query, $filter);
             }
 
             // update the facet counts
@@ -70,11 +68,10 @@ class Facet extends Model
 
             $values = array_replace($values, $updatedValues);
 
-            if (is_null($this->filter)) {
-                $this->filter = FacetFilter::getFilterFromParam($subjectType);
+            $selectedValues = [];
+            if (is_array($this->filter) && isset($this->filter[$facetName])) {
+                $selectedValues = $this->filter[$facetName];
             }
-
-            $selectedValues = (isset($this->filter[$facetName])) ? $this->filter[$facetName] : [];
 
             $options = collect([]);
 
