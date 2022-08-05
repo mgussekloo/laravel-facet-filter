@@ -16,15 +16,13 @@ class FacetFilter
 	*/
 	public function getFacets($subjectType, $filter = null)
 	{
-		if (is_null($filter)) {
-			$filter = self::getFilterFromParam($subjectType);
-		}
-
 		if (!isset(self::$facets[$subjectType])) {
 			self::$facets[$subjectType] = Facet::where('subject_type', $subjectType)->get();
 		}
 
-		self::$facets[$subjectType]->map->setFilter($filter);
+		if (!is_null($filter)) {
+			self::$facets[$subjectType]->map->setFilter($filter);
+		}
 
 		return self::$facets[$subjectType];
 	}
@@ -39,7 +37,7 @@ class FacetFilter
 	*/
 	public function getFilterFromParam($subjectType, $paramName = 'filter')
 	{
-		$arr = (array)request()->input($paramName);
+		$arr = (array)request()->query($paramName);
 		return $this->getFilterFromArr($subjectType, $arr);
 	}
 
