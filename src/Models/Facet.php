@@ -33,8 +33,8 @@ class Facet extends Model
             ->where('facet_id', $this->id)
             ->where('value', '<>', '')
             ->groupBy('value')
-            ->get()
-            ->pluck('total', 'value')->toArray();
+            ->pluck('total', 'value')
+            ->toArray();
 
             // find out totals of the values in this facet
             // *within* the current query / filter operation.
@@ -63,8 +63,8 @@ class Facet extends Model
                 $query->whereIn('subject_id', (array)$idsInFilteredQuery);
             })
             ->groupBy('value')
-            ->get()
-            ->pluck('total', 'value')->toArray();
+            ->pluck('total', 'value')
+            ->toArray();
 
             $values = array_replace($values, $updatedValues);
 

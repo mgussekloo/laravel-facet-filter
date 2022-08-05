@@ -2,6 +2,8 @@
 
 namespace Mgussekloo\FacetFilter;
 
+use Mgussekloo\FacetFilter\Facades\FacetFilter;
+
 use Mgussekloo\FacetFilter\Models\Facet;
 use Mgussekloo\FacetFilter\Models\FacetRow;
 

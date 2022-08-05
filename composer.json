@@ -21,7 +21,8 @@
         }
     ],
     "require": {
-        "spatie/laravel-package-tools": "^1.9.2"
+        "spatie/laravel-package-tools": "^1.9.2",
+        "orchestra/testbench": "^6.24"
     },
     "extra": {
         "laravel": {
@@ -31,5 +32,8 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "require-dev": {
+        "nunomaduro/larastan": "^1.0"
+    }
 }
