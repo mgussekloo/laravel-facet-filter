@@ -178,18 +178,18 @@ $options = $singleFacet->getOptions();
 
 /* Example value:
 [
-    {
-        'value' => 'red'
+    (object)[
+        'value' => 'Red'
         'selected' => false,
         'total' => 3
         'slug' => 'color_red'
-    },
-    {
-        'value' => 'green'
+    ],
+    (object)[
+        'value' => 'Green'
         'selected' => true
         'total' => 2
         'slug' => 'color_green'
-    }
+    ]
 */
 
 ```
