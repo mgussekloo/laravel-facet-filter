@@ -152,35 +152,31 @@ $products = Product::facetsMatchFilter($filter);
 /* Apply the filter to a query. */
 $products = Product::where('discounted', true)->facetsMatchFilter($filter)->get();
 
-/* Calling getFacets() after facetsMatchFilter() will take the previous query
+/* Calling getFacets() after facetsMatchFilter() will take the current query
 into account automagically, so that the facet options will show the correct count
-for the current query. */
+for the current results. */
 $facets = Product::getFacets($filter);
 ```
 
-### Displaying facets
-
-The getFacets method returns a Laravel collection of Facets you can use to build a frontend.
-
-``` php
-/* Remember to pass the current filter to show which options were selected. */
-$facets = Product::getFacets($filter);
-
-/* Since the method returns a Laravel collection, you can iterate or find the one you need easily. */
-$singleFacet = $facets->firstWhere('fieldname', 'color');
-```
-
-### Frontend
+### Displaying the facets
 
 This package doesn't include any frontend, so you are free to set it up how you like.
 
-The facets include the basic information you need, and each facet has a getOptions method
-which returns a Laravel collection of the possible options for this facet.
-
+The getFacets() method takes a $filter argument and returns a collection of facets.
+Each facet has some basic info, and a getOptions() method which returns a collection of all the possible options for this facet.
 Each option has these properties: value, slug, selected (whether it's included in the filter), total (total occurences within current results).
 
-Make sure you update the query parameters yourself, so that you can build the correct filter.
-This example uses Laravel Livewire's wire:model directive, which makes it easy.
+``` php
+/* Get the facets for a model. */
+$facets = Product::getFacets($filter);
+
+/* Since the method returns a collection, you can iterate or find the one you need easily. */
+$singleFacet = $facets->firstWhere('fieldname', 'color');
+```
+
+You can display the facets any way you like. Make sure you update the correct query parameter(s) to get
+the right filter. The example below uses Laravel Livewire's wire:model directive to
+update the ?filter query parameter.
 
 ``` html
 <h2>{{ $facet->title }}</h2>
