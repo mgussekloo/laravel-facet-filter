@@ -153,7 +153,7 @@ total (total occurences within current results).
 /* Returns a Laravel collection of the facets for this model. */
 $facets = Product::getFacets();
 
-/* If you want to know which facet was selected, supply a filter to the getFacets method. */
+/* If you want to know which facet was selected, pass the current filter to the method. */
 $facets = Product::getFacets($filter);
 
 /* Since it's a Laravel collection, you can iterate or find the one you need easily.
