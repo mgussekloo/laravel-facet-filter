@@ -28,13 +28,11 @@ class Facet extends Model
             $facetName = $this->getParamName();
             $subjectType = $this->subject_type;
 
-            $values = DB::table('facetrows')
-            ->select('value',  DB::raw('0 as total'))
+            $facetrows = DB::table('facetrows')
+            ->select('subject_id', 'value')
             ->where('facet_id', $this->id)
             ->where('value', '<>', '')
-            ->groupBy('value')
-            ->pluck('total', 'value')
-            ->toArray();
+            ->get();
 
             // find out totals of the values in this facet
             // *within* the current query / filter operation.
@@ -54,6 +52,7 @@ class Facet extends Model
             }
 
             // update the facet counts
+            /*
             $updatedValues =
             DB::table('facetrows')
             ->select('value',  DB::raw('count(*) as total'))
@@ -67,6 +66,18 @@ class Facet extends Model
             ->toArray();
 
             $values = array_replace($values, $updatedValues);
+            */
+
+            $values = [];
+            foreach ($facetrows as $row) {
+                if (!isset($values[$row->value])) {
+                    $values[$row->value] = 0;
+                }
+
+                if (in_array($row->subject_id, $idsInFilteredQuery)) {
+                    $values[$row->value] = $values[$row->value] + 1;
+                }
+            }
 
             $selectedValues = [];
             if (is_array($this->filter) && isset($this->filter[$facetName])) {

@@ -130,13 +130,31 @@ class IndexFacets extends Command
 
 ## Using the facets
 
+### Get the filter
+
+The filter array is a key-value array for all the facets of a particular model, keyed by the slug of the facet title.
+
+``` php
+/* Get the filter from the query parameter (default: "filter").
+The key is the facet title, e.g. /?filter[main-color][0]=green will result in:
+[ 'main-color' => [ 'green' ], 'size' => [ ] ] */
+$filter = Product::getFilterFromParam();
+
+/* Or build the filter from an array... e.g. /?main-color=[green]&size=[s,m] */
+$anotherFilter = Product::getFilterFromArr(request()->all());
+```
+
 ### Get the facets
 
-Get a list of facets, and show them in the frontend.
+The getFacets method returns a Laravel collection of Facets. A single Facet has these properties: value, slug, selected (whether it's selected by the user / included in the supplied filter),
+total (total occurences within current results).
 
 ``` php
 /* Returns a Laravel collection of the facets for this model. */
 $facets = Product::getFacets();
+
+/* If you want to know which facet was selected, supply a filter to the getFacets method. */
+$facets = Product::getFacets($filter);
 
 /* Since it's a Laravel collection, you can iterate or find the one you need easily.
 Each facet has a method to get a Laravel collection of the available options, to help you build your frontend. */
@@ -144,12 +162,31 @@ $singleFacet = $facets->firstWhere('fieldname', 'color');
 
 ```
 
-There is no frontend included in this package, you will have to build it yourself.
-Set the correct GET-parameter when a user toggles a facet option.
-This example uses Laravel Livewire's wire:model directive, which makes it pretty easy.
+### Apply facet filtering to a query
+
+A local scope on the Facettable trait, facetsMatchFilter, can be used to
+apply the current filter to any query.
+
+``` php
+/* Apply the filter to a query. */
+$products = Product::facetsMatchFilter($filter);
+
+/* Apply the filter to a query. */
+$products = Product::where('discounted', true)->facetsMatchFilter($filter);
+
+/* Afterwards, grabbing the facets will take your query and filter into account automagically so
+the correct totals show in your frontend. */
+$facets = Product::getFacets();
+```
+
+### Frontend for the facets
+
+This package doesn't include a frontend, you're free to set it up how you like.
+The facets returned by getFacets (see above) include the basic information you need to build an interface.
+You're responsible for updating the query parameters yourself, so that you can build the correct filter.
+This example uses Laravel Livewire's wire:model directive to update the ?filter= parameter.
 
 ``` html
-
 <h2>{{ $facet->title }}</h2>
 @foreach ($facet->getOptions() as $option)
     <div class="facet-checkbox-pill">
@@ -164,24 +201,6 @@ This example uses Laravel Livewire's wire:model directive, which makes it pretty
         </label>
     </div>
 @endforeach
-```
-
-### Use facet filtering in a query
-
-Now you can apply the facet filter to your query. You will need a key-value array of a models facets.
-
-``` php
-/* Get the filter from the GET parameter (default is "filter").
-The key is the facet title, e.g. /?filter[main-color][0]=green will result in:
-[ 'main-color' => [ 'green' ], 'size' => [ ] ] */
-$filter = Product::getFilterFromParam();
-
-/* Apply the filter to a query. */
-$products = Product::facetsMatchFilter($filter);
-
-/* Afterwards, grabbing the facets will take the applied filter into account automagically so
-the correct totals show in your frontend. */
-$facets = Product::getFacets();
 ```
 
 ## License
