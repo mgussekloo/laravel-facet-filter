@@ -137,7 +137,7 @@ The key is the facet title, e.g. /?filter[main-color][0]=green will result in:
 $filter = Product::getFilterFromParam();
 
 /* Or build the filter from an array... e.g. /?main-color=[green]&size=[s,m] */
-$anotherFilter = Product::getFilterFromArr(request()->all());
+$filter = Product::getFilterFromArr(request()->all());
 ```
 
 ### Apply facet filtering to a query
@@ -152,9 +152,10 @@ $products = Product::facetsMatchFilter($filter);
 /* Apply the filter to a query. */
 $products = Product::where('discounted', true)->facetsMatchFilter($filter)->get();
 
-/* Afterwards, grabbing the facets will take your query and filter into account automagically so
-the correct totals show in your frontend. */
-$facets = Product::getFacets();
+/* Calling getFacets() after facetsMatchFilter() will take the previous query
+into account automagically, so that the facet options will show the correct count
+for the current query. */
+$facets = Product::getFacets($filter);
 ```
 
 ### Displaying facets
@@ -162,15 +163,11 @@ $facets = Product::getFacets();
 The getFacets method returns a Laravel collection of Facets you can use to build a frontend.
 
 ``` php
-/* Returns a Laravel collection of the facets for this model. */
-$facets = Product::getFacets();
-
-/* If you want to show which options were selected, pass the current filter to the method. */
+/* Remember to pass the current filter to show which options were selected. */
 $facets = Product::getFacets($filter);
 
-/* Since it's a Laravel collection, you can iterate or find the one you need easily. */
+/* Since the method returns a Laravel collection, you can iterate or find the one you need easily. */
 $singleFacet = $facets->firstWhere('fieldname', 'color');
-
 ```
 
 ### Frontend

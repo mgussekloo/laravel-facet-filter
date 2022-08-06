@@ -51,23 +51,6 @@ class Facet extends Model
                 $idsInFilteredQuery = FacetFilter::getIdsInFilteredQuery($subjectType, $query, $filter);
             }
 
-            // update the facet counts
-            /*
-            $updatedValues =
-            DB::table('facetrows')
-            ->select('value',  DB::raw('count(*) as total'))
-            ->where('facet_id', $this->id)
-            ->where('value', '<>', '')
-            ->when(!is_null($idsInFilteredQuery), function($query) use ($idsInFilteredQuery) {
-                $query->whereIn('subject_id', (array)$idsInFilteredQuery);
-            })
-            ->groupBy('value')
-            ->pluck('total', 'value')
-            ->toArray();
-
-            $values = array_replace($values, $updatedValues);
-            */
-
             $values = [];
             foreach ($facetrows as $row) {
                 if (!isset($values[$row->value])) {
@@ -120,7 +103,6 @@ class Facet extends Model
     public function setLastQuery($query, $filter)
     {
         $this->lastQuery = [clone $query, $filter];
-        // $this->filter = $filter;
         return $this;
     }
 
