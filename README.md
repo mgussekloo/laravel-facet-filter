@@ -1,11 +1,11 @@
 # Laravel Facet Filter
 
-This package intends to make it easy to implement facet filtering in Laravel projects.
-It relies on a local index and doesn't require a search engine, such as Algolia or Meilisearch.
+This package provides simple facet filtering in Laravel projects.
 
 ### Contributing
 
-Feel free to contribute to this package!
+Feel free to contribute to this package, either by creating a pull request
+or reporting an issue.
 
 ### Installation
 
@@ -26,7 +26,7 @@ php artisan migrate
 
 ### Update your model
 
-Add the trait to your model.
+Add the Facettable trait to the model(s) for which you want to enable facet filtering.
 
 ``` php
 use Illuminate\Database\Eloquent\Model;
@@ -36,18 +36,14 @@ class Product extends Model
 {
     use Facettable;
 
-    protected $fillable = ['name', 'color'];
+    ...
 
-    public function sizes() {
-        return $this->hasMany('sizes');
-    }
-}
 ```
 
 ### Define the facets
 
-Insert the facet definitions into the "facets" table. Remember that you only need to insert the definitions once.
-You can insert the rows any way you want, but the Facettable trait includes a handy defineFacet method.
+Define the facets for each model. For each facet, provide a title and the property on the model
+from which to pull the values.
 
 ``` php
 namespace App\Console\Commands;
@@ -79,8 +75,9 @@ class DefineFacets extends Command
 
 ### Build the index
 
-Build an index for the facets, using the "facetrows" table. The indexer provided takes a Laravel collection of models and iterates over each facet, and each model.
-You can do this once, or come up with a solution that does this periodically.
+Populate the facetrows table. This package includes a simple indexer
+that iterates over a number of models, populating the facetrows table based on
+the facet definitions.
 
 ``` php
 namespace App\Console\Commands;
@@ -95,7 +92,7 @@ class IndexFacets extends Command
 
     public function handle()
     {
-        /* Build the whole index once */
+        /* Build the whole index in one go */
         $products = Product::with(['sizes'])->get();
 
         $indexer = new Indexer($products);
@@ -103,8 +100,8 @@ class IndexFacets extends Command
         $indexer->resetIndex(); // clears the index
         $indexer->buildIndex(); // process all supplied models
 
-        /* Or come up with way to build it in chunks, e.g. in a scheduled command.
-        Each iteration, do this: */
+        /* For large datasets, you might want to build it in chunks,
+        e.g. in a scheduled command. Each iteration, do this: */
 
         $perPage = 1000;
         $currentPage = ...;
