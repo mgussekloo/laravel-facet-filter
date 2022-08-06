@@ -178,18 +178,18 @@ $options = $singleFacet->getOptions();
 
 /* Example value:
 [
-    [
+    {
         'value' => 'red'
         'selected' => false,
         'total' => 3
         'slug' => 'color_red'
-    ],
-    [
+    },
+    {
         'value' => 'green'
         'selected' => true
         'total' => 2
         'slug' => 'color_green'
-    ]
+    }
 */
 
 ```
