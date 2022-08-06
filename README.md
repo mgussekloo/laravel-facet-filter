@@ -75,8 +75,7 @@ class DefineFacets extends Command
 
 ### Build the index
 
-Populate the facetrows table. This package includes a simple indexer
-that iterates over a number of models, populating the facetrows table based on
+This package includes a simple indexer that iterates over a number of models, populating the facetrows table based on
 the facet definitions.
 
 ``` php
