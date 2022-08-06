@@ -172,6 +172,26 @@ $facets = Product::getFacets($filter);
 
 /* Since the method returns a collection, you can iterate or find the one you need easily. */
 $singleFacet = $facets->firstWhere('fieldname', 'color');
+
+/* Get the options for a facet */
+$options = $singleFacet->getOptions();
+
+/* Example value:
+[
+    [
+        'value' => 'red'
+        'selected' => false,
+        'total' => 3
+        'slug' => 'color_red'
+    ],
+    [
+        'value' => 'green'
+        'selected' => true
+        'total' => 2
+        'slug' => 'color_green'
+    ]
+*/
+
 ```
 
 You can display the facets any way you like. Make sure you update the correct query parameter(s) to get
