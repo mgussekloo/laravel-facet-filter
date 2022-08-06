@@ -150,7 +150,7 @@ apply the current filter to any query.
 $products = Product::facetsMatchFilter($filter);
 
 /* Apply the filter to a query. */
-$products = Product::where('discounted', true)->facetsMatchFilter($filter);
+$products = Product::where('discounted', true)->facetsMatchFilter($filter)->get();
 
 /* Afterwards, grabbing the facets will take your query and filter into account automagically so
 the correct totals show in your frontend. */
