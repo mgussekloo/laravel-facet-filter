@@ -144,23 +144,6 @@ $filter = Product::getFilterFromParam();
 $anotherFilter = Product::getFilterFromArr(request()->all());
 ```
 
-### Get the facets
-
-The getFacets method returns a Laravel collection of Facets. A single Facet has these properties: value, slug, selected (whether it's selected by the user / included in the supplied filter),
-total (total occurences within current results).
-
-``` php
-/* Returns a Laravel collection of the facets for this model. */
-$facets = Product::getFacets();
-
-/* If you want to know which facet was selected, pass the current filter to the method. */
-$facets = Product::getFacets($filter);
-
-/* Since it's a Laravel collection, you can iterate or find the one you need easily. */
-$singleFacet = $facets->firstWhere('fieldname', 'color');
-
-```
-
 ### Apply facet filtering to a query
 
 A local scope on the Facettable trait, facetsMatchFilter, can be used to
@@ -178,14 +161,33 @@ the correct totals show in your frontend. */
 $facets = Product::getFacets();
 ```
 
-### Frontend for the facets
+### Displaying facets
 
-This package doesn't include a frontend, you're free to set it up how you like.
-The facets returned by getFacets (see above) include the basic information you need to build an interface.
-Each facet has a getOptions method, to get a Laravel collection of the available options.
+The getFacets method returns a Laravel collection of Facets you can use to build a frontend.
 
-You're responsible for updating the query parameters yourself, so that you can build the correct filter.
-This example uses Laravel Livewire's wire:model directive to update the ?filter= parameter.
+``` php
+/* Returns a Laravel collection of the facets for this model. */
+$facets = Product::getFacets();
+
+/* If you want to show which options were selected, pass the current filter to the method. */
+$facets = Product::getFacets($filter);
+
+/* Since it's a Laravel collection, you can iterate or find the one you need easily. */
+$singleFacet = $facets->firstWhere('fieldname', 'color');
+
+```
+
+### Frontend
+
+This package doesn't include any frontend, so you are free to set it up how you like.
+
+The facets include the basic information you need, and each facet has a getOptions method
+which returns a Laravel collection of the possible options for this facet.
+
+Each option has these properties: value, slug, selected (whether it's included in the filter), total (total occurences within current results).
+
+Make sure you update the query parameters yourself, so that you can build the correct filter.
+This example uses Laravel Livewire's wire:model directive, which makes it easy.
 
 ``` html
 <h2>{{ $facet->title }}</h2>
