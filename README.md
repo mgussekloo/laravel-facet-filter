@@ -156,8 +156,7 @@ $facets = Product::getFacets();
 /* If you want to know which facet was selected, pass the current filter to the method. */
 $facets = Product::getFacets($filter);
 
-/* Since it's a Laravel collection, you can iterate or find the one you need easily.
-Each facet has a method to get a Laravel collection of the available options, to help you build your frontend. */
+/* Since it's a Laravel collection, you can iterate or find the one you need easily. */
 $singleFacet = $facets->firstWhere('fieldname', 'color');
 
 ```
@@ -183,6 +182,8 @@ $facets = Product::getFacets();
 
 This package doesn't include a frontend, you're free to set it up how you like.
 The facets returned by getFacets (see above) include the basic information you need to build an interface.
+Each facet has a getOptions method, to get a Laravel collection of the available options.
+
 You're responsible for updating the query parameters yourself, so that you can build the correct filter.
 This example uses Laravel Livewire's wire:model directive to update the ?filter= parameter.
 
