@@ -128,7 +128,7 @@ class IndexFacets extends Command
 }
 ```
 
-## Using the facets
+## Usage
 
 ### Get the filter
 
