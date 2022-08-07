@@ -82,8 +82,9 @@ class IndexFacets extends Command
 }
 ```
 
+For very large datasets you might want to build it in chunks, e.g. in a scheduled command.
+
 ```php
-/* For very large datasets you might want to build it in chunks, e.g. in a scheduled command. */
 $perPage = 1000; $currentPage = ...;
 
 $products = Product::with(['sizes'])->paginate($perPage, ['*'], 'page', $currentPage);
