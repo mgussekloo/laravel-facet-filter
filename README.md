@@ -171,7 +171,7 @@ $options = $singleFacet->getOptions();
 ```
 
 To let the user select facets you will have to update the correct query parameter(s).
-You could use something like a form submit or AJAX request. The example below uses Laravel Livewire's wire:model directive which makes it very easy.
+You could use something like a form submit or AJAX request. The example below uses Laravel Livewire's wire:model directive.
 
 ``` html
 <h2>{{ $facet->title }}</h2>
