@@ -47,7 +47,14 @@ class FacetFilter
 			return [$facet->getParamName() => [ ]];
 		})->toArray();
 
-		return array_replace($emptyFilter, array_filter($arr));
+		$arr = array_map(function($item) {
+			if (!is_array($item)) {
+				return [ $item ];
+			}
+			return $item;
+		}, $arr);
+
+		return array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
 	}
 
 	public function getEmptyFilter($subjectType)

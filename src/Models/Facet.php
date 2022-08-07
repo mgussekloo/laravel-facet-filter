@@ -39,7 +39,7 @@ class Facet extends Model
             // in short: apply all the filters EXCEPT the one involving this facet.
             // https://stackoverflow.com/questions/27550841/calculating-product-counts-efficiently-in-faceted-search-with-php-mysql
 
-            $idsInFilteredQuery = null;
+            $idsInFilteredQuery = [];
 
             if (!is_null($this->lastQuery)) {
                 list($query, $filter) = $this->lastQuery;

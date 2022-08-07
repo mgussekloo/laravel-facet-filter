@@ -136,23 +136,22 @@ The key is the facet title, e.g. /?filter[main-color][0]=green will result in:
 [ 'main-color' => [ 'green' ], 'size' => [ ] ] */
 $filter = Product::getFilterFromParam();
 
-/* Or build the filter from an array... e.g. /?main-color=[green]&size=[s,m] */
+/* Get the filter from an array... e.g. /?main-color=green&size=[s,m] */
 $filter = Product::getFilterFromArr(request()->all());
 ```
 
 ### Apply facet filtering to a query
 
-A local scope on the Facettable trait, facetsMatchFilter, can be used to
-apply the current filter to any query.
+A local scope on the Facettable trait, facetsMatchFilter, applies the current filter to a query.
 
 ``` php
 /* Apply the filter to a query. */
-$products = Product::facetsMatchFilter($filter);
+$products = Product::facetsMatchFilter($filter)->get();
 
-/* Apply the filter to a query. */
-$products = Product::where('discounted', true)->facetsMatchFilter($filter)->get();
+/* Or ... */
+$products = Product::where('discounted', true)->facetsMatchFilter($filter)->pluck('id');
 
-/* Calling getFacets() after facetsMatchFilter() will take the current query
+/* Calling getFacets() after facetsMatchFilter() takes the last query
 into account automagically, so that the facet options will show the correct count
 for the current results. */
 $facets = Product::getFacets($filter);
@@ -160,10 +159,10 @@ $facets = Product::getFacets($filter);
 
 ### Displaying the facets
 
-This package doesn't include any frontend, so you are free to set it up how you like.
+This package doesn't include a frontend. You are free to set it up how you like.
 
 The getFacets() method takes a $filter argument and returns a collection of facets.
-Each facet has some basic info, and a getOptions() method which returns a collection of all the possible options for this facet.
+Each facet has a title and a getOptions() method which returns all the possible options for this facet.
 Each option has these properties: value, slug, selected (whether it's included in the filter), total (total occurences within current results).
 
 ``` php
@@ -194,9 +193,8 @@ $options = $singleFacet->getOptions();
 
 ```
 
-You can display the facets any way you like. Make sure you update the correct query parameter(s) to get
-the right filter. The example below uses Laravel Livewire's wire:model directive to
-update the ?filter query parameter.
+To let the user select facets you will have to update the correct query parameter(s).
+You could use something like a form submit or AJAX request. The example below uses Laravel Livewire's wire:model directive which makes it very easy.
 
 ``` html
 <h2>{{ $facet->title }}</h2>
