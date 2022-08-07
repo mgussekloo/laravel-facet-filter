@@ -74,20 +74,15 @@ class IndexFacets extends Command
     {
         /* Build the whole index in one go */
         $products = Product::with(['sizes'])->get();
-
         $indexer = new Indexer($products);
 
         $indexer->resetIndex(); // clears the index
         $indexer->buildIndex(); // process all supplied models
 
-        /* For very large datasets you might want to build it in chunks,
-        e.g. in a scheduled command. */
-
-        $perPage = 1000;
-        $currentPage = ...;
+        /* For very large datasets you might want to build it in chunks, e.g. in a scheduled command. */
+        $perPage = 1000; $currentPage = ...;
 
         $products = Product::with(['sizes'])->paginate($perPage, ['*'], 'page', $currentPage);
-
         $indexer = new Indexer($products);
 
         if ($currentPage == 1) {
@@ -98,8 +93,6 @@ class IndexFacets extends Command
 
         if ($products->hasMorePages()) {}
             // next iteration, increase currentPage with one
-        } else {
-            // stop iterating
         }
     }
 }
