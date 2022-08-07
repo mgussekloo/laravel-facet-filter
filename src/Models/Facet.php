@@ -89,10 +89,10 @@ class Facet extends Model
         });
     }
 
-    public function hasOptions()
-    {
-        return $this->getOptions()->isNotEmpty();
-    }
+    // public function hasOptions()
+    // {
+    //     return $this->getOptions()->isNotEmpty();
+    // }
 
     public function getParamName()
     {
