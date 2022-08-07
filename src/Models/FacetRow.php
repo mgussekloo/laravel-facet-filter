@@ -9,7 +9,7 @@ class FacetRow extends Model
 	protected $table = 'facetrows';
 
     protected $fillable = [
-        'facet_id',
+        'facet_slug',
         'subject_id',
         'value',
     ];

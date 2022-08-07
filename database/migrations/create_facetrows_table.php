@@ -16,13 +16,13 @@ return new class extends Migration
         Schema::create('facetrows', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('facet_id');
+            $table->string('facet_slug');
             $table->foreignId('subject_id');
             $table->string('value')->nullable();
 
             $table->timestamps();
 
-            $table->index(['facet_id','value','subject_id']);
+            $table->index(['facet_slug','value','subject_id']);
         });
     }
 

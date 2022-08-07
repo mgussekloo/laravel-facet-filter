@@ -26,7 +26,9 @@ php artisan migrate
 
 ### Update your model
 
-Add the Facettable trait to the model(s) for which you want to enable facet filtering.
+For all models that should support facet filtering, add a Facettable trait and
+a defineFacets() method. This method should return a title and model property
+from which to pull the value(s) for each facet.
 
 ``` php
 use Illuminate\Database\Eloquent\Model;
@@ -36,47 +38,26 @@ class Product extends Model
 {
     use Facettable;
 
+    public function defineFacets()
+    {
+        return [
+            [
+                'Main color',
+                'color'
+            ],
+            [
+                'Size',
+                'sizes.name' /* Use dot notation to get the value from related models. */
+            ]
+    }
+
     ...
 
 ```
 
-### Define the facets
-
-Define the facets for each model. For each facet, provide a title and the property on the model
-from which to pull the values.
-
-``` php
-namespace App\Console\Commands;
-
-use Illuminate\Console\Command;
-
-use App\Models\Product;
-
-class DefineFacets extends Command
-{
-
-    public function handle()
-    {
-        /* Creates a row in the "facets" table, defining the facet title and the
-        property that contains the value to index. */
-        Product::defineFacet(
-            'Main color',
-            'color'
-        );
-
-        /* You can use dot notation to get the value from related models. */
-        Product::defineFacet(
-            'Size',
-            'sizes.name'
-        );
-    }
-}
-```
-
 ### Build the index
 
-This package includes a simple indexer that iterates over a number of models, populating the facetrows table based on
-the facet definitions.
+The included simple indexer iterates over models, populating the facetrows table based on the facet definitions.
 
 ``` php
 namespace App\Console\Commands;
@@ -99,8 +80,8 @@ class IndexFacets extends Command
         $indexer->resetIndex(); // clears the index
         $indexer->buildIndex(); // process all supplied models
 
-        /* For large datasets, you might want to build it in chunks,
-        e.g. in a scheduled command. Each iteration, do this: */
+        /* For very large datasets you might want to build it in chunks,
+        e.g. in a scheduled command. */
 
         $perPage = 1000;
         $currentPage = ...;

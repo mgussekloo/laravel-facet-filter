@@ -14,7 +14,7 @@ class FacetFilterServiceProvider extends PackageServiceProvider
         $package
             ->name('laravel-facet-filter')
             ->hasConfigFile()
-            ->hasMigrations(['create_facets_table', 'create_facetrows_table']);
+            ->hasMigrations(['create_facetrows_table']);
     }
 
     public function registeringPackage()

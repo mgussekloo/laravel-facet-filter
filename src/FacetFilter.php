@@ -17,7 +17,16 @@ class FacetFilter
 	public function getFacets($subjectType, $filter = null)
 	{
 		if (!isset(self::$facets[$subjectType])) {
-			self::$facets[$subjectType] = Facet::where('subject_type', $subjectType)->get();
+			$definitions = collect($subjectType::defineFacets())
+			->map(function($arr) use ($subjectType) {
+				return [
+					'title' => $arr[0],
+					'fieldname' => $arr[1],
+					'subject_type' => $subjectType,
+				];
+			});
+
+			self::$facets[$subjectType] = $definitions->mapInto(Facet::class);
 		}
 
 		if (!is_null($filter)) {
@@ -73,7 +82,7 @@ class FacetFilter
                 $values = (array)$filter[$key];
                 if (!empty($values)) {
                     $query->whereHas('facetrows', function($query) use ($values, $facet) {
-                        $query->select('id')->where('facet_id', $facet->id)->whereIn('value', $values);
+                        $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
                     });
                 }
             }

@@ -14,7 +14,6 @@ class Facet extends Model
     protected $fillable = [
         'title',
         'fieldname',
-        'facet_type',
         'subject_type',
     ];
 
@@ -30,7 +29,7 @@ class Facet extends Model
 
             $facetrows = DB::table('facetrows')
             ->select('subject_id', 'value')
-            ->where('facet_id', $this->id)
+            ->where('facet_slug', $this->getSlug())
             ->where('value', '<>', '')
             ->get();
 
@@ -98,6 +97,11 @@ class Facet extends Model
     public function getParamName()
     {
         return Str::slug($this->title);
+    }
+
+    public function getSlug()
+    {
+        return implode('.', [$this->subject_type, $this->fieldname]);
     }
 
     public function setLastQuery($query, $filter)

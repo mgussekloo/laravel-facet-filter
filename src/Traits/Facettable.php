@@ -44,14 +44,6 @@ trait Facettable {
         return FacetFilter::getEmptyFilter(self::class);
     }
 
-    public static function defineFacet($title, $fieldName, $facetType = 'simple')
-    {
-        Facet::create([
-            'subject_type' => self::class,
-            'facet_type' => $facetType,
-            'title' => $title,
-            'fieldname' => $fieldName
-        ]);
-    }
+    abstract public function defineFacets();
 
 }

@@ -56,7 +56,7 @@ class Indexer
 
 	                foreach ($values as $value) {
 	                    FacetRow::create([
-	                        'facet_id' => $facet->id,
+	                        'facet_slug' => $facet->getSlug(),
 	                        'subject_id' => $model->id,
 	                        'value' => $value
 	                    ]);
