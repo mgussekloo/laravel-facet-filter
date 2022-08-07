@@ -105,7 +105,7 @@ if ($products->hasMorePages()) {}
 
 ### Get the filter
 
-The filter array is a key-value array for all the facets of a particular model, keyed by the slug of the facet title.
+The filter array is a key-value array for all the facets of a particular model, keyed by the facet title.
 
 ``` php
 /* Get the filter from the query parameter (default: "filter").
@@ -128,7 +128,7 @@ $products = Product::facetsMatchFilter($filter)->get();
 /* Or ... */
 $products = Product::where('discounted', true)->facetsMatchFilter($filter)->pluck('id');
 
-/* Calling getFacets() after facetsMatchFilter() takes the last query
+/* Calling getFacets() after facetsMatchFilter() will take the last query
 into account automagically, so that the facet options will show the correct count
 for the current results. */
 $facets = Product::getFacets($filter);
@@ -139,7 +139,7 @@ $facets = Product::getFacets($filter);
 This package doesn't include a frontend. You are free to set it up how you like.
 
 The getFacets() method takes a $filter argument and returns a collection of facets.
-Each facet has a title and a getOptions() method which returns all the possible options for this facet.
+Each facet has a title and a getOptions() method which returns all possible values for this facet.
 Each option has these properties: value, slug, selected (whether it's included in the filter), total (total occurences within current results).
 
 ``` php
