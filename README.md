@@ -113,7 +113,7 @@ In most cases this is determined by the GET parameters of the request.
 $arr = request()->all();
 $filter = Product::getFilterFromArr($arr);
 
-/* Get the filter from a single query parameter, e.g. /?filter[main-color][0]=green will result in: [ 'main-color' => [ 'green' ], 'size' => [ ] ] */
+/* From a single query parameter, e.g. /?filter[main-color][0]=green will result in: [ 'main-color' => [ 'green' ], 'size' => [ ] ] */
 $arr = request()->query('filter');
 $filter = Product::getFilterFromArr($arr)
 ```
