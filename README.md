@@ -38,7 +38,7 @@ class Product extends Model
 {
     use Facettable;
 
-    public function defineFacets()
+    public static function defineFacets()
     {
         return [
             [
