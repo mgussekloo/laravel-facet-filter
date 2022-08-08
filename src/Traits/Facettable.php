@@ -31,10 +31,11 @@ trait Facettable {
 
     public static function getFilterFromParam($paramName = 'filter')
     {
-        return FacetFilter::getFilterFromParam(self::class, $paramName);
+        $arr = (array)request()->query($paramName);
+        return FacetFilter::getFilterFromArr(self::class, $arr);
     }
 
-    public static function getFilterFromArr($arr)
+    public static function getFilterFromArr($arr = [])
     {
         return FacetFilter::getFilterFromArr(self::class, $arr);
     }

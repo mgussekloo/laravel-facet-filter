@@ -27,7 +27,7 @@ php artisan migrate
 ### Update your model
 
 For all models that should support facet filtering, add a Facettable trait and
-a defineFacets() method. This method should return a title and model property
+a defineFacets() method. This method returns a title and model property
 from which to pull the value(s) for each facet.
 
 ``` php
@@ -42,8 +42,8 @@ class Product extends Model
     {
         return [
             [
-                'Main color',
-                'color'
+                'Main color', /* Title of the facet */
+                'color' /* Model property from which to get values */
             ],
             [
                 'Size',
@@ -82,7 +82,7 @@ class IndexFacets extends Command
 }
 ```
 
-For very large datasets you might want to build it in chunks, e.g. in a scheduled command.
+Alternatively, for very large datasets you might want to process models in chunks.
 
 ```php
 $perPage = 1000; $currentPage = ...;
@@ -105,21 +105,22 @@ if ($products->hasMorePages()) {}
 
 ### Get the filter
 
-The filter array is a key-value array for all the facets of a particular model, keyed by the facet title.
+The filter array contains the selected values for each facet of the model, keyed by the facet title.
+In most cases this is determined by the GET parameters of the request.
 
 ``` php
-/* Get the filter from the query parameter (default: "filter").
-The key is the facet title, e.g. /?filter[main-color][0]=green will result in:
-[ 'main-color' => [ 'green' ], 'size' => [ ] ] */
-$filter = Product::getFilterFromParam();
+/* Get the filter from an array, e.g. /?main-color=green&size=[s,m] will result in [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ] */
+$arr = request()->all();
+$filter = Product::getFilterFromArr($arr);
 
-/* Get the filter from an array... e.g. /?main-color=green&size=[s,m] */
-$filter = Product::getFilterFromArr(request()->all());
+/* Get the filter from a single query parameter, e.g. /?filter[main-color][0]=green will result in: [ 'main-color' => [ 'green' ], 'size' => [ ] ] */
+$arr = request()->query('filter');
+$filter = Product::getFilterFromArr($arr)
 ```
 
 ### Apply facet filtering to a query
 
-A local scope on the Facettable trait, facetsMatchFilter, applies the current filter to a query.
+A local scope on the Facettable trait, facetsMatchFilter(), applies the filter to the query.
 
 ``` php
 /* Apply the filter to a query. */
@@ -128,8 +129,8 @@ $products = Product::facetsMatchFilter($filter)->get();
 /* Or ... */
 $products = Product::where('discounted', true)->facetsMatchFilter($filter)->pluck('id');
 
-/* Calling getFacets() after facetsMatchFilter() will take the last query
-into account automagically, so that the facet options will show the correct count
+/* Calling getFacets() after facetsMatchFilter() takes the last query
+into account automagically so that the facet options will have the correct count
 for the current results. */
 $facets = Product::getFacets($filter);
 ```
@@ -139,8 +140,8 @@ $facets = Product::getFacets($filter);
 This package doesn't include a frontend. You are free to set it up how you like.
 
 The getFacets() method takes a $filter argument and returns a collection of facets.
-Each facet has a title and a getOptions() method which returns all possible values for this facet.
-Each option has these properties: value, slug, selected (whether it's included in the filter), total (total occurences within current results).
+Each facet has a title and a getOptions() method that returns all options for this facet.
+Each option has these properties: value, slug, selected (whether it's selected in the filter), total (total occurrences within current results).
 
 ``` php
 /* Get the facets for a model. */
@@ -170,7 +171,7 @@ $options = $singleFacet->getOptions();
 
 ```
 
-To let the user select facets you will have to update the correct query parameter(s).
+To let the user select facets you will have to update the filter. In most cases by setting the query parameter(s).
 You could use something like a form submit or AJAX request. The example below uses Laravel Livewire's wire:model directive.
 
 ``` html
