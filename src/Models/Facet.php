@@ -77,6 +77,8 @@ class Facet extends Model
                 ]);
             }
 
+            $options = $options->sortByDesc('total');
+
             $this->options = $options;
         }
         return $this->options;
@@ -112,6 +114,8 @@ class Facet extends Model
 
     public function setFilter($filter) {
         $this->filter = $filter;
+        // $this->options = null;
+
         return $this;
     }
 }
