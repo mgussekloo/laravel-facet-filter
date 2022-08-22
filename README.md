@@ -103,57 +103,40 @@ if ($products->hasMorePages()) {}
 
 ## Usage
 
-### Get the filter
-
-The filter array contains the selected values for each facet of the model, keyed by the facet title.
-In most cases this is determined by the GET parameters of the request.
-
-``` php
-/* Get the filter from an array, e.g. /?main-color=green&size=[s,m] will result in [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ] */
-$arr = request()->all();
-$filter = Product::getFilterFromArr($arr);
-
-/* From a single query parameter, e.g. /?filter[main-color][0]=green will result in: [ 'main-color' => [ 'green' ], 'size' => [ ] ] */
-$arr = request()->query('filter');
-$filter = Product::getFilterFromArr($arr)
-```
-
 ### Apply facet filtering to a query
 
 A local scope on the Facettable trait, facetsMatchFilter(), applies the filter to the query.
 
 ``` php
+/* Get the filter from the request, e.g. /?main-color=green&size=[s,m] becomes [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ] */
+$arr = request()->all();
+$filter = Product::getFilterFromArr($arr);
+
+/* Or from a single query parameter, e.g. /?filter[main-color][0]=green becomes [ 'main-color' => [ 'green' ], 'size' => [ ] ] */
+$arr = request()->query('filter');
+$filter = Product::getFilterFromArr($arr)
+
 /* Apply the filter to a query. */
 $products = Product::facetsMatchFilter($filter)->get();
 
-/* Or ... */
-$products = Product::where('discounted', true)->facetsMatchFilter($filter)->pluck('id');
-
-/* Calling getFacets() after facetsMatchFilter() takes the last query
-into account automagically so that the facet options will have the correct count
-for the current results. */
+/* Then get the facets to display them in your frontend. Calling getFacets() after using facetsMatchFilter()
+makes sure that the facets will have the correct option counts for the queried results. */
 $facets = Product::getFacets($filter);
 ```
 
 ### Displaying the facets
 
-This package doesn't include a frontend. You are free to set it up how you like.
-
-The getFacets() method takes a $filter argument and returns a collection of facets.
-Each facet has a title and a getOptions() method that returns all options for this facet.
-Each option has these properties: value, slug, selected (whether it's selected in the filter), total (total occurrences within current results).
+This package doesn't include a frontend. Use the getFacets() method to get a collection of facets.
+Each one has a title and a getOptions() method returning all options for this facet.
 
 ``` php
-/* Get the facets for a model. */
-$facets = Product::getFacets($filter);
-
-/* Since the method returns a collection, you can iterate or find the one you need easily. */
+/* getFacets() returns a Laravel collection */
 $singleFacet = $facets->firstWhere('fieldname', 'color');
 
-/* Get the options for a facet */
+/* Get the options for a single facet */
 $options = $singleFacet->getOptions();
 
-/* Example value:
+/* Options have these properties: value, slug, selected (whether it's selected in the $filter), total (total occurrences within current results).
 [
     (object)[
         'value' => 'Red'
@@ -171,7 +154,7 @@ $options = $singleFacet->getOptions();
 
 ```
 
-To let the user select facets you will have to update the filter. In most cases by setting the query parameter(s).
+To let the user select facets you will have to update the $filter. In most cases by setting the query parameter(s).
 You could use something like a form submit or AJAX request. The example below uses Laravel Livewire's wire:model directive.
 
 ``` html
