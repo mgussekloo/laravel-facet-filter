@@ -118,10 +118,6 @@ $filter = Product::getFilterFromArr($arr)
 
 /* Apply the filter to a query. */
 $products = Product::facetsMatchFilter($filter)->get();
-
-/* Then get the facets to display them in your frontend. Calling getFacets() after using facetsMatchFilter()
-makes sure that the facets will have the correct option counts for the queried results. */
-$facets = Product::getFacets($filter);
 ```
 
 ### Displaying the facets
@@ -130,10 +126,14 @@ This package doesn't include a frontend. Use the getFacets() method to get a col
 Each one has a title and a getOptions() method returning all options for this facet.
 
 ``` php
-/* getFacets() returns a Laravel collection */
+/* Get the facets to display them in your frontend. Calling getFacets() after you've called facetsMatchFilter()
+lets the facets have the correct option counts for the queried results. */
+$facets = Product::getFacets($filter);
+
+/* It returns a regular Laravel collection! */
 $singleFacet = $facets->firstWhere('fieldname', 'color');
 
-/* Get the options for a single facet */
+/* A getOptions() method helps you grab the info you need to render the facet. */
 $options = $singleFacet->getOptions();
 
 /* Options have these properties: value, slug, selected (whether it's selected in the $filter), total (total occurrences within current results).
@@ -150,12 +150,10 @@ $options = $singleFacet->getOptions();
         'total' => 2
         'slug' => 'color_green'
     ]
-*/
-
+*/4
 ```
 
-To let the user select facets you will have to update the $filter. In most cases by setting the query parameter(s).
-You could use something like a form submit or AJAX request. The example below uses Laravel Livewire's wire:model directive.
+So, this is how it would look in an example frontend:
 
 ``` html
 <h2>{{ $facet->title }}</h2>
@@ -173,6 +171,8 @@ You could use something like a form submit or AJAX request. The example below us
     </div>
 @endforeach
 ```
+
+My example uses Laravel Livewire's wire:model directive to communicate a selected option to the backend, but you can use an AJAX request, form submit or anything you can come up with. As long as you can use the getFilterFromArr() method to get the new filter, apply the facetsMatchFilter() scope, and re-render the facets!
 
 ## License
 
