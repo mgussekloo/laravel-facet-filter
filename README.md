@@ -120,17 +120,15 @@ $filter = Product::getFilterFromArr($arr)
 $products = Product::facetsMatchFilter($filter)->get();
 ```
 
-### Displaying the facets
+### Display the facets
 
-This package doesn't include a frontend. Use the getFacets() method to get a collection of facets.
-Each one has a title and a getOptions() method returning all options for this facet.
+This package doesn't have any opinions about the frontend you should use. This is how you can render the facets:
 
 ``` php
-/* Get the facets to display them in your frontend. Calling getFacets() after you've called facetsMatchFilter()
-lets the facets have the correct option counts for the queried results. */
+/* Get the facets to display them in your frontend. Calling getFacets() after you've called facetsMatchFilter() lets the facets have the correct option counts for the queried results. */
 $facets = Product::getFacets($filter);
 
-/* It returns a regular Laravel collection! */
+/* It returns a Laravel collection! */
 $singleFacet = $facets->firstWhere('fieldname', 'color');
 
 /* A getOptions() method helps you grab the info you need to render the facet. */
@@ -150,10 +148,16 @@ $options = $singleFacet->getOptions();
         'total' => 2
         'slug' => 'color_green'
     ]
-*/4
+*/
+
+/* There's some other info you can get from a facet, such as the title and the identifying key for the filter. */
+
+$title = $singleFacet->title; // "Main color"
+$paramName = $singleFacet->getParamName(); // "main-color"
+
 ```
 
-So, this is how it would look in an example frontend:
+This is how it could look:
 
 ``` html
 <h2>{{ $facet->title }}</h2>
@@ -172,7 +176,7 @@ So, this is how it would look in an example frontend:
 @endforeach
 ```
 
-My example uses Laravel Livewire's wire:model directive to communicate a selected option to the backend, but you can use an AJAX request, form submit or anything you can come up with. As long as you can use the getFilterFromArr() method to get the new filter, apply the facetsMatchFilter() scope, and re-render the facets!
+The above example uses Laravel Livewire's wire:model directive to communicate a selected option to the backend, but you could use an AJAX request, form submit or whatever you like. Just make sure to build a correct $filter so you can apply the facetsMatchFilter() scope to refine your query!
 
 ## License
 
