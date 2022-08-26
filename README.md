@@ -116,8 +116,8 @@ $filter = Product::getFilterFromArr($arr);
 $arr = request()->query('filter');
 $filter = Product::getFilterFromArr($arr)
 
-/* Apply the filter to a query. */
-$products = Product::facetsMatchFilter($filter)->get();
+/* Build your query!*/
+$products = Product::facetsMatchFilter($filter)->get(); // You can also apply the facets to the subsection of models, e.g. Product::where('discounted', true)->facetsMatchFilter($filter)->get()
 ```
 
 ### Display the facets
