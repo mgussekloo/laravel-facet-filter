@@ -1,12 +1,14 @@
 {
     "name": "mgussekloo/laravel-facet-filter",
-    "description": "Implement facet filtering in a Laravel project.",
+    "description": "Simple facet filtering in Laravel projects, hassle free.",
     "keywords": [
         "facet",
         "filter",
         "search",
         "navigation",
-        "laravel"
+        "laravel",
+        "faceted search",
+        "smart filter"
     ],
     "autoload": {
         "psr-4": {
