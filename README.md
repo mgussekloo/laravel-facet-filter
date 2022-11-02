@@ -1,11 +1,10 @@
 # Laravel Facet Filter
 
-This package provides simple facet filtering in Laravel projects.
+This package provides simple facet filtering (sometimes called Faceted Search or Faceted Navigation) in Laravel projects. It helps narrow down query results, based on the attributes of your models. I wanted to provide something that is free, relatively easy to setup, and doesn't have any dependencies.
 
 ### Contributing
 
-Feel free to contribute to this package, either by creating a pull request
-or reporting an issue.
+Feel free to contribute to this package, either by creating a pull request or reporting an issue.
 
 ### Installation
 
@@ -27,7 +26,7 @@ php artisan migrate
 ### Update your model
 
 For all models that should support facet filtering, add a Facettable trait and
-a defineFacets() method. This method returns a title and model property
+a defineFacets() method. This method returns an array containing one or more facet definitions. A definition is a title and a model property
 from which to pull the value(s) for each facet.
 
 ``` php
