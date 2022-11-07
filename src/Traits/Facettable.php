@@ -45,6 +45,6 @@ trait Facettable {
         return FacetFilter::getEmptyFilter(self::class);
     }
 
-    abstract public function defineFacets();
+    abstract public static function defineFacets();
 
 }
