@@ -104,8 +104,6 @@ if ($products->hasMorePages()) {}
 
 ### Apply facet filtering to a query
 
-A local scope on the Facettable trait, facetsMatchFilter(), applies the filter to the query.
-
 ``` php
 /* Get the filter from the request, e.g. /?main-color=green&size=[s,m] becomes [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ] */
 $arr = request()->all();
