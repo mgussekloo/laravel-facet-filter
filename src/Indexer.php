@@ -55,15 +55,17 @@ class Indexer
 	                }
 
 	                foreach ($values as $value) {
-	                    FacetRow::create([
+	                    FacetRow::updateOrCreate([
 	                        'facet_slug' => $facet->getSlug(),
 	                        'subject_id' => $model->id,
 	                        'value' => $value
-	                    ]);
+	                    ], []);
 	                }
 	            }
 	        }
 		}
+
+		return $this;
 	}
 
 }
