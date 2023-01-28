@@ -23,8 +23,8 @@ class Indexer
 
 	public function resetIndex()
 	{
-        DB::table('facetrows')->truncate();
-        return $this;
+		DB::table('facetrows')->truncate();
+		return $this;
 	}
 
 	public function buildIndex()
@@ -34,35 +34,35 @@ class Indexer
 
 			$facets = FacetFilter::getFacets($subjectType);
 
-	        foreach ($this->models as $model) {
-	            foreach ($facets as $facet) {
-	                $values = [];
+			foreach ($this->models as $model) {
+				foreach ($facets as $facet) {
+					$values = [];
 
-	                $fields = explode('.', $facet->fieldname);
+					$fields = explode('.', $facet->fieldname);
 
-	                if (count($fields) == 1) {
-	                    $values = collect([$model->{$fields[0]}]);
-	                } else {
-	                    $last_key = array_key_last($fields);
+					if (count($fields) == 1) {
+						$values = collect([$model->{$fields[0]}]);
+					} else {
+						$last_key = array_key_last($fields);
 
-	                    $values = collect([$model]);
-	                    foreach ($fields as $key => $field) {
-	                        $values = $values->pluck($field);
-	                        if ($key !== $last_key) {
-	                            $values = $values->flatten(1);
-	                        }
-	                    }
-	                }
+						$values = collect([$model]);
+						foreach ($fields as $key => $field) {
+							$values = $values->pluck($field);
+							if ($key !== $last_key) {
+								$values = $values->flatten(1);
+							}
+						}
+					}
 
-	                foreach ($values as $value) {
-	                    FacetRow::updateOrCreate([
-	                        'facet_slug' => $facet->getSlug(),
-	                        'subject_id' => $model->id,
-	                        'value' => $value
-	                    ], []);
-	                }
-	            }
-	        }
+					foreach ($values as $value) {
+						FacetRow::updateOrCreate([
+							'facet_slug' => $facet->getSlug(),
+							'subject_id' => $model->id,
+							'value' => $value
+						], []);
+					}
+				}
+			}
 		}
 
 		return $this;
