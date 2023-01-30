@@ -34,7 +34,10 @@ class Indexer
 
 			$facets = FacetFilter::getFacets($subjectType);
 
+			$rows = [];
+			$now = now();
 			foreach ($this->models as $model) {
+
 				foreach ($facets as $facet) {
 					$values = [];
 
@@ -55,14 +58,20 @@ class Indexer
 					}
 
 					foreach ($values as $value) {
-						FacetRow::updateOrCreate([
+						$uniqueKey = implode('_', [$facet->getSlug(), $model->id, $value]);
+						$rows[$uniqueKey] = [
 							'facet_slug' => $facet->getSlug(),
 							'subject_id' => $model->id,
-							'value' => $value
-						], []);
+							'value' => $value,
+		                    'created_at' =>  $now,
+		            		'updated_at' => $now
+
+						];
 					}
 				}
 			}
+			FacetRow::insert(array_values($rows));
+
 		}
 
 		return $this;
