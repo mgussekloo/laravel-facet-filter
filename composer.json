@@ -23,8 +23,7 @@
         }
     ],
     "require": {
-        "spatie/laravel-package-tools": "^1.9.2",
-        "biiiiiigmonster/hasin": "^1.4"
+        "spatie/laravel-package-tools": "^1.9.2"
     },
     "extra": {
         "laravel": {

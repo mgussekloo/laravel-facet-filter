@@ -68,8 +68,8 @@ class FacetFilter
                 $values = (array)$filter[$key];
 
                 if (!empty($values)) {
-                    $query->whereHasIn('facetrows', function($query) use ($values, $facet) {
-                        $query->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
+                    $query->whereHas('facetrows', function($query) use ($values, $facet) {
+                        $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
                     });
                 }
             }
