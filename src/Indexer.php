@@ -58,18 +58,18 @@ class Indexer
 					}
 
 					foreach ($values as $value) {
-						$uniqueKey = implode('_', [$facet->getSlug(), $model->id, $value]);
+						$uniqueKey = implode('.', [$facet->getSlug(), $model->id, $value]);
 						$rows[$uniqueKey] = [
 							'facet_slug' => $facet->getSlug(),
 							'subject_id' => $model->id,
 							'value' => $value,
 		                    'created_at' =>  $now,
 		            		'updated_at' => $now
-
 						];
 					}
 				}
 			}
+
 			FacetRow::insert(array_values($rows));
 
 		}
