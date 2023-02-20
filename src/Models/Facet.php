@@ -30,7 +30,6 @@ class Facet extends Model
             $facetrows = DB::table('facetrows')
             ->select('subject_id', 'value')
             ->where('facet_slug', $this->getSlug())
-            ->where('value', '<>', '')
             ->get();
 
             // find out totals of the values in this facet
@@ -52,6 +51,10 @@ class Facet extends Model
 
             $values = [];
             foreach ($facetrows as $row) {
+            	if ($row->value == '') {
+            		continue;
+            	}
+
                 if (!isset($values[$row->value])) {
                     $values[$row->value] = 0;
                 }
