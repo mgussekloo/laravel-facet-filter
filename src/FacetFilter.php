@@ -85,15 +85,26 @@ class FacetFilter
 
 	public function getIdsInFilteredQuery($subjectType, $query, $filter)
 	{
-		// array_multisort($filter);
-		$cacheKey = implode('_', [$subjectType, md5(json_encode($filter))]);
+		$cacheKey = FacetFilter::getCacheKey($subjectType, $filter);
 
 		if (!isset(self::$idsInFilteredQuery[$cacheKey])) {
 			$query = FacetFilter::constrainQueryWithFilter($subjectType, $query, $filter);
-	        self::$idsInFilteredQuery[$cacheKey] = $query->select('id')->get()->pluck('id')->toArray();
+	        self::cacheFilteredQuery($subjectType, $query, $filter);
 		}
 
 		return self::$idsInFilteredQuery[$cacheKey];
+	}
+
+	public function cacheFilteredQuery($subjectType, $query, $filter)
+	{
+		$cacheKey = FacetFilter::getCacheKey($subjectType, $filter);
+		self::$idsInFilteredQuery[$cacheKey] = $query->pluck('id')->toArray();
+	}
+
+	public function getCacheKey($subjectType, $filter)
+	{
+		ksort($filter);
+		return implode('_', [$subjectType, md5(json_encode($filter))]);
 	}
 
 }

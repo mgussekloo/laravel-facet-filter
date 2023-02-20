@@ -24,6 +24,11 @@ trait Facettable {
         return $query;
     }
 
+    public static function cacheQueryForFilter($query, $filter)
+    {
+		return FacetFilter::cacheFilteredQuery(self::class, $query, $filter);
+    }
+
     public static function getFacets($filter = null)
     {
         return FacetFilter::getFacets(self::class, $filter);

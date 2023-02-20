@@ -40,24 +40,22 @@ class Facet extends Model
             // find out totals of the values in this facet
             // *within* the current query / filter operation.
             // in short: apply all the filters EXCEPT the one involving this facet.
+
             // https://stackoverflow.com/questions/27550841/calculating-product-counts-efficiently-in-faceted-search-with-php-mysql
 
-			$thereWasOnlyOneFilterApplied = false;
             $idsInFilteredQuery = [];
 
             if (!is_null($this->lastQuery)) {
                 list($query, $filter) = $this->lastQuery;
 
-				if ((count(array_keys($filter)) == 1) && isset($filter[$facetName])) {
-					$thereWasOnlyOneFilterApplied = true;
-				} elseif (isset($filter[$facetName])) {
+                if (isset($filter[$facetName])) {
                     $filter[$facetName] = [];
                 	$idsInFilteredQuery = FacetFilter::getIdsInFilteredQuery($subjectType, $query, $filter);
                 }
             }
 
             $values = [];
-            foreach ($facetrows as $row) {
+            foreach ($facetRows as $row) {
             	if ($row->value == '') {
             		continue;
             	}
@@ -66,7 +64,7 @@ class Facet extends Model
                     $values[$row->value] = 0;
                 }
 
-                if ($thereWasOnlyOneFilterApplied || in_array($row->subject_id, $idsInFilteredQuery)) {
+                if (in_array($row->subject_id, $idsInFilteredQuery)) {
                     $values[$row->value] = $values[$row->value] + 1;
                 }
             }
