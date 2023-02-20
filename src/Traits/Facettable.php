@@ -7,29 +7,20 @@ use Mgussekloo\FacetFilter\Models\FacetRow;
 
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
+use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
+
+use Illuminate\Support\Collection;
+
 trait Facettable {
+
+    abstract public static function defineFacets();
 
     public function facetrows()
     {
         return $this->hasMany(FacetRow::class, 'subject_id');
     }
 
-    public function scopeFacetsMatchFilter($query, $filter)
-    {
-        self::getFacets()->map->setLastQuery($query, $filter);
-
-        FacetFilter::resetIdsInFilteredQuery();
-        FacetFilter::constrainQueryWithFilter(self::class, $query, $filter);
-
-        return $query;
-    }
-
-    public static function cacheQueryForFilter($query, $filter)
-    {
-		return FacetFilter::cacheFilteredQuery(self::class, $query, $filter);
-    }
-
-    public static function getFacets($filter = null)
+    public static function getFacets($filter = null): Collection
     {
         return FacetFilter::getFacets(self::class, $filter);
     }
@@ -50,6 +41,9 @@ trait Facettable {
         return FacetFilter::getEmptyFilter(self::class);
     }
 
-    abstract public static function defineFacets();
+ 	public function newEloquentBuilder($query): FacetQueryBuilder
+    {
+        return new FacetQueryBuilder($query);
+    }
 
 }

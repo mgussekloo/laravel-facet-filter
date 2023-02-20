@@ -36,6 +36,11 @@ class FacetFilter
 		return self::$facets[$subjectType];
 	}
 
+	public function setLastQuery($subjectType, $query)
+	{
+        self::getFacets($subjectType)->map->setLastQuery($query);
+	}
+
 	public function getFilterFromArr($subjectType, $arr = [])
 	{
 		$emptyFilter = $this->getFacets($subjectType)->mapWithKeys(function($facet) {
@@ -57,48 +62,21 @@ class FacetFilter
 		return $this->getFilterFromArr($subjectType, []);
 	}
 
-	public function constrainQueryWithFilter($subjectType, $query, $filter)
-	{
-		$facets = self::getFacets($subjectType);
-
-		foreach ($facets as $facet) {
-            $key = $facet->getParamName();
-
-            if (isset($filter[$key])) {
-                $values = (array)$filter[$key];
-
-                if (!empty($values)) {
-                    $query->whereHas('facetrows', function($query) use ($values, $facet) {
-                        $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
-                    });
-                }
-            }
-        }
-
-        return $query;
-	}
-
 	public function resetIdsInFilteredQuery()
 	{
 		self::$idsInFilteredQuery = [];
 	}
 
-	public function getIdsInFilteredQuery($subjectType, $query, $filter)
+	public function cacheIdsInFilteredQuery($subjectType, $filter, $ids = null)
 	{
 		$cacheKey = FacetFilter::getCacheKey($subjectType, $filter);
-
-		if (!isset(self::$idsInFilteredQuery[$cacheKey])) {
-			$query = FacetFilter::constrainQueryWithFilter($subjectType, $query, $filter);
-	        self::cacheFilteredQuery($subjectType, $query, $filter);
+		if (!isset(self::$idsInFilteredQuery[$cacheKey]) && !is_null($ids)) {
+			self::$idsInFilteredQuery[$cacheKey] = $ids;
 		}
-
-		return self::$idsInFilteredQuery[$cacheKey];
-	}
-
-	public function cacheFilteredQuery($subjectType, $query, $filter)
-	{
-		$cacheKey = FacetFilter::getCacheKey($subjectType, $filter);
-		self::$idsInFilteredQuery[$cacheKey] = $query->pluck('id')->toArray();
+		if (isset(self::$idsInFilteredQuery[$cacheKey])) {
+			return self::$idsInFilteredQuery[$cacheKey];
+		}
+		return false;
 	}
 
 	public function getCacheKey($subjectType, $filter)
