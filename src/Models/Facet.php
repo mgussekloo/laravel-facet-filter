@@ -21,32 +21,39 @@ class Facet extends Model
     public $lastQuery = null;
     public $filter = null;
 
+    public function getFacetRowsFromDB()
+    {
+    	return DB::table('facetrows')
+        ->select('subject_id', 'value')
+        ->where('facet_slug', $this->getSlug())
+        ->get();
+    }
+
     public function getOptions()
     {
         if (is_null($this->options)) {
             $facetName = $this->getParamName();
             $subjectType = $this->subject_type;
 
-            $facetrows = DB::table('facetrows')
-            ->select('subject_id', 'value')
-            ->where('facet_slug', $this->getSlug())
-            ->get();
+			$facetRows = $this->getFacetRowsFromDB();
 
             // find out totals of the values in this facet
             // *within* the current query / filter operation.
             // in short: apply all the filters EXCEPT the one involving this facet.
             // https://stackoverflow.com/questions/27550841/calculating-product-counts-efficiently-in-faceted-search-with-php-mysql
 
+			$thereWasOnlyOneFilterApplied = false;
             $idsInFilteredQuery = [];
 
             if (!is_null($this->lastQuery)) {
                 list($query, $filter) = $this->lastQuery;
 
-                if (isset($filter[$facetName])) {
+				if ((count(array_keys($filter)) == 1) && isset($filter[$facetName])) {
+					$thereWasOnlyOneFilterApplied = true;
+				} elseif (isset($filter[$facetName])) {
                     $filter[$facetName] = [];
+                	$idsInFilteredQuery = FacetFilter::getIdsInFilteredQuery($subjectType, $query, $filter);
                 }
-
-                $idsInFilteredQuery = FacetFilter::getIdsInFilteredQuery($subjectType, $query, $filter);
             }
 
             $values = [];
@@ -59,7 +66,7 @@ class Facet extends Model
                     $values[$row->value] = 0;
                 }
 
-                if (in_array($row->subject_id, $idsInFilteredQuery)) {
+                if ($thereWasOnlyOneFilterApplied || in_array($row->subject_id, $idsInFilteredQuery)) {
                     $values[$row->value] = $values[$row->value] + 1;
                 }
             }
