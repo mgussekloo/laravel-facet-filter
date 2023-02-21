@@ -5,6 +5,8 @@ namespace Mgussekloo\FacetFilter;
 use Mgussekloo\FacetFilter\Models\Facet;
 use Illuminate\Http\Request;
 
+use DB;
+
 class FacetFilter
 {
 
@@ -26,7 +28,22 @@ class FacetFilter
 				];
 			});
 
-			self::$facets[$subjectType] = $definitions->mapInto(Facet::class);
+			$facets = $definitions->mapInto(Facet::class);
+
+    		$rows = DB::table('facetrows')
+	        ->select('facet_slug', 'subject_id', 'value')
+	        // ->whereIn('facet_slug', $facets->map->getSlug()->toArray())
+	        ->get()
+	        ->groupBy('facet_slug');
+
+        	foreach ($facets as $index => $facet) {
+        		$slug = $facet->getSlug();
+        		if (isset($rows[$slug])) {
+        			$facet->rows = $rows[$slug];
+        		}
+        	}
+
+        	self::$facets[$subjectType] = $facets;
 		}
 
 		if (!is_null($filter)) {
@@ -81,7 +98,6 @@ class FacetFilter
 
 	public function getCacheKey($subjectType, $filter)
 	{
-		ksort($filter);
 		return implode('_', [$subjectType, md5(json_encode($filter))]);
 	}
 

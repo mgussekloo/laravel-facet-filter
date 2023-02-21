@@ -17,13 +17,14 @@ class Facet extends Model
         'subject_type',
     ];
 
+    public $rows = null;
     public $options = null;
     public $lastQuery = null;
     public $filter = null;
 
     public function getFacetRowsFromDB()
     {
-    	return DB::table('facetrows')
+		return $this->rows = DB::table('facetrows')
         ->select('subject_id', 'value')
         ->where('facet_slug', $this->getSlug())
         ->get();
@@ -35,7 +36,9 @@ class Facet extends Model
             $facetName = $this->getParamName();
             $subjectType = $this->subject_type;
 
-			$facetRows = $this->getFacetRowsFromDB();
+			if (is_null($this->rows)) {
+				$this->rows = $this->getFacetRowsFromDB();
+			}
 
             // find out totals of the values in this facet
             // *within* the current query / filter operation.
@@ -49,7 +52,7 @@ class Facet extends Model
             }
 
             $values = [];
-            foreach ($facetRows as $row) {
+            foreach ($this->rows as $row) {
             	if ($row->value == '') {
             		continue;
             	}
@@ -79,10 +82,9 @@ class Facet extends Model
                 ]);
             }
 
-            $options = $options;
-
             $this->options = $options;
         }
+
         return $this->options;
     }
 
@@ -92,11 +94,6 @@ class Facet extends Model
             return $value->total > 0;
         });
     }
-
-    // public function hasOptions()
-    // {
-    //     return $this->getOptions()->isNotEmpty();
-    // }
 
     public function getParamName()
     {
@@ -111,6 +108,8 @@ class Facet extends Model
     public function setLastQuery($query)
     {
         $this->lastQuery = clone $query;
+    	$this->lastQuery->withOnly([]);
+
         $this->options = null;
 
         return $this;
