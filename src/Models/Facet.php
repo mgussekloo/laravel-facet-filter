@@ -37,7 +37,8 @@ class Facet extends Model
             $subjectType = $this->subject_type;
 
 			if (is_null($this->rows)) {
-				$this->rows = $this->getFacetRowsFromDB();
+				FacetFilter::fillFacetRows($this->subject_type);
+				// $this->rows = $this->getFacetRowsFromDB();
 			}
 
             // find out totals of the values in this facet
@@ -83,6 +84,7 @@ class Facet extends Model
             }
 
             $this->options = $options;
+            $this->lastQuery = null;
         }
 
         return $this->options;

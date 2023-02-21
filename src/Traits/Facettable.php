@@ -20,9 +20,9 @@ trait Facettable {
         return $this->hasMany(FacetRow::class, 'subject_id');
     }
 
-    public static function getFacets($filter = null): Collection
+    public static function getFacets($filter = null, $load = false): Collection
     {
-        return FacetFilter::getFacets(self::class, $filter);
+        return FacetFilter::getFacets(self::class, $filter, $load);
     }
 
     public static function getFilterFromParam($paramName = 'filter')

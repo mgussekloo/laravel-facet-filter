@@ -16,7 +16,7 @@ class FacetFilter
 	/*
 	Returns a Laravel collection of the available facets.
 	*/
-	public function getFacets($subjectType, $filter = null)
+	public function getFacets($subjectType, $filter = null, $load = false)
 	{
 		if (!isset(self::$facets[$subjectType])) {
 			$definitions = collect($subjectType::defineFacets())
@@ -30,27 +30,37 @@ class FacetFilter
 
 			$facets = $definitions->mapInto(Facet::class);
 
-    		$rows = DB::table('facetrows')
-	        ->select('facet_slug', 'subject_id', 'value')
-	        // ->whereIn('facet_slug', $facets->map->getSlug()->toArray())
-	        ->get()
-	        ->groupBy('facet_slug');
-
-        	foreach ($facets as $index => $facet) {
-        		$slug = $facet->getSlug();
-        		if (isset($rows[$slug])) {
-        			$facet->rows = $rows[$slug];
-        		}
-        	}
-
         	self::$facets[$subjectType] = $facets;
 		}
 
+		// set the filter
 		if (!is_null($filter)) {
 			self::$facets[$subjectType]->map->setFilter($filter);
 		}
 
+		// should we preload the options?
+		if ($load) {
+			self::$facets[$subjectType]->map->getOptions();
+		}
+
 		return self::$facets[$subjectType];
+	}
+
+	public function fillFacetRows($subjectType)
+	{
+		$rows = DB::table('facetrows')
+        ->select('facet_slug', 'subject_id', 'value')
+        ->get()
+        ->groupBy('facet_slug');
+
+        $facets = self::getFacets($subjectType);
+
+    	foreach ($facets as $index => $facet) {
+    		$slug = $facet->getSlug();
+    		if (isset($rows[$slug])) {
+    			$facet->rows = $rows[$slug];
+    		}
+    	}
 	}
 
 	public function setLastQuery($subjectType, $query)
