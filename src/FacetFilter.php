@@ -31,6 +31,21 @@ class FacetFilter
 
 			$facets = $definitions->mapInto(Facet::class);
 
+			// should we preload the options?
+			if ($load) {
+				$rows = DB::table('facetrows')
+		        ->select('facet_slug', 'subject_id', 'value')
+		        ->get()
+		        ->groupBy('facet_slug');
+
+				foreach ($facets as $facet) {
+		    		$slug = $facet->getSlug();
+		    		if (isset($rows[$slug])) {
+		    			$facet->rows = $rows[$slug];
+		    		}
+		    	}
+			}
+
         	self::$facets[$subjectType] = $facets;
 		}
 
@@ -39,30 +54,7 @@ class FacetFilter
 			self::$facets[$subjectType]->map->setFilter($filter);
 		}
 
-		// should we preload the options?
-		if ($load) {
-			$this->fillFacetRows($subjectType);
-			// self::$facets[$subjectType]->map->getOptions();
-		}
-
 		return self::$facets[$subjectType];
-	}
-
-	public function fillFacetRows($subjectType)
-	{
-		$rows = DB::table('facetrows')
-        ->select('facet_slug', 'subject_id', 'value')
-        ->get()
-        ->groupBy('facet_slug');
-
-        $facets = self::getFacets($subjectType);
-
-    	foreach ($facets as $index => $facet) {
-    		$slug = $facet->getSlug();
-    		if (isset($rows[$slug])) {
-    			$facet->rows = $rows[$slug];
-    		}
-    	}
 	}
 
 	public function setLastQuery($subjectType, $query)
