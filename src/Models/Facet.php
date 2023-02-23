@@ -2,11 +2,9 @@
 
 namespace Mgussekloo\FacetFilter\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-use Mgussekloo\FacetFilter\Facades\FacetFilter;
-
 use DB;
+use Illuminate\Database\Eloquent\Model;
+use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Str;
 
 class Facet extends Model
@@ -18,12 +16,14 @@ class Facet extends Model
     ];
 
     public $rows = null;
+
     public $options = null;
+
     public $filter = null;
 
     public function getFacetRowsFromDB()
     {
-		return $this->rows = DB::table('facetrows')
+        return $this->rows = DB::table('facetrows')
         ->select('subject_id', 'value')
         ->where('facet_slug', $this->getSlug())
         ->get();
@@ -35,10 +35,10 @@ class Facet extends Model
             $facetName = $this->getParamName();
             $subjectType = $this->subject_type;
 
-			if (is_null($this->rows)) {
-				// FacetFilter::fillFacetRows($this->subject_type);
-				$this->rows = $this->getFacetRowsFromDB();
-			}
+            if (is_null($this->rows)) {
+                // FacetFilter::fillFacetRows($this->subject_type);
+                $this->rows = $this->getFacetRowsFromDB();
+            }
 
             // find out totals of the values in this facet
             // *within* the current query / filter operation.
@@ -48,16 +48,16 @@ class Facet extends Model
 
             $idsInFilteredQuery = [];
             if ($lastQuery = FacetFilter::getLastQuery($this->subject_type)) {
-            	$idsInFilteredQuery = $lastQuery->getIdsInQueryWithoutFacet($this);
+                $idsInFilteredQuery = $lastQuery->getIdsInQueryWithoutFacet($this);
             }
 
             $values = [];
             foreach ($this->rows as $row) {
-            	if ($row->value == '') {
-            		continue;
-            	}
+                if ($row->value == '') {
+                    continue;
+                }
 
-                if (!isset($values[$row->value])) {
+                if (! isset($values[$row->value])) {
                     $values[$row->value] = 0;
                 }
 
@@ -74,11 +74,11 @@ class Facet extends Model
             $options = collect([]);
 
             foreach ($values as $value => $total) {
-                $options->push((object)[
+                $options->push((object) [
                     'value' => $value,
                     'selected' => in_array($value, $selectedValues),
                     'total' => $total,
-                    'slug' =>  sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-'))
+                    'slug' => sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-')),
                 ]);
             }
 
@@ -90,7 +90,7 @@ class Facet extends Model
 
     public function getNonMissingOptions()
     {
-        return $this->getOptions()->filter(fn($value) => $value->total > 0);
+        return $this->getOptions()->filter(fn ($value) => $value->total > 0);
     }
 
     public function getParamName()
@@ -103,7 +103,8 @@ class Facet extends Model
         return implode('.', [$this->subject_type, $this->fieldname]);
     }
 
-    public function setFilter($filter) {
+    public function setFilter($filter)
+    {
         $this->filter = $filter;
 
         return $this;

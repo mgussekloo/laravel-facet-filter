@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FacetRow extends Model
 {
-	protected $table = 'facetrows';
+    protected $table = 'facetrows';
 
     protected $fillable = [
         'facet_slug',

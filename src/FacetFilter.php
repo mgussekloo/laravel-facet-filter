@@ -2,122 +2,123 @@
 
 namespace Mgussekloo\FacetFilter;
 
-use Mgussekloo\FacetFilter\Models\Facet;
-use Illuminate\Http\Request;
-
 use DB;
+use Mgussekloo\FacetFilter\Models\Facet;
 
 class FacetFilter
 {
+    public static $facets = [];
 
-	public static $facets = [];
-	public static $lastQueries = [];
-	public static $idsInFilteredQuery = [];
+    public static $lastQueries = [];
 
-	/*
-	Returns a Laravel collection of the available facets.
-	*/
-	public function getFacets($subjectType, $filter = null, $load = true)
-	{
-		if (!isset(self::$facets[$subjectType])) {
-			$definitions = collect($subjectType::defineFacets())
-			->map(fn($arr) => [
-					'title' => $arr[0],
-					'fieldname' => $arr[1],
-					'subject_type' => $subjectType,
-				]);
+    public static $idsInFilteredQuery = [];
 
-			$facets = $definitions->mapInto(Facet::class);
+    /*
+    Returns a Laravel collection of the available facets.
+    */
+    public function getFacets($subjectType, $filter = null, $load = true)
+    {
+        if (! isset(self::$facets[$subjectType])) {
+            $definitions = collect($subjectType::defineFacets())
+            ->map(fn ($arr) => [
+                'title' => $arr[0],
+                'fieldname' => $arr[1],
+                'subject_type' => $subjectType,
+            ]);
 
-			// should we preload the options?
-			if ($load) {
-				$rows = DB::table('facetrows')
-		        ->select('facet_slug', 'subject_id', 'value')
-		        ->get()
-		        ->groupBy('facet_slug');
+            $facets = $definitions->mapInto(Facet::class);
 
-				foreach ($facets as $facet) {
-		    		$slug = $facet->getSlug();
-		    		if (isset($rows[$slug])) {
-		    			$facet->rows = $rows[$slug];
-		    		}
-		    	}
-			}
+            // should we preload the options?
+            if ($load) {
+                $rows = DB::table('facetrows')
+                ->select('facet_slug', 'subject_id', 'value')
+                ->get()
+                ->groupBy('facet_slug');
 
-        	self::$facets[$subjectType] = $facets;
-		}
+                foreach ($facets as $facet) {
+                    $slug = $facet->getSlug();
+                    if (isset($rows[$slug])) {
+                        $facet->rows = $rows[$slug];
+                    }
+                }
+            }
 
-		// set the filter
-		if (!is_null($filter)) {
-			self::$facets[$subjectType]->map->setFilter($filter);
-		}
+            self::$facets[$subjectType] = $facets;
+        }
 
-		return self::$facets[$subjectType];
-	}
+        // set the filter
+        if (! is_null($filter)) {
+            self::$facets[$subjectType]->map->setFilter($filter);
+        }
 
-	public function setLastQuery($subjectType, $query)
-	{
-		$newQuery = clone $query;
-		$newQuery->withOnly([]);
-		self::$lastQueries[$subjectType] = $newQuery;
-	}
+        return self::$facets[$subjectType];
+    }
 
-	public function getLastQuery($subjectType)
-	{
-		if (isset(self::$lastQueries[$subjectType])) {
-			return clone self::$lastQueries[$subjectType];
-		}
-		return false;
-	}
+    public function setLastQuery($subjectType, $query)
+    {
+        $newQuery = clone $query;
+        $newQuery->withOnly([]);
+        self::$lastQueries[$subjectType] = $newQuery;
+    }
 
-	public function getFilterFromArr($subjectType, $arr = [])
-	{
-		$emptyFilter = $this->getFacets($subjectType)->mapWithKeys(fn($facet) => [$facet->getParamName() => [ ]])->toArray();
+    public function getLastQuery($subjectType)
+    {
+        if (isset(self::$lastQueries[$subjectType])) {
+            return clone self::$lastQueries[$subjectType];
+        }
 
-		$arr = array_map(function($item): array {
-			if (!is_array($item)) {
-				return [ $item ];
-			}
-			return $item;
-		}, $arr);
+        return false;
+    }
 
-		return array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
-	}
+    public function getFilterFromArr($subjectType, $arr = [])
+    {
+        $emptyFilter = $this->getFacets($subjectType)->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
 
-	public function getEmptyFilter($subjectType)
-	{
-		return $this->getFilterFromArr($subjectType, []);
-	}
+        $arr = array_map(function ($item): array {
+            if (! is_array($item)) {
+                return [$item];
+            }
 
-	public function resetIdsInFilteredQuery($subjectType)
-	{
-		if (isset(self::$idsInFilteredQuery[$subjectType])) {
-			unset(self::$idsInFilteredQuery[$subjectType]);
-		}
-	}
+            return $item;
+        }, $arr);
 
-	public function cacheIdsInFilteredQuery($subjectType, $filter, $ids = null)
-	{
-		if (!isset(self::$idsInFilteredQuery[$subjectType])) {
-			self::$idsInFilteredQuery[$subjectType] = [];
-		}
+        return array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
+    }
 
-		$cacheKey = (new FacetFilter())->getCacheKey($subjectType, $filter);
-		if (!isset(self::$idsInFilteredQuery[$subjectType][$cacheKey]) && !is_null($ids)) {
-			self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
-			return $ids;
-		}
+    public function getEmptyFilter($subjectType)
+    {
+        return $this->getFilterFromArr($subjectType, []);
+    }
 
-		if (isset(self::$idsInFilteredQuery[$subjectType][$cacheKey])) {
-			return self::$idsInFilteredQuery[$subjectType][$cacheKey];
-		}
+    public function resetIdsInFilteredQuery($subjectType)
+    {
+        if (isset(self::$idsInFilteredQuery[$subjectType])) {
+            unset(self::$idsInFilteredQuery[$subjectType]);
+        }
+    }
 
-		return false;
-	}
+    public function cacheIdsInFilteredQuery($subjectType, $filter, $ids = null)
+    {
+        if (! isset(self::$idsInFilteredQuery[$subjectType])) {
+            self::$idsInFilteredQuery[$subjectType] = [];
+        }
 
-	public function getCacheKey($subjectType, $filter)
-	{
-		return implode('_', [$subjectType, md5(json_encode($filter, JSON_THROW_ON_ERROR))]);
-	}
+        $cacheKey = (new FacetFilter())->getCacheKey($subjectType, $filter);
+        if (! isset(self::$idsInFilteredQuery[$subjectType][$cacheKey]) && ! is_null($ids)) {
+            self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
 
+            return $ids;
+        }
+
+        if (isset(self::$idsInFilteredQuery[$subjectType][$cacheKey])) {
+            return self::$idsInFilteredQuery[$subjectType][$cacheKey];
+        }
+
+        return false;
+    }
+
+    public function getCacheKey($subjectType, $filter)
+    {
+        return implode('_', [$subjectType, md5(json_encode($filter, JSON_THROW_ON_ERROR))]);
+    }
 }

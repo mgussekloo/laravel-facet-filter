@@ -22,7 +22,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->index(['facet_slug','value','subject_id']);
+            $table->index(['facet_slug', 'value', 'subject_id']);
         });
     }
 

@@ -2,17 +2,13 @@
 
 namespace Mgussekloo\FacetFilter\Traits;
 
-use Mgussekloo\FacetFilter\Models\Facet;
+use Illuminate\Support\Collection;
+use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
+use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Mgussekloo\FacetFilter\Models\FacetRow;
 
-use Mgussekloo\FacetFilter\Facades\FacetFilter;
-
-use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
-
-use Illuminate\Support\Collection;
-
-trait Facettable {
-
+trait Facettable
+{
     abstract public static function defineFacets();
 
     public function facetrows()
@@ -27,7 +23,8 @@ trait Facettable {
 
     public static function getFilterFromParam($paramName = 'filter')
     {
-        $arr = (array)request()->query($paramName);
+        $arr = (array) request()->query($paramName);
+
         return FacetFilter::getFilterFromArr(self::class, $arr);
     }
 
@@ -41,9 +38,8 @@ trait Facettable {
         return FacetFilter::getEmptyFilter(self::class);
     }
 
- 	public function newEloquentBuilder($query): FacetQueryBuilder
+    public function newEloquentBuilder($query): FacetQueryBuilder
     {
         return new FacetQueryBuilder($query);
     }
-
 }
