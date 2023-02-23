@@ -20,7 +20,7 @@ trait Facettable {
         return $this->hasMany(FacetRow::class, 'subject_id');
     }
 
-    public static function getFacets($filter = null, $load = false): Collection
+    public static function getFacets($filter = null, $load = true): Collection
     {
         return FacetFilter::getFacets(self::class, $filter, $load);
     }

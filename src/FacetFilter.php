@@ -11,12 +11,13 @@ class FacetFilter
 {
 
 	public static $facets = [];
+	public static $lastQueries = [];
 	public static $idsInFilteredQuery = [];
 
 	/*
 	Returns a Laravel collection of the available facets.
 	*/
-	public function getFacets($subjectType, $filter = null, $load = false)
+	public function getFacets($subjectType, $filter = null, $load = true)
 	{
 		if (!isset(self::$facets[$subjectType])) {
 			$definitions = collect($subjectType::defineFacets())
@@ -40,7 +41,8 @@ class FacetFilter
 
 		// should we preload the options?
 		if ($load) {
-			self::$facets[$subjectType]->map->getOptions();
+			$this->fillFacetRows($subjectType);
+			// self::$facets[$subjectType]->map->getOptions();
 		}
 
 		return self::$facets[$subjectType];
@@ -65,7 +67,17 @@ class FacetFilter
 
 	public function setLastQuery($subjectType, $query)
 	{
-        self::getFacets($subjectType)->map->setLastQuery($query);
+		$newQuery = clone $query;
+		$newQuery->withOnly([]);
+		self::$lastQueries[$subjectType] = $newQuery;
+	}
+
+	public function getLastQuery($subjectType)
+	{
+		if (isset(self::$lastQueries[$subjectType])) {
+			return clone self::$lastQueries[$subjectType];
+		}
+		return false;
 	}
 
 	public function getFilterFromArr($subjectType, $arr = [])
@@ -89,20 +101,29 @@ class FacetFilter
 		return $this->getFilterFromArr($subjectType, []);
 	}
 
-	public function resetIdsInFilteredQuery()
+	public function resetIdsInFilteredQuery($subjectType)
 	{
-		self::$idsInFilteredQuery = [];
+		if (isset(self::$idsInFilteredQuery[$subjectType])) {
+			unset(self::$idsInFilteredQuery[$subjectType]);
+		}
 	}
 
 	public function cacheIdsInFilteredQuery($subjectType, $filter, $ids = null)
 	{
+		if (!isset(self::$idsInFilteredQuery[$subjectType])) {
+			self::$idsInFilteredQuery[$subjectType] = [];
+		}
+
 		$cacheKey = FacetFilter::getCacheKey($subjectType, $filter);
-		if (!isset(self::$idsInFilteredQuery[$cacheKey]) && !is_null($ids)) {
-			self::$idsInFilteredQuery[$cacheKey] = $ids;
+		if (!isset(self::$idsInFilteredQuery[$subjectType][$cacheKey]) && !is_null($ids)) {
+			self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
+			return $ids;
 		}
-		if (isset(self::$idsInFilteredQuery[$cacheKey])) {
-			return self::$idsInFilteredQuery[$cacheKey];
+
+		if (isset(self::$idsInFilteredQuery[$subjectType][$cacheKey])) {
+			return self::$idsInFilteredQuery[$subjectType][$cacheKey];
 		}
+
 		return false;
 	}
 

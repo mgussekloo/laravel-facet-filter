@@ -32,8 +32,8 @@ class FacetQueryBuilder extends Builder
     	}
 
         if ($saveLast) {
-        	FacetFilter::setLastQuery($this->subjectType, $this, $this->filter);
-			FacetFilter::resetIdsInFilteredQuery();
+        	FacetFilter::setLastQuery($this->subjectType, $this);
+			FacetFilter::resetIdsInFilteredQuery($this->subjectType);
         }
 
 		$result = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter);

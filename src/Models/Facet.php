@@ -19,7 +19,6 @@ class Facet extends Model
 
     public $rows = null;
     public $options = null;
-    public $lastQuery = null;
     public $filter = null;
 
     public function getFacetRowsFromDB()
@@ -37,8 +36,8 @@ class Facet extends Model
             $subjectType = $this->subject_type;
 
 			if (is_null($this->rows)) {
-				FacetFilter::fillFacetRows($this->subject_type);
-				// $this->rows = $this->getFacetRowsFromDB();
+				// FacetFilter::fillFacetRows($this->subject_type);
+				$this->rows = $this->getFacetRowsFromDB();
 			}
 
             // find out totals of the values in this facet
@@ -48,8 +47,8 @@ class Facet extends Model
             // https://stackoverflow.com/questions/27550841/calculating-product-counts-efficiently-in-faceted-search-with-php-mysql
 
             $idsInFilteredQuery = [];
-            if (!is_null($this->lastQuery)) {
-            	$idsInFilteredQuery = $this->lastQuery->getIdsInQueryWithoutFacet($this);
+            if ($lastQuery = FacetFilter::getLastQuery($this->subject_type)) {
+            	$idsInFilteredQuery = $lastQuery->getIdsInQueryWithoutFacet($this);
             }
 
             $values = [];
@@ -84,7 +83,6 @@ class Facet extends Model
             }
 
             $this->options = $options;
-            $this->lastQuery = null;
         }
 
         return $this->options;
@@ -105,16 +103,6 @@ class Facet extends Model
     public function getSlug()
     {
         return implode('.', [$this->subject_type, $this->fieldname]);
-    }
-
-    public function setLastQuery($query)
-    {
-        $this->lastQuery = clone $query;
-    	$this->lastQuery->withOnly([]);
-
-        $this->options = null;
-
-        return $this;
     }
 
     public function setFilter($filter) {
