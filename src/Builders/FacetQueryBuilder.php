@@ -21,7 +21,7 @@ class FacetQueryBuilder extends Builder
     public function facetsMatchFilter($filter = [])
     {
     	$this->filter = $filter;
-		$this->subjectType = get_class($this->model);
+		$this->subjectType = $this->model::class;
         return $this;
     }
 
@@ -47,7 +47,7 @@ class FacetQueryBuilder extends Builder
 	                $values = (array)$this->filter[$key];
 
 	                if (!empty($values)) {
-	                    $this->whereHas('facetrows', function($query) use ($values, $facet) {
+	                    $this->whereHas('facetrows', function($query) use ($values, $facet): void {
 	                        $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
 	                    });
 	                }

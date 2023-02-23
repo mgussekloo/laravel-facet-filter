@@ -19,12 +19,4 @@ return static function (RectorConfig $rectorConfig): void {
     // register a single rule
     $rectorConfig->rule(\Rector\TypeDeclaration\Rector\Closure\AddClosureReturnTypeRector::class);
 	$rectorConfig->rule(\RectorLaravel\Rector\ClassMethod\AddGenericReturnTypeToRelationsRector::class);
-	// $rectorConfig->rule(\RectorLaravel\Rector\ClassMethod\MigrateToSimplifiedAttributeRector::class);
-	// $rectorConfig->rule(\RectorLaravel\Rector\ClassMethod\OptionalToNullsafeOperatorRector::class);
-
-
-    // define sets of rules
-       // $rectorConfig->sets([
-       //     LevelSetList::UP_TO_PHP_81
-       // ]);
 };

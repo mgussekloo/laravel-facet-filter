@@ -3,6 +3,7 @@
 namespace Mgussekloo\FacetFilter\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FacetRow extends Model
 {
@@ -14,7 +15,7 @@ class FacetRow extends Model
         'value',
     ];
 
-    public function facet()
+    public function facet(): BelongsTo
     {
         return $this->belongsTo(Facet::class);
     }

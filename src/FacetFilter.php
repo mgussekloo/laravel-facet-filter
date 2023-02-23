@@ -21,13 +21,11 @@ class FacetFilter
 	{
 		if (!isset(self::$facets[$subjectType])) {
 			$definitions = collect($subjectType::defineFacets())
-			->map(function($arr) use ($subjectType) {
-				return [
+			->map(fn($arr) => [
 					'title' => $arr[0],
 					'fieldname' => $arr[1],
 					'subject_type' => $subjectType,
-				];
-			});
+				]);
 
 			$facets = $definitions->mapInto(Facet::class);
 
@@ -74,11 +72,9 @@ class FacetFilter
 
 	public function getFilterFromArr($subjectType, $arr = [])
 	{
-		$emptyFilter = $this->getFacets($subjectType)->mapWithKeys(function($facet) {
-			return [$facet->getParamName() => [ ]];
-		})->toArray();
+		$emptyFilter = $this->getFacets($subjectType)->mapWithKeys(fn($facet) => [$facet->getParamName() => [ ]])->toArray();
 
-		$arr = array_map(function($item) {
+		$arr = array_map(function($item): array {
 			if (!is_array($item)) {
 				return [ $item ];
 			}
@@ -106,7 +102,7 @@ class FacetFilter
 			self::$idsInFilteredQuery[$subjectType] = [];
 		}
 
-		$cacheKey = FacetFilter::getCacheKey($subjectType, $filter);
+		$cacheKey = (new FacetFilter())->getCacheKey($subjectType, $filter);
 		if (!isset(self::$idsInFilteredQuery[$subjectType][$cacheKey]) && !is_null($ids)) {
 			self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
 			return $ids;
@@ -121,7 +117,7 @@ class FacetFilter
 
 	public function getCacheKey($subjectType, $filter)
 	{
-		return implode('_', [$subjectType, md5(json_encode($filter))]);
+		return implode('_', [$subjectType, md5(json_encode($filter, JSON_THROW_ON_ERROR))]);
 	}
 
 }

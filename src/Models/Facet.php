@@ -90,9 +90,7 @@ class Facet extends Model
 
     public function getNonMissingOptions()
     {
-        return $this->getOptions()->filter(function($value) {
-            return $value->total > 0;
-        });
+        return $this->getOptions()->filter(fn($value) => $value->total > 0);
     }
 
     public function getParamName()

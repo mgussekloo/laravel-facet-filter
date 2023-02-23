@@ -14,12 +14,9 @@ use DB;
 class Indexer
 {
 
-	public $models = null;
-
-	public function __construct($models)
-	{
-		$this->models = $models;
-	}
+	public function __construct(public $models)
+ {
+ }
 
 	public function resetIndex()
 	{
@@ -30,7 +27,7 @@ class Indexer
 	public function buildIndex()
 	{
 		if (!is_null($this->models) && $this->models->isNotEmpty()) {
-			$subjectType = get_class($this->models->first());
+			$subjectType = $this->models->first()::class;
 
 			$facets = FacetFilter::getFacets($subjectType);
 
@@ -41,7 +38,7 @@ class Indexer
 				foreach ($facets as $facet) {
 					$values = [];
 
-					$fields = explode('.', $facet->fieldname);
+					$fields = explode('.', (string) $facet->fieldname);
 
 					if (count($fields) == 1) {
 						$values = collect([$model->{$fields[0]}]);
