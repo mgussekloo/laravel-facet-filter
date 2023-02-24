@@ -1,6 +1,7 @@
 {
     "name": "mgussekloo/laravel-facet-filter",
     "description": "Simple facet filtering in Laravel projects, hassle free.",
+    "license": "MIT",
     "keywords": [
         "facet",
         "filter",
