@@ -68,7 +68,6 @@ use App\Models\Product;
 use Mgussekloo\FacetFilter\Indexer;
 
 /* Example one: Iterate over all the models in one go. */
-
 $products = Product::with(['sizes'])->get();
 $indexer = new Indexer($products);
 
@@ -76,7 +75,6 @@ $indexer->resetIndex(); // clears the index
 $indexer->buildIndex(); // process all supplied models
 
 /* Example two: Process models in chunks. */
-
 $perPage = 1000; $currentPage = ...;
 
 $products = Product::with(['sizes'])->paginate($perPage, ['*'], 'page', $currentPage);
