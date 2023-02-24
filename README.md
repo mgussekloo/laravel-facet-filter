@@ -1,6 +1,11 @@
 # Laravel Facet Filter
 
-This package provides simple facet filtering (sometimes called Faceted Search or Faceted Navigation) in Laravel projects. It helps narrow down query results, based on the attributes of your models. I wanted to provide something that is free, relatively easy to setup, and doesn't have any dependencies.
+This package provides simple facet filtering (sometimes called Faceted Search or Faceted Navigation) in Laravel projects. It helps narrow down query results based on the attributes of your models.
+
+- Free to use, no dependencies
+- Easy to set up
+- Includes everything to get started, no need to write complex queries yourself
+- Flexible
 
 ### Contributing
 
@@ -23,7 +28,7 @@ php artisan vendor:publish --tag="facet-filter-migrations"
 php artisan migrate
 ```
 
-### Update your model
+### Update your models
 
 For all models that should support facet filtering, add a Facettable trait and
 a defineFacets() method. This method returns an array containing one or more facet definitions. A definition is a title and a model property
@@ -59,31 +64,18 @@ class Product extends Model
 The included simple indexer iterates over models, populating the facetrows table based on the facet definitions.
 
 ``` php
-namespace App\Console\Commands;
-
-use Illuminate\Console\Command;
-
 use App\Models\Product;
 use Mgussekloo\FacetFilter\Indexer;
 
-class IndexFacets extends Command
-{
+/* Example one: Iterate over all the models in one go. */
+$products = Product::with(['sizes'])->get();
+$indexer = new Indexer($products);
 
-    public function handle()
-    {
-        /* Build the whole index in one go */
-        $products = Product::with(['sizes'])->get();
-        $indexer = new Indexer($products);
+$indexer->resetIndex(); // clears the index
+$indexer->buildIndex(); // process all supplied models
 
-        $indexer->resetIndex(); // clears the index
-        $indexer->buildIndex(); // process all supplied models
-    }
-}
-```
+/* Example two: Process models in chunks. */
 
-Alternatively, for very large datasets you might want to process models in chunks.
-
-```php
 $perPage = 1000; $currentPage = ...;
 
 $products = Product::with(['sizes'])->paginate($perPage, ['*'], 'page', $currentPage);
@@ -104,34 +96,37 @@ if ($products->hasMorePages()) {}
 
 ### Apply facet filtering to a query
 
+The filter needs to be an array like: `[ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ]`. A helper method to build the filter is provided.
+
 ``` php
-/* Get the filter from the request, e.g. /?main-color=green&size=[s,m] becomes [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ] */
-$arr = request()->all();
-$filter = Product::getFilterFromArr($arr);
+/* Example one: Get filter from the request, e.g. /?main-color=green&size=[s,m] becomes  [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ]*/
+$filter = Product::getFilterFromArr(request()->all());
+$products = Product::facetsMatchFilter($filter)->get();
 
-/* Or from a single query parameter, e.g. /?filter[main-color][0]=green becomes [ 'main-color' => [ 'green' ], 'size' => [ ] ] */
-$arr = request()->query('filter');
-$filter = Product::getFilterFromArr($arr)
-
-/* Build your query!*/
-$products = Product::facetsMatchFilter($filter)->get(); // You can also apply the facets to the subsection of models, e.g. Product::where('discounted', true)->facetsMatchFilter($filter)->get()
+/* Example two: Make yourself */
+$filter = Product::getFilterFromArr(['main-color' => 'green']);
+$products = Product::where('discounted', true)->facetsMatchFilter($filter)->get();
 ```
 
 ### Display the facets
 
-This package doesn't have any opinions about the frontend you should use. This is how you can render the facets:
+There is no frontend included, but there are helper methods to make building a frontend easy.
 
 ``` php
 /* Get the facets to display them in your frontend. Calling getFacets() after you've called facetsMatchFilter() lets the facets have the correct option counts for the queried results. */
-$facets = Product::getFacets($filter);
+$facets = Product::getFacets();
 
 /* It returns a Laravel collection! */
 $singleFacet = $facets->firstWhere('fieldname', 'color');
 
-/* A getOptions() method helps you grab the info you need to render the facet. */
+/* A facet has a title, param name, and options. */
+$title = $singleFacet->title; // "Main color"
+$paramName = $singleFacet->getParamName(); // "main-color"
+
+/* The getOptions() method provides an array of options, with useful info such as the total result count within the current query. */
 $options = $singleFacet->getOptions();
 
-/* Options have these properties: value, slug, selected (whether it's selected in the $filter), total (total occurrences within current results).
+/*
 [
     (object)[
         'value' => 'Red'
@@ -146,11 +141,6 @@ $options = $singleFacet->getOptions();
         'slug' => 'color_green'
     ]
 */
-
-/* There's some other info you can get from a facet, such as the title and the identifying key for the filter. */
-
-$title = $singleFacet->title; // "Main color"
-$paramName = $singleFacet->getParamName(); // "main-color"
 
 ```
 
@@ -173,7 +163,7 @@ This is how it could look:
 @endforeach
 ```
 
-The above example uses Laravel Livewire's wire:model directive to communicate a selected option to the backend, but you could use an AJAX request, form submit or whatever you like. Just make sure to build a correct $filter so you can apply the facetsMatchFilter() scope to refine your query!
+The above example uses Laravel Livewire's wire:model directive to communicate a selected option to the backend. You could use an AJAX request, form submit or whatever you like.
 
 ## License
 
