@@ -2,11 +2,10 @@
 
 namespace Mgussekloo\FacetFilter\Traits;
 
+use Illuminate\Support\Collection;
 use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Mgussekloo\FacetFilter\Models\FacetRow;
-
-use Illuminate\Support\Collection;
 
 trait Facettable
 {

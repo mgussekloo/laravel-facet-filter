@@ -2,10 +2,9 @@
 
 namespace Mgussekloo\FacetFilter;
 
+use DB;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Mgussekloo\FacetFilter\Models\FacetRow;
-
-use DB;
 
 class Indexer
 {

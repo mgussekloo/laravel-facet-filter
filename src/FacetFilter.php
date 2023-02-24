@@ -2,11 +2,9 @@
 
 namespace Mgussekloo\FacetFilter;
 
-use Mgussekloo\FacetFilter\Models\Facet;
-
-use Illuminate\Support\Collection;
-
 use DB;
+use Illuminate\Support\Collection;
+use Mgussekloo\FacetFilter\Models\Facet;
 
 class FacetFilter
 {
@@ -19,14 +17,11 @@ class FacetFilter
     /**
      * Get the facets for a subjecttype, optionally setting the filter
      * and preloading the available options in an efficient query
-     *
-     * @return Collection
      */
     public function getFacets($subjectType, $filter = null, $load = true): Collection
     {
         if (! isset(self::$facets[$subjectType])) {
-
-        	// Get the definition from the model's static method
+            // Get the definition from the model's static method
             $definitions = collect($subjectType::defineFacets())
             ->map(fn ($arr) => [
                 'title' => $arr[0],

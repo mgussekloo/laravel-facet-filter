@@ -35,7 +35,7 @@ class FacetQueryBuilder extends Builder
      */
     public function get($columns = ['*'])
     {
-    	// If we're not doing any facet filtering, just bail.
+        // If we're not doing any facet filtering, just bail.
         if (is_null($this->filter)) {
             return parent::get($columns);
         }
@@ -71,30 +71,30 @@ class FacetQueryBuilder extends Builder
         $result = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter);
 
         if ($result === false) {
-        	$this->constrainQueryWithFilter();
+            $this->constrainQueryWithFilter();
             $result = parent::get()->pluck('id')->toArray();
-        	FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter, $result);
+            FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter, $result);
         }
 
         return $result;
     }
 
-	// Constrain the query with the facets and filter
-	public function constrainQueryWithFilter()
-	{
-	    $facets = FacetFilter::getFacets($this->subjectType);
+    // Constrain the query with the facets and filter
+    public function constrainQueryWithFilter()
+    {
+        $facets = FacetFilter::getFacets($this->subjectType);
 
-	    foreach ($facets as $facet) {
-	        $key = $facet->getParamName();
-	        if (isset($this->filter[$key])) {
-	            $values = (array) $this->filter[$key];
+        foreach ($facets as $facet) {
+            $key = $facet->getParamName();
+            if (isset($this->filter[$key])) {
+                $values = (array) $this->filter[$key];
 
-	            if (! empty($values)) {
-	                $this->whereHas('facetrows', function ($query) use ($values, $facet): void {
-	                    $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
-	                });
-	            }
-	        }
-	    }
-	}
+                if (! empty($values)) {
+                    $this->whereHas('facetrows', function ($query) use ($values, $facet): void {
+                        $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
+                    });
+                }
+            }
+        }
+    }
 }
