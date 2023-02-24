@@ -2,9 +2,9 @@
 
 This package provides simple facet filtering (sometimes called Faceted Search or Faceted Navigation) in Laravel projects. It helps narrow down query results based on the attributes of your models.
 
-- Free to use, no dependencies
-- Easy to set up
-- Includes everything to get started, no need to write complex queries yourself
+- Free, no dependencies
+- Easy, no complex queries to write
+- Includes everything to get started
 - Flexible
 
 ### Contributing
