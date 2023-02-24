@@ -68,6 +68,7 @@ use App\Models\Product;
 use Mgussekloo\FacetFilter\Indexer;
 
 /* Example one: Iterate over all the models in one go. */
+
 $products = Product::with(['sizes'])->get();
 $indexer = new Indexer($products);
 
@@ -96,7 +97,7 @@ if ($products->hasMorePages()) {}
 
 ### Apply facet filtering to a query
 
-The filter needs to be an array like: `[ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ]`. A helper method to build the filter is provided.
+The model trait returns a custom query builder with a facetsMatchFilter($filter) method. Use this method to apply facet filtering to a query. First, get the filter (an array like: `[ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ]`) using a helper method on the model.
 
 ``` php
 /* Example one: Get filter from the request, e.g. /?main-color=green&size=[s,m] becomes  [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ]*/
