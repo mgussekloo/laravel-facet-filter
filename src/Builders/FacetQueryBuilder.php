@@ -75,16 +75,17 @@ class FacetQueryBuilder extends Builder
      */
     public function getIdsInQueryWithoutFacet($facet)
     {
-        $facetName = $facet->getParamName();
+        $paramName = $facet->getParamName();
 
-        if (isset($this->filter[$facetName])) {
-            $this->filter[$facetName] = [];
+        if (isset($this->filter[$paramName])) {
+            $this->filter[$paramName] = [];
         }
 
         $result = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter);
 
         if ($result === false) {
-            $result = parent::get(['id'])->pluck('id')->toArray();
+            $result = parent::get()->pluck('id')->toArray();
+        	FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter, $result);
         }
 
         return $result;
