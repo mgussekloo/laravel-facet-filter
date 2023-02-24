@@ -97,7 +97,7 @@ class FacetFilter
             }
 
             return $item;
-        }, $arr);
+        }, (array)$arr);
 
         return array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
     }
