@@ -2,10 +2,11 @@
 
 namespace Mgussekloo\FacetFilter\Traits;
 
-use Illuminate\Support\Collection;
 use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Mgussekloo\FacetFilter\Models\FacetRow;
+
+use Illuminate\Support\Collection;
 
 trait Facettable
 {
@@ -19,13 +20,6 @@ trait Facettable
     public static function getFacets($filter = null, $load = true): Collection
     {
         return FacetFilter::getFacets(self::class, $filter, $load);
-    }
-
-    public static function getFilterFromParam($paramName = 'filter')
-    {
-        $arr = (array) request()->query($paramName);
-
-        return FacetFilter::getFilterFromArr(self::class, $arr);
     }
 
     public static function getFilterFromArr($arr = [])

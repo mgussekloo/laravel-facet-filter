@@ -2,13 +2,24 @@
 
 namespace Mgussekloo\FacetFilter\Models;
 
-use DB;
 use Illuminate\Database\Eloquent\Model;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
+
+use Illuminate\Support\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
+
+use DB;
 use Str;
+
+/**
+* @property string $title
+* @property string $fieldname
+* @property string $subject_type
+*/
 
 class Facet extends Model
 {
+
     protected $fillable = [
         'title',
         'fieldname',
@@ -21,7 +32,7 @@ class Facet extends Model
 
     public $filter = null;
 
-    public function getFacetRowsFromDB()
+    public function getFacetRowsFromDB(): EloquentCollection
     {
         return $this->rows = DB::table('facetrows')
         ->select('subject_id', 'value')
@@ -29,7 +40,7 @@ class Facet extends Model
         ->get();
     }
 
-    public function getOptions()
+    public function getOptions(): Collection
     {
         if (is_null($this->options)) {
             $facetName = $this->getParamName();
@@ -88,17 +99,17 @@ class Facet extends Model
         return $this->options;
     }
 
-    public function getNonMissingOptions()
+    public function getNonMissingOptions(): Collection
     {
         return $this->getOptions()->filter(fn ($value) => $value->total > 0);
     }
 
-    public function getParamName()
+    public function getParamName(): String
     {
         return Str::slug($this->title);
     }
 
-    public function getSlug()
+    public function getSlug(): String
     {
         return implode('.', [$this->subject_type, $this->fieldname]);
     }

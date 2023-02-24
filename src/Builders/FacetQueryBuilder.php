@@ -17,6 +17,10 @@ class FacetQueryBuilder extends Builder
         parent::__construct($query);
     }
 
+    /**
+     * Remember the filter and the subject type (model class) and wait
+     * until we need the results (get) before performing the query.
+     */
     public function facetsMatchFilter($filter = [])
     {
         $this->filter = $filter;
@@ -25,42 +29,50 @@ class FacetQueryBuilder extends Builder
         return $this;
     }
 
-    public function get($columns = ['*'], $saveLast = true)
+    /**
+     * Get the results, but first constrain the query with matching facets.
+     * We save the base query, to use it later to calculate the results in each facet.
+     */
+    public function get($columns = ['*'])
     {
+    	// If we're not doing any facet filtering, just bail.
         if (is_null($this->filter)) {
             return parent::get($columns);
         }
 
-        if ($saveLast) {
-            FacetFilter::setLastQuery($this->subjectType, $this);
-            FacetFilter::resetIdsInFilteredQuery($this->subjectType);
-        }
+        // Save the base query
+        FacetFilter::setLastQuery($this->subjectType, $this);
 
-        $result = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter);
+        // Constrain the query with the facets and filter
+        $facets = FacetFilter::getFacets($this->subjectType);
 
-        if ($result === false) {
-            $facets = FacetFilter::getFacets($this->subjectType);
+        foreach ($facets as $facet) {
+            $key = $facet->getParamName();
+            if (isset($this->filter[$key])) {
+                $values = (array) $this->filter[$key];
 
-            foreach ($facets as $facet) {
-                $key = $facet->getParamName();
-                if (isset($this->filter[$key])) {
-                    $values = (array) $this->filter[$key];
-
-                    if (! empty($values)) {
-                        $this->whereHas('facetrows', function ($query) use ($values, $facet): void {
-                            $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
-                        });
-                    }
+                if (! empty($values)) {
+                    $this->whereHas('facetrows', function ($query) use ($values, $facet): void {
+                        $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
+                    });
                 }
             }
-
-            $result = parent::get($columns);
-            FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter, $result->pluck('id')->toArray());
         }
+
+        // Get the result
+        $result = parent::get($columns);
+
+        // Save the ID's in the result in the cache
+        FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter, $result->pluck('id')->toArray());
 
         return $result;
     }
 
+    /**
+     * Perform a query of the same filter, without a particular facet
+     * and return the id's in the results. Cache the results, to avoid
+     * running the same query twice.
+     */
     public function getIdsInQueryWithoutFacet($facet)
     {
         $facetName = $facet->getParamName();
@@ -72,7 +84,7 @@ class FacetQueryBuilder extends Builder
         $result = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter);
 
         if ($result === false) {
-            $result = $this->get(['id'], false)->pluck('id')->toArray();
+            $result = parent::get(['id'])->pluck('id')->toArray();
         }
 
         return $result;

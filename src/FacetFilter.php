@@ -2,8 +2,11 @@
 
 namespace Mgussekloo\FacetFilter;
 
-use DB;
 use Mgussekloo\FacetFilter\Models\Facet;
+
+use Illuminate\Support\Collection;
+
+use DB;
 
 class FacetFilter
 {
@@ -13,12 +16,17 @@ class FacetFilter
 
     public static $idsInFilteredQuery = [];
 
-    /*
-    Returns a Laravel collection of the available facets.
-    */
-    public function getFacets($subjectType, $filter = null, $load = true)
+    /**
+     * Get the facets for a subjecttype, optionally setting the filter
+     * and preloading the available options in an efficient query
+     *
+     * @return Collection
+     */
+    public function getFacets($subjectType, $filter = null, $load = true): Collection
     {
         if (! isset(self::$facets[$subjectType])) {
+
+        	// Get the definition from the model's static method
             $definitions = collect($subjectType::defineFacets())
             ->map(fn ($arr) => [
                 'title' => $arr[0],
@@ -26,9 +34,10 @@ class FacetFilter
                 'subject_type' => $subjectType,
             ]);
 
+            // Instantiate models
             $facets = $definitions->mapInto(Facet::class);
 
-            // should we preload the options?
+            // Should we preload the options?
             if ($load) {
                 $rows = DB::table('facetrows')
                 ->select('facet_slug', 'subject_id', 'value')
@@ -46,7 +55,7 @@ class FacetFilter
             self::$facets[$subjectType] = $facets;
         }
 
-        // set the filter
+        // should we set the filter on all the facets?
         if (! is_null($filter)) {
             self::$facets[$subjectType]->map->setFilter($filter);
         }
@@ -54,14 +63,23 @@ class FacetFilter
         return self::$facets[$subjectType];
     }
 
-    public function setLastQuery($subjectType, $query)
+    /**
+     * Remember the last query for a model class, without eager loaded relations.
+     * We use this query as basis to run queries for each facet, calculating the number
+     * of results the facet options would have.
+     */
+    public function setLastQuery(string $subjectType, $query): void
     {
         $newQuery = clone $query;
         $newQuery->withOnly([]);
         self::$lastQueries[$subjectType] = $newQuery;
+        self::resetIdsInFilteredQuery($subjectType);
     }
 
-    public function getLastQuery($subjectType)
+    /**
+     * Retrieve the last query for a model class or return false.
+     */
+    public function getLastQuery(string $subjectType)
     {
         if (isset(self::$lastQueries[$subjectType])) {
             return clone self::$lastQueries[$subjectType];
@@ -70,7 +88,11 @@ class FacetFilter
         return false;
     }
 
-    public function getFilterFromArr($subjectType, $arr = [])
+    /**
+     * Get a filter array that has the facet parameters for a certain subject (model) as keys
+     * merged with $arr.
+     */
+    public function getFilterFromArr($subjectType, $arr = []): array
     {
         $emptyFilter = $this->getFacets($subjectType)->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
 
@@ -85,18 +107,19 @@ class FacetFilter
         return array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
     }
 
-    public function getEmptyFilter($subjectType)
+    /**
+     * Same as above, but the values are empty.
+     */
+    public function getEmptyFilter($subjectType): array
     {
         return $this->getFilterFromArr($subjectType, []);
     }
 
-    public function resetIdsInFilteredQuery($subjectType)
-    {
-        if (isset(self::$idsInFilteredQuery[$subjectType])) {
-            unset(self::$idsInFilteredQuery[$subjectType]);
-        }
-    }
-
+    /**
+     * Remember which model id's were in a filtered query for the combination
+     * "model class" and "filter". This avoid running the same query
+     * twice when calculating the number of results for each facet.
+     */
     public function cacheIdsInFilteredQuery($subjectType, $filter, $ids = null)
     {
         if (! isset(self::$idsInFilteredQuery[$subjectType])) {
@@ -117,7 +140,21 @@ class FacetFilter
         return false;
     }
 
-    public function getCacheKey($subjectType, $filter)
+    /**
+     * Forget the model id's that were in a filtered query, so we can
+     * start fresh.
+     */
+    public function resetIdsInFilteredQuery($subjectType): void
+    {
+        if (isset(self::$idsInFilteredQuery[$subjectType])) {
+            unset(self::$idsInFilteredQuery[$subjectType]);
+        }
+    }
+
+    /**
+     * Build a cache key for the combination model class + filter
+     */
+    public function getCacheKey($subjectType, $filter): string
     {
         return implode('_', [$subjectType, md5(json_encode($filter, JSON_THROW_ON_ERROR))]);
     }

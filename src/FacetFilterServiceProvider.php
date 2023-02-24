@@ -15,7 +15,7 @@ class FacetFilterServiceProvider extends PackageServiceProvider
             ->hasMigrations(['create_facetrows_table']);
     }
 
-    public function registeringPackage()
+    public function registeringPackage(): void
     {
         $this->app->bind('facetfilter', fn () => new FacetFilter());
     }
