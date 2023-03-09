@@ -36,16 +36,22 @@ class Facet extends Model
         ->get();
     }
 
+    public function getRows(): EloquentCollection
+    {
+    	if (is_null($this->rows)) {
+            // FacetFilter::fillFacetRows($this->subject_type);
+            $this->rows = $this->getFacetRowsFromDB();
+        }
+        return $this->rows;
+    }
+
     public function getOptions(): Collection
     {
         if (is_null($this->options)) {
             $facetName = $this->getParamName();
             $subjectType = $this->subject_type;
 
-            if (is_null($this->rows)) {
-                // FacetFilter::fillFacetRows($this->subject_type);
-                $this->rows = $this->getFacetRowsFromDB();
-            }
+
 
             // find out totals of the values in this facet
             // *within* the current query / filter operation.
@@ -59,7 +65,7 @@ class Facet extends Model
             }
 
             $values = [];
-            foreach ($this->rows as $row) {
+            foreach ($this->getRows() as $row) {
                 if ($row->value == '') {
                     continue;
                 }
