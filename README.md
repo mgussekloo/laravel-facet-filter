@@ -7,6 +7,8 @@ This package provides simple facet filtering (sometimes called Faceted Search or
 - Includes everything to get started
 - Flexible
 
+![Demo](https://raw.githubusercontent.com/mgussekloo/laravel-facet-filter/master/demo.gif)
+
 ### Contributing
 
 Feel free to contribute to this package, either by creating a pull request or reporting an issue.
