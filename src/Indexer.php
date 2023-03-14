@@ -49,6 +49,10 @@ class Indexer
                     }
 
                     foreach ($values as $value) {
+                    	if (is_null($value)) {
+                    		continue;
+                    	}
+
                         $uniqueKey = implode('.', [$facet->getSlug(), $model->id, $value]);
                         $rows[$uniqueKey] = [
                             'facet_slug' => $facet->getSlug(),
