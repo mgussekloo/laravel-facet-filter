@@ -12,6 +12,20 @@ class Indexer
     {
     }
 
+    public function buildRow($facet, $model, $value)
+    {
+        return [
+            'facet_slug' => $facet->getSlug(),
+            'subject_id' => $model->id,
+            'value' => $value,
+        ];
+    }
+
+    public function insertRows($rows)
+    {
+	    return FacetRow::insert(array_values($rows));
+    }
+
     public function resetIndex()
     {
         DB::table('facetrows')->truncate();
@@ -26,8 +40,8 @@ class Indexer
 
             $facets = FacetFilter::getFacets($subjectType);
 
-            $rows = [];
             $now = now();
+            $rows = [];
             foreach ($this->models as $model) {
                 foreach ($facets as $facet) {
                     $values = [];
@@ -53,19 +67,19 @@ class Indexer
                     		continue;
                     	}
 
-                        $uniqueKey = implode('.', [$facet->getSlug(), $model->id, $value]);
-                        $rows[$uniqueKey] = [
-                            'facet_slug' => $facet->getSlug(),
-                            'subject_id' => $model->id,
-                            'value' => $value,
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ];
+						$uniqueKey = implode('.', [$facet->getSlug(), $model->id, $value]);
+                    	$row = $this->buildRow($facet, $model, $value);
+                    	$row = array_merge([
+                    		'created_at' => $now,
+                    		// 'updated_at' => null,
+                    	], $row);
+                    	$rows[$uniqueKey] = $row;
+
                     }
                 }
             }
 
-            FacetRow::insert(array_values($rows));
+            $this->insertRows($rows);
         }
 
         return $this;
