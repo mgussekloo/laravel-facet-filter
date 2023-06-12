@@ -97,21 +97,21 @@ if ($products->hasMorePages()) {}
 
 ### Apply facet filtering to a query
 
-The model trait returns a custom query builder with a facetsMatchFilter($filter) method. Use this method to apply facet filtering to a query. First, get the filter (an array like: `[ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ]`) using a helper method on the model.
+Use facetsMatchFilter($filter) method on your model to query models by filter.
 
 ``` php
-/* Example one: Get filter from the request, e.g. /?main-color=green&size=[s,m] becomes  [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ]*/
+/* Example one: Get filter from the request parameters, e.g. /?main-color=green&size=[s,m] becomes  [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ]*/
 $filter = Product::getFilterFromArr(request()->all());
 $products = Product::facetsMatchFilter($filter)->get();
 
-/* Example two: Make yourself */
+/* Example two: Build your own filter from an array */
 $filter = Product::getFilterFromArr(['main-color' => 'green']);
 $products = Product::where('discounted', true)->facetsMatchFilter($filter)->get();
 ```
 
 ### Display the facets
 
-There is no frontend included, but there are helper methods to make building a frontend easy.
+There is no frontend included but there are helper methods to make building a frontend easy.
 
 ``` php
 /* Get the facets to display them in your frontend. Calling getFacets() after you've called facetsMatchFilter() lets the facets have the correct option counts for the queried results. */
@@ -124,7 +124,7 @@ $singleFacet = $facets->firstWhere('fieldname', 'color');
 $title = $singleFacet->title; // "Main color"
 $paramName = $singleFacet->getParamName(); // "main-color"
 
-/* The getOptions() method provides an array of options, with useful info such as the total result count within the current query. */
+/* The getOptions() method provides a Laravel collection, including useful info such as the total result count for an option within the current query. */
 $options = $singleFacet->getOptions();
 
 /*
