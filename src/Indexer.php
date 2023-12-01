@@ -23,7 +23,7 @@ class Indexer
 
     public function insertRows($rows)
     {
-	    return FacetRow::insert(array_values($rows));
+        return FacetRow::insert(array_values($rows));
     }
 
     public function resetIndex()
@@ -63,18 +63,17 @@ class Indexer
                     }
 
                     foreach ($values as $value) {
-                    	if (is_null($value)) {
-                    		continue;
-                    	}
+                        if (is_null($value)) {
+                            continue;
+                        }
 
-						$uniqueKey = implode('.', [$facet->getSlug(), $model->id, $value]);
-                    	$row = $this->buildRow($facet, $model, $value);
-                    	$row = array_merge([
-                    		'created_at' => $now,
-                    		// 'updated_at' => null,
-                    	], $row);
-                    	$rows[$uniqueKey] = $row;
-
+                        $uniqueKey = implode('.', [$facet->getSlug(), $model->id, $value]);
+                        $row = $this->buildRow($facet, $model, $value);
+                        $row = array_merge([
+                            'created_at' => $now,
+                            // 'updated_at' => null,
+                        ], $row);
+                        $rows[$uniqueKey] = $row;
                     }
                 }
             }

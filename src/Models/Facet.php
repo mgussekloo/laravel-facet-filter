@@ -38,10 +38,11 @@ class Facet extends Model
 
     public function getRows(): EloquentCollection
     {
-    	if (is_null($this->rows)) {
+        if (is_null($this->rows)) {
             // FacetFilter::fillFacetRows($this->subject_type);
             $this->rows = $this->getFacetRowsFromDB();
         }
+
         return $this->rows;
     }
 
@@ -50,8 +51,6 @@ class Facet extends Model
         if (is_null($this->options)) {
             $facetName = $this->getParamName();
             $subjectType = $this->subject_type;
-
-
 
             // find out totals of the values in this facet
             // *within* the current query / filter operation.

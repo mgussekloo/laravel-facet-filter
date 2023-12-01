@@ -4,7 +4,6 @@ namespace Mgussekloo\FacetFilter;
 
 use DB;
 use Illuminate\Support\Collection;
-use Mgussekloo\FacetFilter\Models\Facet;
 
 class FacetFilter
 {
@@ -16,21 +15,13 @@ class FacetFilter
 
     /**
      * Get the facets for a subjecttype, optionally setting the filter
-     * and preloading the available options in an efficient query
+     * and preloading the available options.
      */
     public function getFacets($subjectType, $filter = null, $load = true): Collection
     {
         if (! isset(self::$facets[$subjectType])) {
-            // Get the definition from the model's static method
-            $definitions = collect($subjectType::defineFacets())
-            ->map(fn ($arr) => [
-                'title' => $arr[0],
-                'fieldname' => $arr[1],
-                'subject_type' => $subjectType,
-            ]);
-
-            // Instantiate models
-            $facets = $definitions->mapInto(Facet::class);
+            // Get the definition from the model
+            $facets = $subjectType::makeFacets();
 
             // Should we preload the options?
             if ($load) {
@@ -97,7 +88,7 @@ class FacetFilter
             }
 
             return $item;
-        }, (array)$arr);
+        }, (array) $arr);
 
         return array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
     }

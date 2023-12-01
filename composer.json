@@ -33,7 +33,7 @@
             ]
         }
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "prefer-stable": true,
     "require-dev": {
         "laravel/pint": "^1.6",
