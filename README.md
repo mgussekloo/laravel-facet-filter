@@ -40,21 +40,21 @@ use Mgussekloo\FacetFilter\Traits\Facettable;
 
 class Product extends Model
 {
-    use Facettable;
+	use Facettable;
 
-    public static function defineFacets()
-    {
-        return [
-            [
-                'fieldname' => 'color' /* Model property from which to get values */
-            ],
-            [
-                'fieldname' => 'sizes.name' /* Use dot notation to get the value from related models. */
-            ]
-        ]
-    }
+	public static function defineFacets()
+	{
+		return [
+			[
+				'fieldname' => 'color' /* Model property from which to get values */
+			],
+			[
+				'fieldname' => 'sizes.name' /* Use dot notation to get the value from related models. */
+			]
+		]
+	}
 
-    ...
+	...
 
 ```
 
@@ -104,20 +104,19 @@ $options = $singleFacet->getOptions();
 /*
 Options look like this:
 [
-    (object)[
-        'value' => 'Red'
-        'selected' => false,
-        'total' => 3
-        'slug' => 'color_red'
-    ],
-    (object)[
-        'value' => 'Green'
-        'selected' => true
-        'total' => 2
-        'slug' => 'color_green'
-    ]
+	(object)[
+		'value' => 'Red'
+		'selected' => false,
+		'total' => 3
+		'slug' => 'color_red'
+	],
+	(object)[
+		'value' => 'Green'
+		'selected' => true
+		'total' => 2
+		'slug' => 'color_green'
+	]
 */
-
 ```
 
 This is how it could look using Laravel Livewire to communicate a selected option to the backend. You could use any AJAX request, form submit or whatever you like.
@@ -125,17 +124,17 @@ This is how it could look using Laravel Livewire to communicate a selected optio
 ``` html
 <h2>Colors</h2>
 @foreach ($facet->getOptions() as $option)
-    <div class="facet-checkbox-pill">
-        <input
-            wire:model="filter.{{ $facet->getParamName() }}"
-            type="checkbox"
-            id="{{ $option->slug }}"
-            value="{{ $option->value }}"
-        />
-        <label for="{{ $option->slug }}" class="{{ $option->selected ? 'selected' : '' }}">
-            {{ $option->value }} ({{ $option->total }})
-        </label>
-    </div>
+	<div class="facet-checkbox-pill">
+		<input
+			wire:model="filter.{{ $facet->getParamName() }}"
+			type="checkbox"
+			id="{{ $option->slug }}"
+			value="{{ $option->value }}"
+		/>
+		<label for="{{ $option->slug }}" class="{{ $option->selected ? 'selected' : '' }}">
+			{{ $option->value }} ({{ $option->total }})
+		</label>
+	</div>
 @endforeach
 ```
 
@@ -146,14 +145,14 @@ The defineFacets() method on the Facettable model can return more than the field
 ``` php
 public static function defineFacets()
 {
-    return [
+	return [
 		[
-            'title' => 'Color',
-            'description' => 'The main color.',
-           	'fieldname' => 'color',
-           	'facet_class' => CustomFacet::class
-        ]
-    ];
+			'title' => 'Color',
+			'description' => 'The main color.',
+			'fieldname' => 'color',
+			'facet_class' => CustomFacet::class
+		]
+	];
 }
 
 echo $singleFacet->title; // Color
@@ -169,10 +168,12 @@ class CustomFacet extends Mgussekloo\FacetFilter\Models\Facet
 }
 ```
 
-Extend the Mgussekloo\FacetFilter\Indexer class to customize the indexing.
-For example, save a "range bracket" value instead of a "individual price" value.
+You can extend the Indexer to customize the facet values. For example, save a "range bracket" value instead of a "individual price" value.
 
 ``` php
+
+class CustomIndexer extends Mgussekloo\FacetFilter\Indexer
+{
 public function buildRow($facet, $model, $value) {
 	$row = parent::buildRow($facet, $model, $value);
 
@@ -185,8 +186,6 @@ public function buildRow($facet, $model, $value) {
 	return $row;
 }
 ```
-
-
 
 ## License
 
