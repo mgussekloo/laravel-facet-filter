@@ -30,7 +30,7 @@ class FacetFilter
                 foreach ($facets as $facet) {
                     $slug = $facet->getSlug();
                     if (isset($rows[$slug])) {
-                        $facet->rows = $rows[$slug];
+                        $facet->setRows($rows[$slug]);
                     }
                 }
             }

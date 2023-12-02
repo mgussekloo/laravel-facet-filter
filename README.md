@@ -46,10 +46,11 @@ class Product extends Model
 	{
 		return [
 			[
-				'fieldname' => 'color' /* Model property from which to get values */
+				'fieldname' => 'color' // Model property from which to get values
 			],
 			[
-				'fieldname' => 'sizes.name' /* Use dot notation to get the value from related models. */
+				'title' => 'Size', // The title will be used for the parameter.
+				'fieldname' => 'sizes.name' // Use dot notation to get the value from related models.
 			]
 		]
 	}
@@ -164,7 +165,18 @@ The 'facet_class' key will be used when instantiating Facets.
 ``` php
 class CustomFacet extends Mgussekloo\FacetFilter\Models\Facet
 {
-	...
+    // return the option objects for this facet
+    public function getOptions(): Collection
+    // return the options objects, but remove the ones leading to zero results
+    public function getNonMissingOptions(): Collection
+    // get this facet's parameter name
+    public function getParamName(): string
+    // get this facet's unique slug (used for indexing)
+    public function getSlug(): string
+	// set the filter for this facet (used when getting the options)
+    public function setFilter($filter)
+	// set the facetrows for this facet
+    public function setRows($rows)
 }
 ```
 
@@ -174,16 +186,17 @@ You can extend the Indexer to customize the facet values. For example, save a "r
 
 class CustomIndexer extends Mgussekloo\FacetFilter\Indexer
 {
-public function buildRow($facet, $model, $value) {
-	$row = parent::buildRow($facet, $model, $value);
+	public function buildRow($facet, $model, $value) {
+		$row = parent::buildRow($facet, $model, $value);
 
-	if ($facet->getSlug() == 'App\Models\Product.price') {
-		if ($row['value'] > 0 && $row['value'] < 100) {
-			$row['value'] = '0-100';
+		if ($facet->getSlug() == 'App\Models\Product.price') {
+			if ($row['value'] > 0 && $row['value'] < 100) {
+				$row['value'] = '0-100';
+			}
 		}
-	}
 
-	return $row;
+		return $row;
+	}
 }
 ```
 

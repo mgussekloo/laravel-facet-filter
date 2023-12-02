@@ -17,7 +17,6 @@ use Str;
 class Facet extends Model
 {
     protected $fillable = [
-        'title',
         'fieldname',
         'subject_type',
     ];
@@ -35,28 +34,16 @@ class Facet extends Model
     	}
     }
 
-    public function getFacetRowsFromDB(): EloquentCollection
-    {
-        return $this->rows = DB::table('facetrows')
-        ->select('subject_id', 'value')
-        ->where('facet_slug', $this->getSlug())
-        ->get();
-    }
-
-    public function getRows(): EloquentCollection
-    {
-        if (is_null($this->rows)) {
-            $this->rows = $this->getFacetRowsFromDB();
-        }
-
-        return $this->rows;
-    }
-
+    // return the option objects for this facet
     public function getOptions(): Collection
     {
         if (is_null($this->options)) {
             $facetName = $this->getParamName();
             $subjectType = $this->subject_type;
+
+            if (is_null($this->rows)) {
+            	throw new \Exception('This facet `' . $facetName . '` has no rows!');
+            }
 
             // find out totals of the values in this facet
             // *within* the current query / filter operation.
@@ -70,7 +57,7 @@ class Facet extends Model
             }
 
             $values = [];
-            foreach ($this->getRows() as $row) {
+            foreach ($this->rows as $row) {
                 if ($row->value == '') {
                     continue;
                 }
@@ -106,25 +93,35 @@ class Facet extends Model
         return $this->options;
     }
 
+    // return the options objects, but remove the ones leading to zero results
     public function getNonMissingOptions(): Collection
     {
         return $this->getOptions()->filter(fn ($value) => $value->total);
     }
 
+    // get this facet's parameter name
     public function getParamName(): string
     {
-        return Str::slug($this->title);
+    	$param = isset($this->title) ? $this->title : $this->fieldname;
+        return Str::slug($param);
     }
 
+    // get this facet's unique slug (used for indexing)
     public function getSlug(): string
     {
         return implode('.', [$this->subject_type, $this->fieldname]);
     }
 
+    // set the filter for this facet
     public function setFilter($filter)
     {
         $this->filter = $filter;
-
-        return $this;
     }
+
+    // set the facetrows for this facet
+    public function setRows($rows)
+    {
+    	$this->rows = $rows;
+    }
+
 }

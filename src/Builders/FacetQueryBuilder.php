@@ -120,7 +120,7 @@ class FacetQueryBuilder extends Builder
 
 			if (!empty($this->filter[$key])) {
 				$selectedValues = collect($this->filter[$key])->values();
-            	$allValues = $facet->getRows()->pluck('value')->filter()->unique()->values();
+            	$allValues = $facet->rows->pluck('value')->filter()->unique()->values();
 
 	            if ($allValues->diff($selectedValues)->isEmpty()) {
 	                $this->filter[$key] = [];
