@@ -4,6 +4,7 @@ namespace Mgussekloo\FacetFilter;
 
 use DB;
 use Illuminate\Support\Collection;
+use Mgussekloo\FacetFilter\Models\Facet;
 
 class FacetFilter
 {
@@ -17,18 +18,14 @@ class FacetFilter
      * Get the facets for a subjecttype, optionally setting the filter
      * and preloading the available options.
      */
-    public function getFacets($subjectType, $filter = null, $load = true): Collection
+    public function getFacets(string $subjectType, $filter = null, $load = true): Collection
     {
-        if (! isset(self::$facets[$subjectType])) {
-            // Get the definition from the model
-            $facets = $subjectType::makeFacets();
+		if (!isset(self::$facets[$subjectType])) {
+			$facets = $subjectType::makeFacets();
 
-            // Should we preload the options?
+		    // Should we preload the options?
             if ($load) {
-                $rows = DB::table('facetrows')
-                ->select('facet_slug', 'subject_id', 'value')
-                ->get()
-                ->groupBy('facet_slug');
+                $rows = DB::table('facetrows')->select('facet_slug', 'subject_id', 'value')->get()->groupBy('facet_slug');
 
                 foreach ($facets as $facet) {
                     $slug = $facet->getSlug();
@@ -39,7 +36,7 @@ class FacetFilter
             }
 
             self::$facets[$subjectType] = $facets;
-        }
+		}
 
         // should we set the filter on all the facets?
         if (! is_null($filter)) {
@@ -47,6 +44,37 @@ class FacetFilter
         }
 
         return self::$facets[$subjectType];
+    }
+
+    /**
+     * Get the facets for a subjecttype, optionally setting the filter
+     * and preloading the available options.
+     */
+    public function makeFacetsWithDefinitions(string $subjectType, $definitions): Collection
+    {
+     	if (is_array($definitions)) {
+     		$definitions = collect($definitions);
+     	}
+
+        $definitions = $definitions->map(function ($definition) use ($subjectType) {
+            if (! isset($definition['fieldname'])) {
+                throw new \Exception('Missing key `fieldname` in facet definition '.json_encode($definition).'!');
+            }
+
+            return array_merge([
+                'title' => $definition['fieldname'],
+                'subject_type' => $subjectType,
+                'facet_class' => Facet::class,
+            ], $definition);
+        })->filter();
+
+        // Instantiate models
+        $facets = [];
+        foreach ($definitions as $definition) {
+            $facets[] = new $definition['facet_class']($definition);
+        }
+
+        return collect($facets);
     }
 
     /**
@@ -96,17 +124,17 @@ class FacetFilter
     /**
      * Same as above, but the values are empty.
      */
-    public function getEmptyFilter($subjectType): array
+    public function getEmptyFilter(string $subjectType): array
     {
         return $this->getFilterFromArr($subjectType, []);
     }
 
     /**
      * Remember which model id's were in a filtered query for the combination
-     * "model class" and "filter". This avoid running the same query
+     * "model class" and "filter". This should avoid running the same query
      * twice when calculating the number of results for each facet.
      */
-    public function cacheIdsInFilteredQuery($subjectType, $filter, $ids = null)
+    public function cacheIdsInFilteredQuery(string $subjectType, $filter, $ids = null)
     {
         if (! isset(self::$idsInFilteredQuery[$subjectType])) {
             self::$idsInFilteredQuery[$subjectType] = [];
@@ -130,18 +158,18 @@ class FacetFilter
      * Forget the model id's that were in a filtered query, so we can
      * start fresh.
      */
-    public function resetIdsInFilteredQuery($subjectType): void
+    public function resetIdsInFilteredQuery(string $subjectType): void
     {
-        if (isset(self::$idsInFilteredQuery[$subjectType])) {
+        // if (isset(self::$idsInFilteredQuery[$subjectType])) {
             unset(self::$idsInFilteredQuery[$subjectType]);
-        }
+        // }
     }
 
     /**
      * Build a cache key for the combination model class + filter
      */
-    public function getCacheKey($subjectType, $filter): string
+    public function getCacheKey(string $subjectType, $filter): string
     {
-        return implode('_', [$subjectType, md5(json_encode($filter, JSON_THROW_ON_ERROR))]);
+        return implode('_', [$subjectType, json_encode($filter, JSON_THROW_ON_ERROR)]);
     }
 }

@@ -39,7 +39,6 @@ class Facet extends Model
     public function getRows(): EloquentCollection
     {
         if (is_null($this->rows)) {
-            // FacetFilter::fillFacetRows($this->subject_type);
             $this->rows = $this->getFacetRowsFromDB();
         }
 
@@ -102,7 +101,7 @@ class Facet extends Model
 
     public function getNonMissingOptions(): Collection
     {
-        return $this->getOptions()->filter(fn ($value) => $value->total > 0);
+        return $this->getOptions()->filter(fn ($value) => $value->total);
     }
 
     public function getParamName(): string

@@ -40,11 +40,11 @@ class FacetQueryBuilder extends Builder
             return parent::get($columns);
         }
 
+		// Try to remove this filter
+        $this->removeFilterWhenAllFacetValuesSelected();
+
         // Save the unconstrained query
         FacetFilter::setLastQuery($this->subjectType, $this);
-
-        // Try to optimize the query
-        $this->removeFilterWhenAllFacetValuesSelected();
 
         // Constrain the query
         $this->constrainQueryWithFilter();
@@ -67,36 +67,38 @@ class FacetQueryBuilder extends Builder
     {
         $paramName = $facet->getParamName();
 
-        if (isset($this->filter[$paramName])) {
-            $this->filter[$paramName] = [];
-        }
+        $this->filter[$paramName] = [];
 
-        $this->removeFilterWhenAllFacetValuesSelected();
+        // $this->removeFilterWhenAllFacetValuesSelected();
 
-        $result = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter);
+        $idsArr = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter);
 
-        if ($result === false) {
+        if ($idsArr === false) {
             $this->constrainQueryWithFilter();
-            $result = parent::get()->pluck('id')->toArray();
-            FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter, $result);
+            $idsArr = parent::pluck('id')->toArray();
+            FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter, $idsArr);
         }
 
-        return $result;
+        return $idsArr;
     }
 
     // Constrain the query with the facets and filter
     public function constrainQueryWithFilter()
     {
+    	if (empty(array_filter($this->filter))) {
+    		return;
+    	}
+
         $facets = FacetFilter::getFacets($this->subjectType);
 
         foreach ($facets as $facet) {
             $key = $facet->getParamName();
 
-            if (isset($this->filter[$key])) {
+            if (!empty($this->filter[$key])) {
                 $values = (array) $this->filter[$key];
 
                 if (! empty($values)) {
-                    $this->whereHas('facetrows', function ($query) use ($values, $facet): void {
+                    $this->whereIn('id', function ($query) use ($values, $facet): void {
                         $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
                     });
                 }
@@ -107,16 +109,23 @@ class FacetQueryBuilder extends Builder
     // If we selected ALL facet values, we do not need to filter at all
     public function removeFilterWhenAllFacetValuesSelected()
     {
+    	if (empty(array_filter($this->filter))) {
+    		return;
+    	}
+
         $facets = FacetFilter::getFacets($this->subjectType);
 
         foreach ($facets as $facet) {
             $key = $facet->getParamName();
 
-            $allValues = $facet->getRows()->pluck('value')->filter()->unique()->values();
-            $selectedValues = collect($this->filter[$key])->values();
-            if ($allValues->diff($selectedValues)->isEmpty()) {
-                $this->filter[$key] = [];
-            }
+			if (!empty($this->filter[$key])) {
+				$selectedValues = collect($this->filter[$key])->values();
+            	$allValues = $facet->getRows()->pluck('value')->filter()->unique()->values();
+
+	            if ($allValues->diff($selectedValues)->isEmpty()) {
+	                $this->filter[$key] = [];
+	            }
+	        }
         }
     }
 }
