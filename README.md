@@ -165,18 +165,18 @@ The 'facet_class' key will be used when instantiating Facets.
 ``` php
 class CustomFacet extends Mgussekloo\FacetFilter\Models\Facet
 {
-    // return the option objects for this facet
-    public function getOptions(): Collection
-    // return the options objects, but remove the ones leading to zero results
-    public function getNonMissingOptions(): Collection
-    // get this facet's parameter name
-    public function getParamName(): string
-    // get this facet's unique slug (used for indexing)
-    public function getSlug(): string
+	// return the option objects for this facet
+	public function getOptions(): Collection { ... }
+	// return the options objects, but remove the ones leading to zero results
+	public function getNonMissingOptions(): Collection { ... }
+	// get this facet's parameter name
+	public function getParamName(): string { ... }
+	// get this facet's unique slug (used for indexing)
+	public function getSlug(): string { ... }
 	// set the filter for this facet (used when getting the options)
-    public function setFilter($filter)
+	public function setFilter($filter) { ... }
 	// set the facetrows for this facet
-    public function setRows($rows)
+	public function setRows($rows) { ... }
 }
 ```
 
