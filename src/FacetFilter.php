@@ -62,7 +62,6 @@ class FacetFilter
             }
 
             return array_merge([
-                'title' => $definition['fieldname'],
                 'subject_type' => $subjectType,
                 'facet_class' => Facet::class,
             ], $definition);

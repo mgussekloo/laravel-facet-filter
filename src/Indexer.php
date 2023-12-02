@@ -6,10 +6,13 @@ use DB;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Mgussekloo\FacetFilter\Models\FacetRow;
 
+public $models;
+
 class Indexer
 {
-    public function __construct(public $models)
+    public function __construct($models)
     {
+    	$this->models = $models;
     }
 
     public function buildRow($facet, $model, $value)
@@ -33,8 +36,10 @@ class Indexer
         return $this;
     }
 
-    public function buildIndex()
+    public function buildIndex($models = null)
     {
+    	$this->models = $models;
+
         if (! is_null($this->models) && $this->models->isNotEmpty()) {
             $subjectType = $this->models->first()::class;
 

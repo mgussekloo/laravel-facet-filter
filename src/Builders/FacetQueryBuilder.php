@@ -98,7 +98,7 @@ class FacetQueryBuilder extends Builder
                 $values = (array) $this->filter[$key];
 
                 if (! empty($values)) {
-                    $this->whereIn('id', function ($query) use ($values, $facet): void {
+                    $this->whereHas('facetrows', function ($query) use ($values, $facet): void {
                         $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
                     });
                 }

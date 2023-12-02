@@ -28,6 +28,13 @@ class Facet extends Model
 
     public $filter = null;
 
+    public function __construct($definition)
+    {
+    	foreach ($definition as $key => $value) {
+    		$this->$key = $value;
+    	}
+    }
+
     public function getFacetRowsFromDB(): EloquentCollection
     {
         return $this->rows = DB::table('facetrows')
