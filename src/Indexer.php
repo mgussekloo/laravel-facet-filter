@@ -6,10 +6,10 @@ use DB;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Mgussekloo\FacetFilter\Models\FacetRow;
 
-public $models;
-
 class Indexer
 {
+	public $models;
+
     public function __construct($models)
     {
     	$this->models = $models;
