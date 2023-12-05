@@ -9,13 +9,13 @@ use Mgussekloo\FacetFilter\Models\FacetRow;
 
 trait Facettable
 {
-    abstract public static function defineFacets();
+    abstract public static function facetDefinitions();
 
     // make the facet models, based on the facet definition.
     // you can overwrite this function
     public static function makeFacets(): Collection
     {
-        return FacetFilter::makeFacetsWithDefinitions(self::class, self::defineFacets());
+        return FacetFilter::makeFacetsWithDefinitions(self::class, self::facetDefinitions());
     }
 
     // get the facet models

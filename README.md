@@ -31,8 +31,7 @@ php artisan migrate
 
 ### Update your models
 
-For all models that should support facet filtering, add a Facettable trait and
-a defineFacets() method. It returns an array containing one or more facet definitions.
+Add a Facettable trait and a defineFacets() method to all the models that should support facet filtering.
 
 ``` php
 use Illuminate\Database\Eloquent\Model;
@@ -42,57 +41,55 @@ class Product extends Model
 {
 	use Facettable;
 
-	public static function defineFacets()
+	public static function facetDefinitions()
 	{
+		// Return an array of definitions
 		return [
 			[
-				'fieldname' => 'color' // Model property from which to get values
+				'title' => 'Main color', // The title will be used for the parameter.
+				'fieldname' => 'color' // Model property from which to get the values.
 			],
 			[
-				'title' => 'Size', // The title will be used for the parameter.
+				'title' => 'Sizes',
 				'fieldname' => 'sizes.name' // Use dot notation to get the value from related models.
 			]
 		]
 	}
 
 	...
-
 ```
 
 ### Build the index
 
-You must build the index before you can start filtering. How you build the index is up to you.
-You could run the included indexer in a scheduled command.
+Before you can start filtering you will have to build an index. You can use the
+Indexer provided with this package.
 
 ``` php
+
+use Mgussekloo\FacetFilter\Indexer;
 
 $products = Product::with(['sizes'])->get(); // get some products
 
-$indexer = new Mgussekloo\FacetFilter\Indexer();
-$indexer->resetIndex(); // clear the index
-$indexer->buildIndex($products); // process all supplied models
-
+$indexer = Indexer();
+$indexer->resetIndex(); // clears the index
+$indexer->buildIndex($products); // process the models
 ```
 
-## Start filtering
+## Get results
 
-### Apply facet filter to the query
+### Apply the facet filter to a query
 
 ``` php
-// A facet filter is an associative, two-dimensional array ([facet_name => [values]]).
-$products = Product::facetsMatchFilter(['main-color' => ['green']]->get();
-
-// You can use the getFilterFromArr helper function to build the array.
-$filter = Product::getFilterFromArr(request()->all()); // /?main-color=green&size=[s,m] becomes [ 'main-color' => [ 'green' ], 'size' => [ 's', 'm' ] ]
+$filter = ['main-color' => ['green']];
 $products = Product::facetsMatchFilter($filter)->get();
 ```
 
-### Display the output
+## Build the frontend
 
-There is no frontend included, but it should be straight forward.
+You can get all the info about the facets you need from the getFacets() method on the Facettable model.
 
 ``` php
-/* Get info about the facets. The facets have the correct option counts for the last queried results. */
+/* Get info about the facets. */
 $facets = Product::getFacets();
 
 /* You can filter and sort like any regular Laravel collection. */
@@ -119,6 +116,7 @@ Options look like this:
 	]
 */
 ```
+### Livewire example
 
 This is how it could look using Laravel Livewire to communicate a selected option to the backend. You could use any AJAX request, form submit or whatever you like.
 
@@ -139,48 +137,11 @@ This is how it could look using Laravel Livewire to communicate a selected optio
 @endforeach
 ```
 
-## Next steps
+## Further reading
 
-The defineFacets() method on the Facettable model can return more than the fieldname. Each key will be added as a property on the Facet.
+### Advanced indexing
 
-``` php
-public static function defineFacets()
-{
-	return [
-		[
-			'title' => 'Color',
-			'description' => 'The main color.',
-			'fieldname' => 'color',
-			'facet_class' => CustomFacet::class
-		]
-	];
-}
-
-echo $singleFacet->title; // Color
-echo $singleFacet->description; // The main color.
-```
-
-The 'facet_class' key will be used when instantiating Facets.
-
-``` php
-class CustomFacet extends Mgussekloo\FacetFilter\Models\Facet
-{
-	// return the option objects for this facet
-	public function getOptions(): Collection { ... }
-	// return the options objects, but remove the ones leading to zero results
-	public function getNonMissingOptions(): Collection { ... }
-	// get this facet's parameter name
-	public function getParamName(): string { ... }
-	// get this facet's unique slug (used for indexing)
-	public function getSlug(): string { ... }
-	// set the filter for this facet (used when getting the options)
-	public function setFilter($filter) { ... }
-	// set the facetrows for this facet
-	public function setRows($rows) { ... }
-}
-```
-
-You can extend the Indexer to customize the facet values. For example, save a "range bracket" value instead of a "individual price" value.
+You can extend the Indexer when you want to save a "range bracket" value instead of a "individual price" value to the index.
 
 ``` php
 
@@ -199,6 +160,61 @@ class CustomIndexer extends Mgussekloo\FacetFilter\Indexer
 	}
 }
 ```
+
+Process the models in chunks when you deal with very large datasets.
+
+``` php
+$perPage = 1000; $currentPage = Cache::get('facetIndexingPage', 1);
+
+$products = Product::with(['sizes'])->paginate($perPage, ['*'], 'page', $currentPage);
+$indexer = new Indexer($products);
+
+if ($currentPage == 1) {
+    $indexer->resetIndex();
+}
+
+$indexer->buildIndex();
+
+if ($products->hasMorePages()) {}
+    // next iteration, increase currentPage with one
+}
+```
+
+### Custom facets
+
+You can define a custom Facet class (and other custom attributes) for your facets.
+
+``` php
+public static function facetDefinitions()
+{
+	return [
+		[
+			'title' => 'Main color',
+			'description' => 'The main color.',
+			'fieldname' => 'color',
+			'facet_class' => CustomFacet::class
+		]
+	];
+}
+
+class CustomFacet extends Mgussekloo\FacetFilter\Models\Facet
+{
+	// return the option objects for this facet
+	public function getOptions(): Collection { ... }
+	// return the options objects, but remove the ones leading to zero results
+	public function getNonMissingOptions(): Collection { ... }
+	// get this facet's parameter name
+	public function getParamName(): string { ... }
+	// get this facet's unique slug (used for indexing)
+	public function getSlug(): string { ... }
+	// set the filter for this facet (used when getting the options)
+	public function setFilter($filter) { ... }
+	// set the facetrows for this facet
+	public function setRows($rows) { ... }
+}
+```
+
+
 
 ## License
 
