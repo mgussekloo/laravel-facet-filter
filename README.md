@@ -34,11 +34,14 @@ php artisan migrate
 Add a Facettable trait and a defineFacets() method to all the models that should support facet filtering.
 
 ``` php
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 use Mgussekloo\FacetFilter\Traits\Facettable;
 
 class Product extends Model
 {
+    use HasFactory;
 	use Facettable;
 
 	public static function facetDefinitions()
@@ -53,7 +56,7 @@ class Product extends Model
 				'title' => 'Sizes',
 				'fieldname' => 'sizes.name' // Use dot notation to get the value from related models.
 			]
-		]
+		];
 	}
 
 	...
