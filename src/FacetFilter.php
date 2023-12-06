@@ -38,11 +38,6 @@ class FacetFilter
             self::$facets[$subjectType] = $facets;
 		}
 
-        // should we set the filter on all the facets?
-        if (! is_null($filter)) {
-            self::$facets[$subjectType]->map->setFilter(self::getFilterFromArr($subjectType, $filter));
-        }
-
         return self::$facets[$subjectType];
     }
 
@@ -138,6 +133,8 @@ class FacetFilter
         if (! isset(self::$idsInFilteredQuery[$subjectType])) {
             self::$idsInFilteredQuery[$subjectType] = [];
         }
+
+		$filter = self::getFilterFromArr($subjectType, $filter);
 
         $cacheKey = (new FacetFilter())->getCacheKey($subjectType, $filter);
         if (! isset(self::$idsInFilteredQuery[$subjectType][$cacheKey]) && ! is_null($ids)) {
