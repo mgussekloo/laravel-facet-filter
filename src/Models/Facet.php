@@ -85,6 +85,7 @@ class Facet extends Model
                     'selected' => in_array($value, $selectedValues),
                     'total' => $total,
                     'slug' => sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-')),
+                    'http_query' => $this->get_http_query($value)
                 ]);
             }
 
@@ -94,6 +95,8 @@ class Facet extends Model
         return $this->options;
     }
 
+
+
     // return the options objects, but remove the ones leading to zero results
     public function getNonMissingOptions(): Collection
     {
@@ -101,21 +104,42 @@ class Facet extends Model
     }
 
     // constrain the given query to this facet's filtered values
-    public function constrainQueryWithFilter($query, $filter = null): FacetQueryBuilder {
-    	if (!is_null($filter)) {
-    		$this->filter = $filter;
-    	}
+    public function constrainQueryWithFilter($query): FacetQueryBuilder {
+  		$facetName = $this->getParamName();
+		$selectedValues = (isset($this->filter[$facetName]))
+			? collect($this->filter[$facetName])->values()
+			: collect([]);
 
-  		$key = $this->getParamName();
-		$selectedValues = $this->filter[$key];
+    	$allValues = $this->rows->pluck('value')->filter()->unique()->values();
 
-		if (!empty($selectedValues)) {
+        if ($allValues->diff($selectedValues)->isEmpty()) {
+        	$selectedValues = collect([]);
+        }
+
+		if ($selectedValues->isNotEmpty()) {
         	$query->whereHas('facetrows', function($query) use ($selectedValues): void {
-            	$query->select('id')->where('facet_slug', $this->getSlug())->whereIn('value', $selectedValues);
+            	$query->select('id')->where('facet_slug', $this->getSlug())->whereIn('value', $selectedValues->toArray());
             });
         }
 
         return $query;
+    }
+
+    public function get_http_query($value): string
+    {
+        $facetName = $this->getParamName();
+
+		if (isset($this->filter[$facetName])) {
+	    	$collection = collect($this->filter[$facetName]);
+			if ($collection->contains($value)) {
+				$collection->pull($collection->search($value));
+			} else {
+				$collection->push($value);
+			}
+
+			$arr = array_merge($this->filter, [$facetName => $collection->toArray()]);
+			return http_build_query($arr, null, '&', PHP_QUERY_RFC3986);
+		}
     }
 
     // return the title (or fieldname) to use for the http query param

@@ -9,7 +9,6 @@ use Mgussekloo\FacetFilter\Facades\FacetFilter;
 class FacetQueryBuilder extends Builder
 {
     public $subjectType = null;
-
     public $filter = null;
 
     public function __construct(QueryBuilder $query)
@@ -26,6 +25,8 @@ class FacetQueryBuilder extends Builder
         $this->filter = $filter;
         $this->subjectType = $this->model::class;
 
+		FacetFilter::getFacets($this->subjectType, $filter);
+
         return $this;
     }
 
@@ -40,14 +41,11 @@ class FacetQueryBuilder extends Builder
             return parent::get($columns);
         }
 
-		// Try to remove this filter
-        $this->removeFilterWhenAllFacetValuesSelected();
-
         // Save the unconstrained query
         FacetFilter::setLastQuery($this->subjectType, $this);
 
         // Constrain the query
-        $this->constrainQueryWithFilter();
+        $this->constrainQueryWithFilter($this->filter);
 
         // Get the result
         $result = parent::get($columns);
@@ -67,55 +65,32 @@ class FacetQueryBuilder extends Builder
     {
         $paramName = $facet->getParamName();
 
-        $this->filter[$paramName] = [];
+        $filter = array_merge($this->filter, [$paramName => []]);
 
         // $this->removeFilterWhenAllFacetValuesSelected();
 
-        $idsArr = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter);
+        $idsArr = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $filter);
 
         if ($idsArr === false) {
-            $this->constrainQueryWithFilter();
+            $this->constrainQueryWithFilter($filter);
             $idsArr = parent::pluck('id')->toArray();
-            FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter, $idsArr);
+            FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $filter, $idsArr);
         }
 
         return $idsArr;
     }
 
     // Constrain the query with the facets and filter
-    public function constrainQueryWithFilter()
+    public function constrainQueryWithFilter($filter)
     {
-    	if (empty(array_filter($this->filter))) {
+    	if (empty(array_filter($filter))) {
     		return;
     	}
 
         $facets = FacetFilter::getFacets($this->subjectType);
 
         foreach ($facets as $facet) {
-    		$facet->constrainQueryWithFilter($this, $this->filter);
-        }
-    }
-
-    // If we selected ALL facet values, we do not need to filter at all
-    public function removeFilterWhenAllFacetValuesSelected()
-    {
-    	if (empty(array_filter($this->filter))) {
-    		return;
-    	}
-
-        $facets = FacetFilter::getFacets($this->subjectType);
-
-        foreach ($facets as $facet) {
-            $key = $facet->getParamName();
-
-			if (!empty($this->filter[$key])) {
-				$selectedValues = collect($this->filter[$key])->values();
-            	$allValues = $facet->rows->pluck('value')->filter()->unique()->values();
-
-	            if ($allValues->diff($selectedValues)->isEmpty()) {
-	                $this->filter[$key] = [];
-	            }
-	        }
+    		$facet->constrainQueryWithFilter($this);
         }
     }
 }
