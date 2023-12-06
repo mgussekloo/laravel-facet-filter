@@ -85,7 +85,7 @@ class Facet extends Model
                     'selected' => in_array($value, $selectedValues),
                     'total' => $total,
                     'slug' => sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-')),
-                    'http_query' => $this->get_http_query($value)
+                    'http_query' => $this->getHttpQuery($value)
                 ]);
             }
 
@@ -125,7 +125,7 @@ class Facet extends Model
         return $query;
     }
 
-    public function get_http_query($value): string
+    public function getHttpQuery($value): string
     {
         $facetName = $this->getParamName();
 
@@ -140,6 +140,7 @@ class Facet extends Model
 			$arr = array_merge($this->filter, [$facetName => $collection->toArray()]);
 			return http_build_query($arr, null, '&', PHP_QUERY_RFC3986);
 		}
+		return '';
     }
 
     // return the title (or fieldname) to use for the http query param

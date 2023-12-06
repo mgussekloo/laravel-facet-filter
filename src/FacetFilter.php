@@ -40,7 +40,7 @@ class FacetFilter
 
         // should we set the filter on all the facets?
         if (! is_null($filter)) {
-            self::$facets[$subjectType]->map->setFilter($filter);
+            self::$facets[$subjectType]->map->setFilter(self::getFilterFromArr($subjectType, $filter));
         }
 
         return self::$facets[$subjectType];

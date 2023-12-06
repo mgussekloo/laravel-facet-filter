@@ -170,6 +170,10 @@ This is how it could look using Laravel Livewire to communicate a selected optio
 
 ## Further reading
 
+### Demo
+
+I've prepared a simple [demo project](https://github.com/mgussekloo/Facet-Demo).
+
 ### Advanced indexing
 
 You can extend the Indexer when you want to save a "range bracket" value instead of a "individual price" value to the index.
@@ -235,8 +239,8 @@ class CustomFacet extends Mgussekloo\FacetFilter\Models\Facet
 	public function getNonMissingOptions(): Collection { ... }
 	// constrain the given query to this facet's filtered values
     public function constrainQueryWithFilter($query): FacetQueryBuilder {
-    // make the http query for this value
-	public function get_http_query($value): string
+    // get the http query for this value
+	public function getHttpQuery($value): string
 	// get this facet's parameter name
 	public function getParamName(): string { ... }
 	// get this facet's unique slug (used for indexing)
