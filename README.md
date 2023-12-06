@@ -238,8 +238,8 @@ class CustomFacet extends Mgussekloo\FacetFilter\Models\Facet
 	// return the options objects, but remove the ones leading to zero results
 	public function getNonMissingOptions(): Collection { ... }
 	// apply the facet filtering to the given $querybuilder instance
-    public function constrainQueryWithFilter($query): FacetQueryBuilder { ... }
-    // get the http query to build links easily
+	public function constrainQueryWithFilter($query): FacetQueryBuilder { ... }
+	// get the http query to build links easily
 	public function getHttpQuery($value): string { ... }
 	// get this facet's parameter name
 	public function getParamName(): string { ... }
