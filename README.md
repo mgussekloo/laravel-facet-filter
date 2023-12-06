@@ -58,8 +58,8 @@ class Product extends Model
 			]
 		];
 	}
+}
 
-	...
 ```
 
 ### Build the index
