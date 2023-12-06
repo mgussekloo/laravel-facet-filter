@@ -92,17 +92,7 @@ class FacetQueryBuilder extends Builder
         $facets = FacetFilter::getFacets($this->subjectType);
 
         foreach ($facets as $facet) {
-            $key = $facet->getParamName();
-
-            if (!empty($this->filter[$key])) {
-                $values = (array) $this->filter[$key];
-
-                if (! empty($values)) {
-                    $this->whereHas('facetrows', function ($query) use ($values, $facet): void {
-                        $query->select('id')->where('facet_slug', $facet->getSlug())->whereIn('value', $values);
-                    });
-                }
-            }
+    		$facet->constrainQueryWithFilter($this, $this->filter);
         }
     }
 

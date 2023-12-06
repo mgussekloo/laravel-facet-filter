@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Collection as EloquentCollection;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
+use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
 use Str;
 
 /**
@@ -99,7 +100,25 @@ class Facet extends Model
         return $this->getOptions()->filter(fn ($value) => $value->total);
     }
 
-    // get this facet's parameter name
+    // constrain the given query to this facet's filtered values
+    public function constrainQueryWithFilter($query, $filter = null): FacetQueryBuilder {
+    	if (!is_null($filter)) {
+    		$this->filter = $filter;
+    	}
+
+  		$key = $this->getParamName();
+		$selectedValues = $this->filter[$key];
+
+		if (!empty($selectedValues)) {
+        	$query->whereHas('facetrows', function($query) use ($selectedValues): void {
+            	$query->select('id')->where('facet_slug', $this->getSlug())->whereIn('value', $selectedValues);
+            });
+        }
+
+        return $query;
+    }
+
+    // return the title (or fieldname) to use for the http query param
     public function getParamName(): string
     {
     	$param = isset($this->title) ? $this->title : $this->fieldname;
