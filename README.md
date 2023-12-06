@@ -41,7 +41,7 @@ use Mgussekloo\FacetFilter\Traits\Facettable;
 
 class Product extends Model
 {
-    use HasFactory;
+	use HasFactory;
 	use Facettable;
 
 	public static function facetDefinitions()
@@ -68,7 +68,6 @@ Before you can start filtering you will have to build an index. You can use the
 Indexer provided with this package.
 
 ``` php
-
 use Mgussekloo\FacetFilter\Indexer;
 
 $products = Product::with(['sizes'])->get(); // get some products
@@ -89,7 +88,7 @@ $products = Product::facetsMatchFilter($filter)->get();
 
 ## Build the frontend
 
-You can get all the info about the facets you need from the getFacets() method on the Facettable model.
+All the info you need to build your frontend is included.
 
 ``` php
 /* Get info about the facets. */
@@ -106,19 +105,48 @@ $options = $singleFacet->getOptions();
 Options look like this:
 [
 	(object)[
-		'value' => 'Red'
+		'value' => 'Red',
 		'selected' => false,
-		'total' => 3
-		'slug' => 'color_red'
+		'total' => 3,
+		'slug' => 'color_red',
+		'http_query' => 'main-color%5B1%5D=red&sizes%5B0%5D=small'
 	],
 	(object)[
-		'value' => 'Green'
-		'selected' => true
-		'total' => 2
-		'slug' => 'color_green'
+		'value' => 'Green',
+		'selected' => true,
+		'total' => 2,
+		'slug' => 'color_green',
+		'http_query' => 'main-color%5B1%5D=green&sizes%5B0%5D=small'
 	]
 */
 ```
+
+### Basic frontend example
+
+``` html
+<div class="flex">
+	<div class="w-1/4 flex-0">
+		@foreach ($facets as $facet)
+			<p>
+				<h3>{{ $facet->title }}</h3>
+
+				@foreach ($facet->getOptions() as $option)
+					<a href="?{{ $option->http_query }}" class="{{ $option->selected ? 'underline' : '' }}">{{ $option->value }} ({{ $option->total }}) </a><br />
+				@endforeach
+			</p><br />
+		@endforeach
+	</div>
+	<div class="w-3/4">
+		@foreach ($products as $product)
+			<p>
+				<h1>{{ $product->name }} ({{ $product->sizes->pluck('name')->join(', ') }})</h1>
+				{{ $product->color }}<br /><br />
+			</p>
+		@endforeach
+	</div>
+</div>
+```
+
 ### Livewire example
 
 This is how it could look using Laravel Livewire to communicate a selected option to the backend. You could use any AJAX request, form submit or whatever you like.
@@ -147,7 +175,6 @@ This is how it could look using Laravel Livewire to communicate a selected optio
 You can extend the Indexer when you want to save a "range bracket" value instead of a "individual price" value to the index.
 
 ``` php
-
 class CustomIndexer extends Mgussekloo\FacetFilter\Indexer
 {
 	public function buildRow($facet, $model, $value) {
@@ -173,13 +200,13 @@ $products = Product::with(['sizes'])->paginate($perPage, ['*'], 'page', $current
 $indexer = new Indexer($products);
 
 if ($currentPage == 1) {
-    $indexer->resetIndex();
+	$indexer->resetIndex();
 }
 
 $indexer->buildIndex();
 
 if ($products->hasMorePages()) {}
-    // next iteration, increase currentPage with one
+	// next iteration, increase currentPage with one
 }
 ```
 
@@ -206,6 +233,10 @@ class CustomFacet extends Mgussekloo\FacetFilter\Models\Facet
 	public function getOptions(): Collection { ... }
 	// return the options objects, but remove the ones leading to zero results
 	public function getNonMissingOptions(): Collection { ... }
+	// constrain the given query to this facet's filtered values
+    public function constrainQueryWithFilter($query): FacetQueryBuilder {
+    // make the http query for this value
+	public function get_http_query($value): string
 	// get this facet's parameter name
 	public function getParamName(): string { ... }
 	// get this facet's unique slug (used for indexing)
