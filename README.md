@@ -31,7 +31,7 @@ php artisan migrate
 
 ### Update your models
 
-Add a Facettable trait and a defineFacets() method to all the models that should support facet filtering.
+Add a Facettable trait and a facetDefinitions() method to all the models that should support facet filtering.
 
 ``` php
 use Illuminate\Database\Eloquent\Factories\HasFactory;
