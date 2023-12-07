@@ -110,18 +110,13 @@ Options look like this:
 		'total' => 3,
 		'slug' => 'color_red',
 		'http_query' => 'main-color%5B1%5D=red&sizes%5B0%5D=small'
-	],
-	(object)[
-		'value' => 'Green',
-		'selected' => true,
-		'total' => 2,
-		'slug' => 'color_green',
-		'http_query' => 'main-color%5B1%5D=green&sizes%5B0%5D=small'
 	]
 */
 ```
 
 ### Basic frontend example
+
+I've prepared a simple [demo project](https://github.com/mgussekloo/Facet-Demo) that demonstrates a basic frontend.
 
 ``` html
 <div class="flex">
@@ -170,13 +165,9 @@ This is how it could look using Laravel Livewire to communicate a selected optio
 
 ## Further reading
 
-### Demo
-
-I've prepared a simple [demo project](https://github.com/mgussekloo/Facet-Demo).
-
 ### Advanced indexing
 
-You can extend the Indexer when you want to save a "range bracket" value instead of a "individual price" value to the index.
+Extend the [Indexer](src/Indexer.php) to customize behavior, e.g. to save a "range bracket" value instead of a "individual price" value to the index.
 
 ``` php
 class CustomIndexer extends Mgussekloo\FacetFilter\Indexer
@@ -195,7 +186,7 @@ class CustomIndexer extends Mgussekloo\FacetFilter\Indexer
 }
 ```
 
-Process the models in chunks when you deal with very large datasets.
+You can process models in chunks for very large datasets.
 
 ``` php
 $perPage = 1000; $currentPage = Cache::get('facetIndexingPage', 1);
@@ -216,7 +207,7 @@ if ($products->hasMorePages()) {}
 
 ### Custom facets
 
-You can define a custom Facet class (and other custom attributes) for your facets.
+You can provide custom attributes and an optional custom [Facet class](src/Models/Facet.php) in the definitions.
 
 ``` php
 public static function facetDefinitions()
@@ -230,29 +221,7 @@ public static function facetDefinitions()
 		]
 	];
 }
-
-class CustomFacet extends Mgussekloo\FacetFilter\Models\Facet
-{
-	// return the option objects for this facet
-	public function getOptions(): Collection { ... }
-	// return the options objects, but remove the ones leading to zero results
-	public function getNonMissingOptions(): Collection { ... }
-	// apply the facet filtering to the given $querybuilder instance
-	public function constrainQueryWithFilter($query): FacetQueryBuilder { ... }
-	// get the http query to build links easily
-	public function getHttpQuery($value): string { ... }
-	// get this facet's parameter name
-	public function getParamName(): string { ... }
-	// get this facet's unique slug (used for indexing)
-	public function getSlug(): string { ... }
-	// set the filter for this facet (used when getting the options)
-	public function setFilter($filter) { ... }
-	// set the facetrows for this facet
-	public function setRows($rows) { ... }
-}
 ```
-
-
 
 ## License
 
