@@ -2,12 +2,10 @@
 
 namespace Mgussekloo\FacetFilter\Models;
 
-use DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Collection as EloquentCollection;
-use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
+use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Str;
 
 /**
@@ -30,9 +28,9 @@ class Facet extends Model
 
     public function __construct($definition)
     {
-    	foreach ($definition as $key => $value) {
-    		$this->$key = $value;
-    	}
+        foreach ($definition as $key => $value) {
+            $this->$key = $value;
+        }
     }
 
     // return the option objects for this facet
@@ -43,7 +41,7 @@ class Facet extends Model
             $subjectType = $this->subject_type;
 
             if (is_null($this->rows)) {
-            	throw new \Exception('This facet `' . $facetName . '` has no rows!');
+                throw new \Exception('This facet `'.$facetName.'` has no rows!');
             }
 
             // find out totals of the values in this facet
@@ -85,7 +83,7 @@ class Facet extends Model
                     'selected' => in_array($value, $selectedValues),
                     'total' => $total,
                     'slug' => sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-')),
-                    'http_query' => $this->getHttpQuery($value)
+                    'http_query' => $this->getHttpQuery($value),
                 ]);
             }
 
@@ -95,8 +93,6 @@ class Facet extends Model
         return $this->options;
     }
 
-
-
     // return the options objects, but remove the ones leading to zero results
     public function getNonMissingOptions(): Collection
     {
@@ -104,22 +100,23 @@ class Facet extends Model
     }
 
     // constrain the given query to this facet's filtered values
-    public function constrainQueryWithFilter($query, $filter): FacetQueryBuilder {
-  		$facetName = $this->getParamName();
+    public function constrainQueryWithFilter($query, $filter): FacetQueryBuilder
+    {
+        $facetName = $this->getParamName();
 
-		$selectedValues = (isset($filter[$facetName]))
-			? collect($filter[$facetName])->values()
-			: collect([]);
+        $selectedValues = (isset($filter[$facetName]))
+            ? collect($filter[$facetName])->values()
+            : collect([]);
 
-    	$allValues = $this->rows->pluck('value')->filter()->unique()->values();
+        $allValues = $this->rows->pluck('value')->filter()->unique()->values();
 
         if ($allValues->diff($selectedValues)->isEmpty()) {
-        	$selectedValues = collect([]);
+            $selectedValues = collect([]);
         }
 
-		if ($selectedValues->isNotEmpty()) {
-        	$query->whereHas('facetrows', function($query) use ($selectedValues): void {
-            	$query->select('id')->where('facet_slug', $this->getSlug())->whereIn('value', $selectedValues->toArray());
+        if ($selectedValues->isNotEmpty()) {
+            $query->whereHas('facetrows', function ($query) use ($selectedValues): void {
+                $query->select('id')->where('facet_slug', $this->getSlug())->whereIn('value', $selectedValues->toArray());
             });
         }
 
@@ -130,25 +127,27 @@ class Facet extends Model
     {
         $facetName = $this->getParamName();
 
-		if (isset($this->filter[$facetName])) {
-	    	$collection = collect($this->filter[$facetName]);
-			if ($collection->contains($value)) {
-				$collection->pull($collection->search($value));
-			} else {
-				$collection->push($value);
-			}
+        if (isset($this->filter[$facetName])) {
+            $collection = collect($this->filter[$facetName]);
+            if ($collection->contains($value)) {
+                $collection->pull($collection->search($value));
+            } else {
+                $collection->push($value);
+            }
 
-			$arr = array_merge($this->filter, [$facetName => $collection->toArray()]);
-			return http_build_query($arr, null, '&', PHP_QUERY_RFC3986);
-		}
+            $arr = array_merge($this->filter, [$facetName => $collection->toArray()]);
 
-		return '';
+            return http_build_query($arr, '', '&', PHP_QUERY_RFC3986);
+        }
+
+        return '';
     }
 
     // return the title (or fieldname) to use for the http query param
     public function getParamName(): string
     {
-    	$param = isset($this->title) ? $this->title : $this->fieldname;
+        $param = isset($this->title) ? $this->title : $this->fieldname;
+
         return Str::slug($param);
     }
 
@@ -167,7 +166,6 @@ class Facet extends Model
     // set the facetrows for this facet
     public function setRows($rows)
     {
-    	$this->rows = $rows;
+        $this->rows = $rows;
     }
-
 }

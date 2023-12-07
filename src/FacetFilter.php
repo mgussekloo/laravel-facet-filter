@@ -20,10 +20,10 @@ class FacetFilter
      */
     public function getFacets(string $subjectType, $filter = null, $load = true): Collection
     {
-		if (!isset(self::$facets[$subjectType])) {
-			$facets = $subjectType::makeFacets();
+        if (! isset(self::$facets[$subjectType])) {
+            $facets = $subjectType::makeFacets();
 
-		    // Should we preload the options?
+            // Should we preload the options?
             if ($load) {
                 $rows = DB::table('facetrows')->select('facet_slug', 'subject_id', 'value')->get()->groupBy('facet_slug');
 
@@ -36,12 +36,12 @@ class FacetFilter
             }
 
             self::$facets[$subjectType] = $facets;
-		}
+        }
 
-		if (is_array($filter)) {
-			$filter = $subjectType::getFilterFromArr($filter);
-			self::$facets[$subjectType]->map->setFilter($filter);
-		}
+        if (is_array($filter)) {
+            $filter = $subjectType::getFilterFromArr($filter);
+            self::$facets[$subjectType]->map->setFilter($filter);
+        }
 
         return self::$facets[$subjectType];
     }
@@ -52,9 +52,9 @@ class FacetFilter
      */
     public function makeFacetsWithDefinitions(string $subjectType, $definitions): Collection
     {
-     	if (is_array($definitions)) {
-     		$definitions = collect($definitions);
-     	}
+        if (is_array($definitions)) {
+            $definitions = collect($definitions);
+        }
 
         $definitions = $definitions->map(function ($definition) use ($subjectType) {
             if (! isset($definition['fieldname'])) {
@@ -118,7 +118,8 @@ class FacetFilter
             return $item;
         }, (array) $arr);
 
-		$filter = array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
+        $filter = array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
+
         return $filter;
     }
 
@@ -141,12 +142,13 @@ class FacetFilter
             self::$idsInFilteredQuery[$subjectType] = [];
         }
 
-		// $filter = $subjectType::getFilterFromArr($subjectType, $filter);
+        // $filter = $subjectType::getFilterFromArr($subjectType, $filter);
 
         $cacheKey = self::getCacheKey($subjectType, $filter);
 
         if (! is_null($ids)) {
             self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
+
             return $ids;
         }
 

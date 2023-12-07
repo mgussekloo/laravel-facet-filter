@@ -3,83 +3,85 @@
 namespace Mgussekloo\FacetFilter\Builders;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
 class FacetQueryBuilder extends Builder
 {
-	public $facetSubjectType = null;
-	public $facetFilter = null;
-	public $facetMainQuery = false;
+    public $facetSubjectType = null;
 
-	/**
-	 * Remember the filter and the subject type (model class) and wait
-	 * until we need the results (get) before performing the query.
-	 */
-	public function facetsMatchFilter($filter = [])
-	{
-		$this->facetFilter = $filter;
-		$this->facetSubjectType = $this->model::class;
-		$this->facetMainQuery = true;
-		return $this;
-	}
+    public $facetFilter = null;
 
-	/**
-	 * Get the results, but first constrain the query with matching facets.
-	 * We save the base query, to use it later to calculate the results in each facet.
-	 */
-	public function get($columns = ['*'])
-	{
-		// If we're not doing any facet filtering, just bail.
-		if (is_null($this->facetFilter)) {
-			return parent::get($columns);
-		}
+    public $facetMainQuery = false;
 
-		// Save the unconstrained query
-		FacetFilter::setLastQuery($this->facetSubjectType, $this);
+    /**
+     * Remember the filter and the subject type (model class) and wait
+     * until we need the results (get) before performing the query.
+     */
+    public function facetsMatchFilter($filter = [])
+    {
+        $this->facetFilter = $filter;
+        $this->facetSubjectType = $this->model::class;
+        $this->facetMainQuery = true;
 
-		// Constrain the query
-		$this->constrainQueryWithFilter($this->facetFilter);
+        return $this;
+    }
 
-		// Get the result
-		$result = parent::get($columns);
+    /**
+     * Get the results, but first constrain the query with matching facets.
+     * We save the base query, to use it later to calculate the results in each facet.
+     */
+    public function get($columns = ['*'])
+    {
+        // If we're not doing any facet filtering, just bail.
+        if (is_null($this->facetFilter)) {
+            return parent::get($columns);
+        }
 
-		// Save the ID's within the result in the cache
-		FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $this->facetFilter, $result->pluck('id')->toArray());
+        // Save the unconstrained query
+        FacetFilter::setLastQuery($this->facetSubjectType, $this);
 
-		return $result;
-	}
+        // Constrain the query
+        $this->constrainQueryWithFilter($this->facetFilter);
 
-	/**
-	 * Perform a query of the same filter, without a particular facet
-	 * and return the id's in the results. Cache the results, to avoid
-	 * running the same query twice.
-	 */
-	public function getIdsInQueryWithoutFacet($facet): array
-	{
-		$paramName = $facet->getParamName();
+        // Get the result
+        $result = parent::get($columns);
 
-		$filter = array_merge($this->facetFilter, [$paramName => []]);
+        // Save the ID's within the result in the cache
+        FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $this->facetFilter, $result->pluck('id')->toArray());
 
-		$idsArr = FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter);
+        return $result;
+    }
 
-		if (false === $idsArr) {
-			$this->constrainQueryWithFilter($filter);
-			$idsArr = parent::pluck('id')->toArray();
-			FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter, $idsArr);
-		}
+    /**
+     * Perform a query of the same filter, without a particular facet
+     * and return the id's in the results. Cache the results, to avoid
+     * running the same query twice.
+     */
+    public function getIdsInQueryWithoutFacet($facet): array
+    {
+        $paramName = $facet->getParamName();
 
-		return $idsArr;
-	}
+        $filter = array_merge($this->facetFilter, [$paramName => []]);
 
-	// Constrain the query with the facets and filter
-	public function constrainQueryWithFilter($filter)
-	{
-		$shouldApplyFilter = ($this->facetMainQuery) ? $filter : false;
-		$facets = FacetFilter::getFacets($this->facetSubjectType, $shouldApplyFilter);
+        $idsArr = FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter);
 
-		foreach ($facets as $facet) {
-			$facet->constrainQueryWithFilter($this, $filter);
-		}
-	}
+        if (false === $idsArr) {
+            $this->constrainQueryWithFilter($filter);
+            $idsArr = parent::pluck('id')->toArray();
+            FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter, $idsArr);
+        }
+
+        return $idsArr;
+    }
+
+    // Constrain the query with the facets and filter
+    public function constrainQueryWithFilter($filter)
+    {
+        $shouldApplyFilter = ($this->facetMainQuery) ? $filter : false;
+        $facets = FacetFilter::getFacets($this->facetSubjectType, $shouldApplyFilter);
+
+        foreach ($facets as $facet) {
+            $facet->constrainQueryWithFilter($this, $filter);
+        }
+    }
 }

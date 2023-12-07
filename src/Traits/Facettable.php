@@ -19,7 +19,7 @@ trait Facettable
     }
 
     // get the facet models
-	public static function getFacets($filter = null, $load = true): Collection
+    public static function getFacets($filter = null, $load = true): Collection
     {
         return FacetFilter::getFacets(self::class, $filter, $load);
     }
@@ -34,9 +34,8 @@ trait Facettable
         return new FacetQueryBuilder($query);
     }
 
-	public static function getFilterFromArr($arr = [])
+    public static function getFilterFromArr($arr = [])
     {
         return FacetFilter::getFilterFromArr(self::class, $arr);
     }
-
 }
