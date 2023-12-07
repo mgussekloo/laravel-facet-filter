@@ -104,10 +104,11 @@ class Facet extends Model
     }
 
     // constrain the given query to this facet's filtered values
-    public function constrainQueryWithFilter($query): FacetQueryBuilder {
+    public function constrainQueryWithFilter($query, $filter): FacetQueryBuilder {
   		$facetName = $this->getParamName();
-		$selectedValues = (isset($this->filter[$facetName]))
-			? collect($this->filter[$facetName])->values()
+
+		$selectedValues = (isset($filter[$facetName]))
+			? collect($filter[$facetName])->values()
 			: collect([]);
 
     	$allValues = $this->rows->pluck('value')->filter()->unique()->values();
@@ -140,6 +141,7 @@ class Facet extends Model
 			$arr = array_merge($this->filter, [$facetName => $collection->toArray()]);
 			return http_build_query($arr, null, '&', PHP_QUERY_RFC3986);
 		}
+
 		return '';
     }
 

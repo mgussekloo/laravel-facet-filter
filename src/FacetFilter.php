@@ -39,7 +39,8 @@ class FacetFilter
 		}
 
 		if (is_array($filter)) {
-			self::$facets[$subjectType]->map->setFilter($subjectType::getFilterFromArr($filter));
+			$filter = $subjectType::getFilterFromArr($filter);
+			self::$facets[$subjectType]->map->setFilter($filter);
 		}
 
         return self::$facets[$subjectType];
@@ -117,7 +118,8 @@ class FacetFilter
             return $item;
         }, (array) $arr);
 
-        return array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
+		$filter = array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
+        return $filter;
     }
 
     /**
@@ -139,12 +141,12 @@ class FacetFilter
             self::$idsInFilteredQuery[$subjectType] = [];
         }
 
-		$filter = $subjectType::getFilterFromArr($subjectType, $filter);
+		// $filter = $subjectType::getFilterFromArr($subjectType, $filter);
 
         $cacheKey = self::getCacheKey($subjectType, $filter);
-        if (! isset(self::$idsInFilteredQuery[$subjectType][$cacheKey]) && ! is_null($ids)) {
-            self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
 
+        if (! is_null($ids)) {
+            self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
             return $ids;
         }
 
@@ -161,9 +163,7 @@ class FacetFilter
      */
     public function resetIdsInFilteredQuery(string $subjectType): void
     {
-        // if (isset(self::$idsInFilteredQuery[$subjectType])) {
-            unset(self::$idsInFilteredQuery[$subjectType]);
-        // }
+        unset(self::$idsInFilteredQuery[$subjectType]);
     }
 
     /**

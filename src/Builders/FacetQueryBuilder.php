@@ -12,11 +12,6 @@ class FacetQueryBuilder extends Builder
 	public $facetFilter = null;
 	public $facetMainQuery = false;
 
-	public function __construct(QueryBuilder $query)
-	{
-		parent::__construct($query);
-	}
-
 	/**
 	 * Remember the filter and the subject type (model class) and wait
 	 * until we need the results (get) before performing the query.
@@ -68,7 +63,7 @@ class FacetQueryBuilder extends Builder
 
 		$idsArr = FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter);
 
-		if ($idsArr === false) {
+		if (false === $idsArr) {
 			$this->constrainQueryWithFilter($filter);
 			$idsArr = parent::pluck('id')->toArray();
 			FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter, $idsArr);
@@ -80,17 +75,11 @@ class FacetQueryBuilder extends Builder
 	// Constrain the query with the facets and filter
 	public function constrainQueryWithFilter($filter)
 	{
-		if (empty(array_filter($filter))) {
-			return;
-		}
-
 		$shouldApplyFilter = ($this->facetMainQuery) ? $filter : false;
-
 		$facets = FacetFilter::getFacets($this->facetSubjectType, $shouldApplyFilter);
 
-
 		foreach ($facets as $facet) {
-			$facet->constrainQueryWithFilter($this);
+			$facet->constrainQueryWithFilter($this, $filter);
 		}
 	}
 }
