@@ -103,14 +103,13 @@ $options = $singleFacet->getOptions();
 
 /*
 Options look like this:
-[
-	(object)[
-		'value' => 'Red',
-		'selected' => false,
-		'total' => 3,
-		'slug' => 'color_red',
-		'http_query' => 'main-color%5B1%5D=red&sizes%5B0%5D=small'
-	]
+(object)[
+	'value' => 'Red',
+	'selected' => false,
+	'total' => 3,
+	'slug' => 'color_red',
+	'http_query' => 'main-color%5B1%5D=red&sizes%5B0%5D=small'
+]
 */
 ```
 
