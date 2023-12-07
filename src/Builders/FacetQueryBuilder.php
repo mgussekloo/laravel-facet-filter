@@ -8,8 +8,9 @@ use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
 class FacetQueryBuilder extends Builder
 {
-	public $subjectType = null;
-	public $filter = null;
+	public $facetSubjectType = null;
+	public $facetFilter = null;
+	public $facetMainQuery = false;
 
 	public function __construct(QueryBuilder $query)
 	{
@@ -22,12 +23,9 @@ class FacetQueryBuilder extends Builder
 	 */
 	public function facetsMatchFilter($filter = [])
 	{
-		$this->filter = $filter;
-		$this->subjectType = $this->model::class;
-
-		$facets = FacetFilter::getFacets($this->subjectType);
-		$facets->map->setFilter(FacetFilter::getFilterFromArr($this->subjectType, $this->filter));
-
+		$this->facetFilter = $filter;
+		$this->facetSubjectType = $this->model::class;
+		$this->facetMainQuery = true;
 		return $this;
 	}
 
@@ -38,21 +36,21 @@ class FacetQueryBuilder extends Builder
 	public function get($columns = ['*'])
 	{
 		// If we're not doing any facet filtering, just bail.
-		if (is_null($this->filter)) {
+		if (is_null($this->facetFilter)) {
 			return parent::get($columns);
 		}
 
 		// Save the unconstrained query
-		FacetFilter::setLastQuery($this->subjectType, $this);
+		FacetFilter::setLastQuery($this->facetSubjectType, $this);
 
 		// Constrain the query
-		$this->constrainQueryWithFilter($this->filter);
+		$this->constrainQueryWithFilter($this->facetFilter);
 
 		// Get the result
 		$result = parent::get($columns);
 
 		// Save the ID's within the result in the cache
-		FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $this->filter, $result->pluck('id')->toArray());
+		FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $this->facetFilter, $result->pluck('id')->toArray());
 
 		return $result;
 	}
@@ -66,14 +64,14 @@ class FacetQueryBuilder extends Builder
 	{
 		$paramName = $facet->getParamName();
 
-		$filter = array_merge($this->filter, [$paramName => []]);
+		$filter = array_merge($this->facetFilter, [$paramName => []]);
 
-		$idsArr = FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $filter);
+		$idsArr = FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter);
 
 		if ($idsArr === false) {
 			$this->constrainQueryWithFilter($filter);
 			$idsArr = parent::pluck('id')->toArray();
-			FacetFilter::cacheIdsInFilteredQuery($this->subjectType, $filter, $idsArr);
+			FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter, $idsArr);
 		}
 
 		return $idsArr;
@@ -86,7 +84,12 @@ class FacetQueryBuilder extends Builder
 			return;
 		}
 
-		$facets = FacetFilter::getFacets($this->subjectType);
+		$facets = FacetFilter::getFacets($this->facetSubjectType);
+
+		// Update filter for the facets
+		if ($this->facetMainQuery) {
+			$facets->map->setFilter($this->facetFilter);
+		}
 
 		foreach ($facets as $facet) {
 			$facet->constrainQueryWithFilter($this);

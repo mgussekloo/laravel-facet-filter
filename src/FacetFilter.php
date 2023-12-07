@@ -80,6 +80,7 @@ class FacetFilter
     {
         $newQuery = clone $query;
         $newQuery->withOnly([]);
+        $newQuery->facetMainQuery = false;
         self::$lastQueries[$subjectType] = $newQuery;
         self::resetIdsInFilteredQuery($subjectType);
     }
@@ -102,7 +103,7 @@ class FacetFilter
      */
     public function getFilterFromArr($subjectType, $arr = []): array
     {
-        $emptyFilter = $this->getFacets($subjectType)->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
+        $emptyFilter = $subjectType::getFacets()->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
 
         $arr = array_map(function ($item): array {
             if (! is_array($item)) {
@@ -120,7 +121,7 @@ class FacetFilter
      */
     public function getEmptyFilter(string $subjectType): array
     {
-        return $this->getFilterFromArr($subjectType, []);
+        return $subjectType::getFilterFromArr($subjectType, []);
     }
 
     /**
@@ -134,9 +135,9 @@ class FacetFilter
             self::$idsInFilteredQuery[$subjectType] = [];
         }
 
-		$filter = self::getFilterFromArr($subjectType, $filter);
+		$filter = $subjectType::getFilterFromArr($subjectType, $filter);
 
-        $cacheKey = (new FacetFilter())->getCacheKey($subjectType, $filter);
+        $cacheKey = self::getCacheKey($subjectType, $filter);
         if (! isset(self::$idsInFilteredQuery[$subjectType][$cacheKey]) && ! is_null($ids)) {
             self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
 
@@ -164,7 +165,7 @@ class FacetFilter
     /**
      * Build a cache key for the combination model class + filter
      */
-    public function getCacheKey(string $subjectType, $filter): string
+    public static function getCacheKey(string $subjectType, $filter): string
     {
         return implode('_', [$subjectType, json_encode($filter, JSON_THROW_ON_ERROR)]);
     }
