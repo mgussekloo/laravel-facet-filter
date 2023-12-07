@@ -84,12 +84,10 @@ class FacetQueryBuilder extends Builder
 			return;
 		}
 
-		$facets = FacetFilter::getFacets($this->facetSubjectType);
+		$shouldApplyFilter = ($this->facetMainQuery) ? $filter : false;
 
-		// Update filter for the facets
-		if ($this->facetMainQuery) {
-			$facets->map->setFilter($this->facetFilter);
-		}
+		$facets = FacetFilter::getFacets($this->facetSubjectType, $shouldApplyFilter);
+
 
 		foreach ($facets as $facet) {
 			$facet->constrainQueryWithFilter($this);

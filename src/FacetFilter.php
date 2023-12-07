@@ -38,6 +38,10 @@ class FacetFilter
             self::$facets[$subjectType] = $facets;
 		}
 
+		if (is_array($filter)) {
+			self::$facets[$subjectType]->map->setFilter($subjectType::getFilterFromArr($filter));
+		}
+
         return self::$facets[$subjectType];
     }
 
