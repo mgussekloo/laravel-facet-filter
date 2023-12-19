@@ -38,7 +38,9 @@ class Indexer
 
     public function buildIndex($models = null)
     {
-        $this->models = $models;
+        if (is_null($models)) {
+        	$this->models = $models;
+        }
 
         if (! is_null($this->models) && $this->models->isNotEmpty()) {
             $subjectType = $this->models->first()::class;
