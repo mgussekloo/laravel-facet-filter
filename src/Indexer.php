@@ -38,7 +38,7 @@ class Indexer
 
     public function buildIndex($models = null)
     {
-        if (is_null($models)) {
+        if (!is_null($models)) {
         	$this->models = $models;
         }
 
