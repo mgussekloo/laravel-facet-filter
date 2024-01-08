@@ -31,7 +31,7 @@ php artisan migrate
 
 ### Update your models
 
-Add a Facettable trait and a facetDefinitions() method to all the models that should support facet filtering.
+Add a Facettable trait and a facetDefinitions() method to models that should support facet filtering.
 
 ``` php
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -64,8 +64,7 @@ class Product extends Model
 
 ### Build the index
 
-Before you can start filtering you will have to build an index. You can use the
-Indexer provided with this package.
+Before you can start filtering you will have to build an index. There's an Indexer included.
 
 ``` php
 use Mgussekloo\FacetFilter\Indexer;
@@ -82,16 +81,15 @@ $indexer->buildIndex($products); // process the models
 ### Apply the facet filter to a query
 
 ``` php
-$filter = ['main-color' => ['green']];
+$filter = request()->all(); // use the request parameters
+$filter = ['main-color' => ['green']]; // (or provide your own array)
+
 $products = Product::facetsMatchFilter($filter)->get();
 ```
 
 ## Build the frontend
 
-All the info you need to build your frontend is included.
-
 ``` php
-/* Get info about the facets. */
 $facets = Product::getFacets();
 
 /* You can filter and sort like any regular Laravel collection. */
@@ -115,7 +113,7 @@ Options look like this:
 
 ### Basic frontend example
 
-I've prepared a simple [demo project](https://github.com/mgussekloo/Facet-Demo) that demonstrates a basic frontend.
+Here's a simple [demo project](https://github.com/mgussekloo/Facet-Demo) that demonstrates a basic frontend.
 
 ``` html
 <div class="flex">
@@ -143,7 +141,7 @@ I've prepared a simple [demo project](https://github.com/mgussekloo/Facet-Demo) 
 
 ### Livewire example
 
-This is how it could look using Laravel Livewire to communicate a selected option to the backend. You could use any AJAX request, form submit or whatever you like.
+This is how it could look like with Livewire.
 
 ``` html
 <h2>Colors</h2>
@@ -162,7 +160,7 @@ This is how it could look using Laravel Livewire to communicate a selected optio
 @endforeach
 ```
 
-## Further reading
+## Customization
 
 ### Advanced indexing
 
@@ -185,7 +183,7 @@ class CustomIndexer extends Mgussekloo\FacetFilter\Indexer
 }
 ```
 
-You can process models in chunks for very large datasets.
+Process models in chunks for very large datasets.
 
 ``` php
 $perPage = 1000; $currentPage = Cache::get('facetIndexingPage', 1);
@@ -206,7 +204,7 @@ if ($products->hasMorePages()) {}
 
 ### Custom facets
 
-You can provide custom attributes and an optional custom [Facet class](src/Models/Facet.php) in the definitions.
+Provide custom attributes and an optional custom [Facet class](src/Models/Facet.php) in the facet definitions.
 
 ``` php
 public static function facetDefinitions()
