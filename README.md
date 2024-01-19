@@ -14,7 +14,7 @@ Feel free to contribute to this package, either by creating a pull request or re
 
 ### Installation
 
-This package can be installed through Composer.
+This package can be installed through [Composer](https://packagist.org/packages/mgussekloo/laravel-facet-filter).
 
 ``` bash
 composer require mgussekloo/laravel-facet-filter
