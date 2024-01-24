@@ -108,12 +108,13 @@ class Facet extends Model
             ? collect($filter[$facetName])->values()
             : collect([]);
 
+        // if you have selected ALL, it is the same as selecting none
         $allValues = $this->rows->pluck('value')->filter()->unique()->values();
-
         if ($allValues->diff($selectedValues)->isEmpty()) {
             $selectedValues = collect([]);
         }
 
+        // if you must filter
         if ($selectedValues->isNotEmpty()) {
             $query->whereHas('facetrows', function ($query) use ($selectedValues): void {
                 $query->select('id')->where('facet_slug', $this->getSlug())->whereIn('value', $selectedValues->toArray());

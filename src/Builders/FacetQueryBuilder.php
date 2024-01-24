@@ -11,8 +11,6 @@ class FacetQueryBuilder extends Builder
 
     public $facetFilter = null;
 
-    public $facetMainQuery = false;
-
     /**
      * Remember the filter and the subject type (model class) and wait
      * until we need the results (get) before performing the query.
@@ -21,8 +19,6 @@ class FacetQueryBuilder extends Builder
     {
         $this->facetFilter = $filter;
         $this->facetSubjectType = $this->model::class;
-        $this->facetMainQuery = true;
-
         return $this;
     }
 
@@ -66,7 +62,7 @@ class FacetQueryBuilder extends Builder
         $idsArr = FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter);
 
         if (false === $idsArr) {
-            $this->constrainQueryWithFilter($filter);
+            $this->constrainQueryWithFilter($filter, false);
             $idsArr = parent::pluck('id')->toArray();
             FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter, $idsArr);
         }
@@ -75,9 +71,9 @@ class FacetQueryBuilder extends Builder
     }
 
     // Constrain the query with the facets and filter
-    public function constrainQueryWithFilter($filter)
+    public function constrainQueryWithFilter($filter, $shouldApplyFilter=true)
     {
-        $shouldApplyFilter = ($this->facetMainQuery) ? $filter : false;
+        $shouldApplyFilter = ($shouldApplyFilter) ? $filter : false;
         $facets = FacetFilter::getFacets($this->facetSubjectType, $shouldApplyFilter);
 
         foreach ($facets as $facet) {

@@ -47,36 +47,6 @@ class FacetFilter
     }
 
     /**
-     * Get the facets for a subjecttype, optionally setting the filter
-     * and preloading the available options.
-     */
-    public function makeFacetsWithDefinitions(string $subjectType, $definitions): Collection
-    {
-        if (is_array($definitions)) {
-            $definitions = collect($definitions);
-        }
-
-        $definitions = $definitions->map(function ($definition) use ($subjectType) {
-            if (! isset($definition['fieldname'])) {
-                throw new \Exception('Missing key `fieldname` in facet definition '.json_encode($definition).'!');
-            }
-
-            return array_merge([
-                'subject_type' => $subjectType,
-                'facet_class' => Facet::class,
-            ], $definition);
-        })->filter();
-
-        // Instantiate models
-        $facets = [];
-        foreach ($definitions as $definition) {
-            $facets[] = new $definition['facet_class']($definition);
-        }
-
-        return collect($facets);
-    }
-
-    /**
      * Remember the last query for a model class, without eager loaded relations.
      * We use this query as basis to run queries for each facet, calculating the number
      * of results the facet options would have.
@@ -85,7 +55,6 @@ class FacetFilter
     {
         $newQuery = clone $query;
         $newQuery->withOnly([]);
-        $newQuery->facetMainQuery = false;
         self::$lastQueries[$subjectType] = $newQuery;
         self::resetIdsInFilteredQuery($subjectType);
     }
