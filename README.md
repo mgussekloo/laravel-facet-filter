@@ -72,7 +72,9 @@ use Mgussekloo\FacetFilter\Indexer;
 $products = Product::with(['sizes'])->get(); // get some products
 
 $indexer = new Indexer();
-$indexer->resetIndex(); // clears the index
+$indexer->resetIndex(); // clears the entire index
+or
+$indexer->resetRows($products); // clears the index for the provided models
 $indexer->buildIndex($products); // process the models
 ```
 
