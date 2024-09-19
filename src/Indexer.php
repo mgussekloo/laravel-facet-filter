@@ -3,6 +3,7 @@
 namespace Mgussekloo\FacetFilter;
 
 use DB;
+use Illuminate\Database\Eloquent\Model;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Mgussekloo\FacetFilter\Models\FacetRow;
 
@@ -27,6 +28,24 @@ class Indexer
     public function insertRows($rows)
     {
         return FacetRow::insert(array_values($rows));
+    }
+
+    public function resetRows($models = null): self
+    {
+        if (is_null($models) || $models->isEmpty()) {
+            return $this->resetIndex();
+        }
+
+        foreach ($models as $model) {
+            FacetFilter::getFacets($model::class)->each(function ($facet) use ($model) {
+                DB::table('facetrows')
+                    ->where('subject_id', $model->{$model->getKeyName()})
+                    ->where('facet_slug', $facet->getSlug())
+                    ->delete();
+            });
+        }
+
+        return $this;
     }
 
     public function resetIndex()
