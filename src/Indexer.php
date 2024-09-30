@@ -20,9 +20,30 @@ class Indexer
     {
         return [
             'facet_slug' => $facet->getSlug(),
-            'subject_id' => $model->id,
+            'subject_id' => $model->{$model->getKeyName()},
             'value' => $value,
         ];
+    }
+
+    public function buildValues($facet, $model)
+    {
+    	$fields = explode('.', (string) $facet->fieldname);
+
+        if (count($fields) == 1) {
+            $values = collect([$model->{$fields[0]}]);
+        } else {
+            $last_key = array_key_last($fields);
+
+            $values = collect([$model]);
+            foreach ($fields as $key => $field) {
+                $values = $values->pluck($field);
+                if ($key !== $last_key) {
+                    $values = $values->flatten(1);
+                }
+            }
+        }
+
+        return $values;
     }
 
     public function insertRows($rows)
@@ -70,30 +91,14 @@ class Indexer
             $rows = [];
             foreach ($this->models as $model) {
                 foreach ($facets as $facet) {
-                    $values = [];
-
-                    $fields = explode('.', (string) $facet->fieldname);
-
-                    if (count($fields) == 1) {
-                        $values = collect([$model->{$fields[0]}]);
-                    } else {
-                        $last_key = array_key_last($fields);
-
-                        $values = collect([$model]);
-                        foreach ($fields as $key => $field) {
-                            $values = $values->pluck($field);
-                            if ($key !== $last_key) {
-                                $values = $values->flatten(1);
-                            }
-                        }
-                    }
+                    $values = $this->buildValues($facet, $model);
 
                     foreach ($values as $value) {
                         if (is_null($value)) {
                             continue;
                         }
 
-                        $uniqueKey = implode('.', [$facet->getSlug(), $model->id, $value]);
+                        $uniqueKey = implode('.', [$facet->getSlug(), $model->{$model->getKeyName()}, $value]);
                         $row = $this->buildRow($facet, $model, $value);
                         $row = array_merge([
                             'created_at' => $now,
