@@ -170,18 +170,25 @@ This is how it could look like with Livewire.
 Extend the [Indexer](src/Indexer.php) to customize behavior, e.g. to save a "range bracket" value instead of a "individual price" value to the index.
 
 ``` php
-class CustomIndexer extends Mgussekloo\FacetFilter\Indexer
-{
-	public function buildRow($facet, $model, $value) {
-		$row = parent::buildRow($facet, $model, $value);
+class MyCustomIndexer extends \Mgussekloo\FacetFilter\Indexer {
+	public function buildValues($facet, $model) {
+		$values = parent::buildValues($facet, $model);
 
 		if ($facet->getSlug() == 'App\Models\Product.price') {
-			if ($row['value'] > 0 && $row['value'] < 100) {
-				$row['value'] = '0-100';
+			foreach ($values as $index => $value) {
+				if ($value > 0 && $value < 500) {
+					$values[$index] = '0-490';
+				}
+				if ($value > 490 && $value < 1000) {
+					$values[$index] = '500-990';
+				}
+				if ($value > 990) {
+					$values[$index] = 'Expensive';
+				}
 			}
 		}
 
-		return $row;
+		return $values;
 	}
 }
 ```
