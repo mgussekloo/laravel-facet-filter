@@ -3,14 +3,15 @@
 This package provides simple facet filtering (sometimes called Faceted Search or Faceted Navigation) in Laravel projects. It helps narrow down query results based on the attributes of your models.
 
 - Free, no dependencies
-- No complex queries to write
-- Easy to extend
+- Easy to use in any project
+- Easy to customize
+- There's a [demo project](https://github.com/mgussekloo/Facet-Demo) to get you started
 
 ![Demo](https://raw.githubusercontent.com/mgussekloo/laravel-facet-filter/master/demo.gif)
 
 ### Contributing
 
-Feel free to contribute to this package, either by creating a pull request or reporting an issue.
+Please contribute to this package, either by creating a pull request or reporting an issue.
 
 ### Installation
 
@@ -222,9 +223,10 @@ public static function facetDefinitions()
 	return [
 		[
 			'title' => 'Main color',
-			'description' => 'The main color.',
+			'description' => 'The main color.', // optional custom attribute, you could use $facet->description when creating the frontend...
+            'related_id' => 23, // ... or use $facet->related_id with your custom indexer 
 			'fieldname' => 'color',
-			'facet_class' => CustomFacet::class
+			'facet_class' => CustomFacet::class // optional Facet class with custom logic
 		]
 	];
 }
