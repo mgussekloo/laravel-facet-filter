@@ -23,13 +23,6 @@ composer require mgussekloo/laravel-facet-filter
 
 ## Prepare your project
 
-### Publish and run the migrations
-
-``` bash
-php artisan vendor:publish --tag="facet-filter-migrations"
-php artisan migrate
-```
-
 ### Update your models
 
 Add a Facettable trait and a facetDefinitions() method to models that should support facet filtering.
@@ -61,11 +54,21 @@ class Product extends Model
 	}
 }
 
+
+```
+
+### Publish and run the migrations
+
+For larger datasets you must build an index of all facets beforehand. If you're absolutely certain you don't need an index, skip to (filtering collections).[#filtering-collections]
+
+``` bash
+php artisan vendor:publish --tag="facet-filter-migrations"
+php artisan migrate
 ```
 
 ### Build the index
 
-Before you can start filtering you will have to build an index. There's an Indexer included.
+Now you can start building the index. There's a simple Indexer included, you just need to configure it to run once, periodically or whenever a relevant part of your data changes.
 
 ``` php
 use Mgussekloo\FacetFilter\Indexer;
@@ -75,7 +78,7 @@ $products = Product::with(['sizes'])->get(); // get some products
 $indexer = new Indexer();
 
 $indexer->resetIndex(); // clear the entire index or...
-$indexer->resetRows($products); // clear only the provided models
+$indexer->resetRows($products); // clear only the models that you know have changed
 
 $indexer->buildIndex($products); // process the models
 ```
@@ -88,7 +91,7 @@ $indexer->buildIndex($products); // process the models
 $filter = request()->all(); // use the request parameters
 $filter = ['main-color' => ['green']]; // (or provide your own array)
 
-$products = Product::facetsMatchFilter($filter)->get();
+$products = Product::facetFilter($filter)->get();
 ```
 
 ## Build the frontend
@@ -194,7 +197,7 @@ class MyCustomIndexer extends \Mgussekloo\FacetFilter\Indexer {
 }
 ```
 
-Process models in chunks for very large datasets.
+### Incremental indexing for large datasets
 
 ``` php
 $perPage = 1000; $currentPage = Cache::get('facetIndexingPage', 1);
@@ -211,6 +214,21 @@ $indexer->buildIndex();
 if ($products->hasMorePages()) {}
 	// next iteration, increase currentPage with one
 }
+```
+
+### Filtering collections
+
+Filtering collections without using an index, without the need to build one first. Fine for small datasets, much too slow for larger datasets.
+
+``` php
+$products = Product::all(); // returns a "FacettableCollection"
+$selectedProducts = $products->indexlessFacetFilter($filter);
+
+// optionally you can provide your custom indexer to the method
+
+use App\MyCustomIndexer as Indexer;
+$products = Product::all()->indexlessFacetFilter($filter, new Indexer());
+$facets = Product::getFacets();
 ```
 
 ### Custom facets

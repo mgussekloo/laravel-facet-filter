@@ -22,6 +22,11 @@ class FacetQueryBuilder extends Builder
         return $this;
     }
 
+    public function facetFilter($filter = [])
+    {
+    	return $this->facetsMatchFilter($filter);
+    }
+
     /**
      * Get the results, but first constrain the query with matching facets.
      * We save the base query, to use it later to calculate the results in each facet.

@@ -14,7 +14,7 @@ class FacettableCollection extends Collection
 	/**
      * Experimental: Filter a collection, bypassing the database index entirely
      */
-    public function facetFilter($filter, $indexer=null)
+    public function indexlessFacetFilter($filter, $indexer=null)
     {
     	if (is_null($indexer)) {
     		$indexer = new Indexer();
