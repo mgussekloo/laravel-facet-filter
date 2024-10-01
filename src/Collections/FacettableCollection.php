@@ -25,6 +25,8 @@ class FacettableCollection extends Collection
 
 		$facets = FacetFilter::getFacets($subjectType, $filter, false);
 
+		$all_ids = $this->pluck('id')->toArray();
+
     	foreach ($facets as $facet) {
     		// build the facetrows
     		$rows = [];
@@ -51,16 +53,9 @@ class FacettableCollection extends Collection
 
 	        // if you must filter
 	        if ($selectedValues->isNotEmpty()) {
-	        	$ids = [];
-	        	foreach ($this as $model) {
-	            	$values = $indexer->buildValues($facet, $model);
-		            if ($values->intersect($selectedValues)->isNotEmpty()) {
-		            	$ids[] = $model->id;
-		            }
-		        }
-		        $facet->included_ids = $ids;
+	        	$facet->included_ids = $facet->rows->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
 	        } else {
-	        	$facet->included_ids = $this->pluck('id')->toArray();
+	        	$facet->included_ids = $all_ids;
 	        }
 	    }
 
