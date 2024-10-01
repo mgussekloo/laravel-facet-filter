@@ -51,10 +51,12 @@ class FacettableCollection extends Collection
 	            : collect([]);
 
 	        // if you have selected ALL, it is the same as selecting none
-	        // $allValues = $facet->rows->pluck('value')->filter()->unique()->values();
-	        // if ($allValues->diff($selectedValues)->isEmpty()) {
-	        //     $selectedValues = collect([]);
-	        // }
+			if ($selectedValues->isNotEmpty()) {
+		        $allValues = $rows->pluck('value')->filter()->unique()->values();
+		        if ($allValues->diff($selectedValues)->isEmpty()) {
+		            $selectedValues = collect([]);
+		        }
+		    }
 
 	        // if you must filter
 	        if ($selectedValues->isNotEmpty()) {

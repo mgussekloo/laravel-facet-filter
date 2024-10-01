@@ -87,7 +87,7 @@ class FacetFilter
 		$filterWithoutFacet = array_merge($facet->filter, [$facetName => []]);
 
     	$ids = self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet);
-    	if ($ids == false) {
+    	if ($ids === false) {
     		if ($lastQuery = self::getLastQuery($facet->subject_type)) {
     			$lastQuery->constrainQueryWithFilter($filterWithoutFacet, false);
             	$ids = $lastQuery->pluck('id')->toArray();
