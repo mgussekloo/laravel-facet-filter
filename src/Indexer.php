@@ -27,7 +27,7 @@ class Indexer
 
     public function buildValues($facet, $model)
     {
-		$values = collect([]);
+		$values = [];
 
     	if (isset($facet->fieldname)) {
 	    	$fields = explode('.', (string) $facet->fieldname);
@@ -45,6 +45,8 @@ class Indexer
 	                }
 	            }
 	        }
+
+	        return $values->toArray();
 	    }
 
         return $values;
@@ -96,6 +98,10 @@ class Indexer
             foreach ($this->models as $model) {
                 foreach ($facets as $facet) {
                     $values = $this->buildValues($facet, $model);
+
+                    if (!is_array($values)) {
+                    	$values = [$values];
+                    }
 
                     foreach ($values as $value) {
                         if (is_null($value)) {
