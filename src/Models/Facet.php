@@ -62,7 +62,7 @@ class Facet extends Model
                     $values[$row->value] = 0;
                 }
 
-                if (in_array($row->subject_id, $idsInFilteredQuery)) {
+                if ($idsInFilteredQuery && in_array($row->subject_id, $idsInFilteredQuery)) {
                     $values[$row->value] = $values[$row->value] + 1;
                 }
             }
