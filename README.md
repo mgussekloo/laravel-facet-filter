@@ -59,7 +59,7 @@ class Product extends Model
 
 ### Publish and run the migrations
 
-For larger datasets you must build an index of all facets beforehand. If you're absolutely certain you don't need an index, skip to (filtering collections).[#filtering-collections]
+For larger datasets you must build an index of all facets beforehand. If you're absolutely certain you don't need an index, skip to [filtering collections].(#filtering-collections)
 
 ``` bash
 php artisan vendor:publish --tag="facet-filter-migrations"
