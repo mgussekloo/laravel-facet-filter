@@ -27,21 +27,25 @@ class Indexer
 
     public function buildValues($facet, $model)
     {
-    	$fields = explode('.', (string) $facet->fieldname);
+		$values = collect([]);
 
-        if (count($fields) == 1) {
-            $values = collect([$model->{$fields[0]}]);
-        } else {
-            $last_key = array_key_last($fields);
+    	if (isset($facet->fieldname)) {
+	    	$fields = explode('.', (string) $facet->fieldname);
 
-            $values = collect([$model]);
-            foreach ($fields as $key => $field) {
-                $values = $values->pluck($field);
-                if ($key !== $last_key) {
-                    $values = $values->flatten(1);
-                }
-            }
-        }
+	        if (count($fields) == 1) {
+	            $values = collect([$model->{$fields[0]}]);
+	        } else {
+	            $last_key = array_key_last($fields);
+
+	            $values = collect([$model]);
+	            foreach ($fields as $key => $field) {
+	                $values = $values->pluck($field);
+	                if ($key !== $last_key) {
+	                    $values = $values->flatten(1);
+	                }
+	            }
+	        }
+	    }
 
         return $values;
     }

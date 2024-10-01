@@ -48,28 +48,6 @@ class FacetQueryBuilder extends Builder
         return $result;
     }
 
-    /**
-     * Perform a query of the same filter, without a particular facet
-     * and return the id's in the results. Cache the results, to avoid
-     * running the same query twice.
-     */
-    public function getIdsInQueryWithoutFacet($facet): array
-    {
-        $paramName = $facet->getParamName();
-
-        $filter = array_merge($this->facetFilter, [$paramName => []]);
-
-        $idsArr = FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter);
-
-        if (false === $idsArr) {
-            $this->constrainQueryWithFilter($filter, false);
-            $idsArr = parent::pluck('id')->toArray();
-            FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter, $idsArr);
-        }
-
-        return $idsArr;
-    }
-
     // Constrain the query with the facets and filter
     public function constrainQueryWithFilter($filter, $shouldApplyFilter=true)
     {

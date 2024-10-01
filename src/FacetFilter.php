@@ -25,7 +25,14 @@ class FacetFilter
 
             // Should we preload the options?
             if ($load) {
-                $rows = DB::table('facetrows')->select('facet_slug', 'subject_id', 'value')->get()->groupBy('facet_slug');
+            	$slugs = $facets->map(function($facet) {
+            		return $facet->getSlug();
+            	})->toArray();
+
+                $rows = DB::table('facetrows')
+                ->whereIn('facet_slug', $slugs)
+				->select('facet_slug', 'subject_id', 'value')
+				->get()->groupBy('facet_slug');
 
                 foreach ($facets as $facet) {
                     $slug = $facet->getSlug();
@@ -69,6 +76,26 @@ class FacetFilter
         }
 
         return false;
+    }
+
+	/**
+     * Retrieve the ids in the last query for a model class, without filter set for a single facet
+     */
+    public function getIdsInLastQueryWithoutFacet($facet)
+    {
+    	$facetName = $facet->getParamName();
+		$filterWithoutFacet = array_merge($facet->filter, [$facetName => []]);
+
+    	$ids = self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet);
+    	if ($ids == false) {
+    		if ($lastQuery = self::getLastQuery($facet->subject_type)) {
+    			$lastQuery->constrainQueryWithFilter($filterWithoutFacet, false);
+            	$ids = $lastQuery->pluck('id')->toArray();
+            	self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet, $ids);
+    		}
+    	}
+
+    	return $ids;
     }
 
     /**
@@ -117,7 +144,6 @@ class FacetFilter
 
         if (! is_null($ids)) {
             self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
-
             return $ids;
         }
 

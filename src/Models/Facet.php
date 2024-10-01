@@ -50,10 +50,7 @@ class Facet extends Model
 
             // https://stackoverflow.com/questions/27550841/calculating-product-counts-efficiently-in-faceted-search-with-php-mysql
 
-            $idsInFilteredQuery = [];
-            if ($lastQuery = FacetFilter::getLastQuery($this->subject_type)) {
-                $idsInFilteredQuery = $lastQuery->getIdsInQueryWithoutFacet($this);
-            }
+			$idsInFilteredQuery = FacetFilter::getIdsInLastQueryWithOutFacet($this);
 
             $values = [];
             foreach ($this->rows as $row) {
@@ -82,7 +79,11 @@ class Facet extends Model
                     'value' => $value,
                     'selected' => in_array($value, $selectedValues),
                     'total' => $total,
-                    'slug' => sprintf('%s_%s', Str::of($this->fieldname)->slug('-'), Str::of($value)->slug('-')),
+                    'slug' => sprintf(
+                    	'%s_%s',
+                    	Str::slug($this->fieldname ?? $this->title),
+                    	Str::slug($value)
+                    ),
                     'http_query' => $this->getHttpQuery($value),
                 ]);
             }
@@ -108,8 +109,11 @@ class Facet extends Model
             ? collect($filter[$facetName])->values()
             : collect([]);
 
+
+		$rows = $this->rows ?? collect();
+
         // if you have selected ALL, it is the same as selecting none
-        $allValues = $this->rows->pluck('value')->filter()->unique()->values();
+        $allValues = $rows->pluck('value')->filter()->unique()->values();
         if ($allValues->diff($selectedValues)->isEmpty()) {
             $selectedValues = collect([]);
         }
@@ -128,34 +132,33 @@ class Facet extends Model
     {
         $facetName = $this->getParamName();
 
+        $arr = $this->filter;
         if (isset($this->filter[$facetName])) {
-            $collection = collect($this->filter[$facetName]);
-            if ($collection->contains($value)) {
-                $collection->pull($collection->search($value));
+            $filter = collect($this->filter[$facetName]);
+            if ($filter->contains($value)) {
+                $filter->pull($filter->search($value));
             } else {
-                $collection->push($value);
+                $filter->push($value);
             }
 
-            $arr = array_merge($this->filter, [$facetName => $collection->toArray()]);
-
-            return http_build_query($arr, '', '&', PHP_QUERY_RFC3986);
+            $arr = array_merge($this->filter, [$facetName => $filter->toArray()]);
         }
 
-        return '';
+        $arr = array_filter($arr);
+        return http_build_query($arr, '', '&', PHP_QUERY_RFC3986);
     }
 
     // return the title (or fieldname) to use for the http query param
     public function getParamName(): string
     {
-        $param = isset($this->title) ? $this->title : $this->fieldname;
-
+        $param = $this->title ?? $this->fieldname;
         return Str::slug($param);
     }
 
     // get this facet's unique slug (used for indexing)
     public function getSlug(): string
     {
-        return implode('.', [$this->subject_type, $this->fieldname]);
+        return implode('.', [$this->subject_type, $this->fieldname ?? strtolower($this->title) ]);
     }
 
     // set the filter for this facet

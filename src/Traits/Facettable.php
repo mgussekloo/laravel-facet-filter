@@ -8,9 +8,16 @@ use Mgussekloo\FacetFilter\Facades\FacetFilter;
 use Mgussekloo\FacetFilter\Models\FacetRow;
 use Mgussekloo\FacetFilter\Models\Facet;
 
+use Mgussekloo\FacetFilter\Collections\FacettableCollection;
+
 trait Facettable
 {
     abstract public static function facetDefinitions();
+
+	public function newCollection(array $models = [])
+    {
+        return new FacettableCollection($models);
+    }
 
     /**
      * Make the facets
@@ -29,12 +36,7 @@ trait Facettable
             $definitions = collect($definitions);
         }
 
-
         $definitions = $definitions->map(function ($definition) use ($subjectType) {
-            if (! isset($definition['fieldname'])) {
-                throw new \Exception('Missing key `fieldname` in facet definition '.json_encode($definition).'!');
-            }
-
             return array_merge([
                 'subject_type' => $subjectType,
                 'facet_class' => Facet::class,
@@ -70,4 +72,12 @@ trait Facettable
     {
         return FacetFilter::getFilterFromArr(self::class, $arr);
     }
+
+
+	public static function filterCollection($models, $filter, $indexer=null)
+    {
+    	return FacetFilter::filterCollection($models, $filter, $indexer);
+    }
+
+
 }
