@@ -62,7 +62,7 @@ class Facet extends Model
 			$values = array_count_values($rows->pluck('value')->filter()->toArray());
 
             $selectedValues = false;
-            if (is_array($this->filter) && isset($this->filter[$facetName])) {
+            if (!empty($this->filter[$facetName])) {
                 $selectedValues = $this->filter[$facetName];
             }
 
