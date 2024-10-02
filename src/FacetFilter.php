@@ -90,9 +90,7 @@ class FacetFilter
     	$ids = self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet);
     	if ($ids === false) {
     		if ($lastQuery = self::getLastQuery($facet->subject_type)) {
-    			$lastQuery->constrainQueryWithFilter($filterWithoutFacet, false);
-            	$ids = $lastQuery->pluck('id')->toArray();
-            	self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet, $ids);
+    			$ids = $lastQuery->constrainQueryWithFilter($filterWithoutFacet, false, true);
     		}
     	}
 

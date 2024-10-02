@@ -55,7 +55,7 @@ class FacetQueryBuilder extends Builder
     }
 
     // Constrain the query with the facets and filter
-    public function constrainQueryWithFilter($filter, $shouldApplyFilter=true)
+    public function constrainQueryWithFilter($filter, $shouldApplyFilter=true, $cacheIds=false)
     {
         $shouldApplyFilter = ($shouldApplyFilter) ? $filter : false;
         $facets = FacetFilter::getFacets($this->facetSubjectType, $shouldApplyFilter);
@@ -63,5 +63,9 @@ class FacetQueryBuilder extends Builder
         foreach ($facets as $facet) {
             $facet->constrainQueryWithFilter($this, $filter);
         }
+
+		if ($cacheIds) {
+			return FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $filter, $this->pluck('id')->toArray());
+		}
     }
 }
