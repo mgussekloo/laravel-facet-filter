@@ -34,14 +34,19 @@ class FacettableCollection extends Collection
 
     	foreach ($facets as $facet) {
     		// build the facetrows
-    		$rows = [];
+    		$rows = collect([]);
 	    	foreach ($this as $model) {
-	    		foreach ($indexer->buildValues($facet, $model) as $value) {
-	    			$arr = $indexer->buildRow($facet, $model, $value);
-	    			$rows[] = new FacetRow($arr);
+	    		$values = $indexer->buildValues($facet, $model);
+                if (!is_array($values)) {
+                	$values = [$values];
+                }
+
+	    		foreach ($values as $value) {
+	    			$arr = (object)$indexer->buildRow($facet, $model, $value);
+	    			$rows->push($arr);
 	    		}
 	    	}
-	    	$facet->setRows(collect($rows));
+	    	$facet->setRows($rows);
 
 	    	// now start filtering
         	$facetName = $facet->getParamName();

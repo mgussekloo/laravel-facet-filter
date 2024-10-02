@@ -52,20 +52,14 @@ class Facet extends Model
 
 			$idsInFilteredQuery = FacetFilter::getIdsInLastQueryWithOutFacet($this);
 
-            $values = [];
-            foreach ($this->rows as $row) {
-                if ($row->value == '') {
-                    continue;
-                }
+            $rows = [];
+			if ($idsInFilteredQuery) {
+				$rows = $this->rows->filter(function($row) use ($idsInFilteredQuery) {
+					return in_array($row->subject_id, $idsInFilteredQuery);
+				});
+			}
 
-                if (! isset($values[$row->value])) {
-                    $values[$row->value] = 0;
-                }
-
-                if ($idsInFilteredQuery && in_array($row->subject_id, $idsInFilteredQuery)) {
-                    $values[$row->value] = $values[$row->value] + 1;
-                }
-            }
+			$values = array_count_values($rows->pluck('value')->filter()->toArray());
 
             $selectedValues = [];
             if (is_array($this->filter) && isset($this->filter[$facetName])) {
@@ -74,16 +68,13 @@ class Facet extends Model
 
             $options = collect([]);
 
+            $slugBase = Str::slug($this->fieldname ?? $this->title);
             foreach ($values as $value => $total) {
                 $options->push((object) [
                     'value' => $value,
                     'selected' => in_array($value, $selectedValues),
                     'total' => $total,
-                    'slug' => sprintf(
-                    	'%s_%s',
-                    	Str::slug($this->fieldname ?? $this->title),
-                    	Str::slug($value)
-                    ),
+                    'slug' => sprintf( '%s_%s', $slugBase, Str::slug($value) ),
                     'http_query' => $this->getHttpQuery($value),
                 ]);
             }
