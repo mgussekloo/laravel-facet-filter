@@ -28,6 +28,9 @@ class Facet extends Model
 
     public function __construct($definition)
     {
+    	$this->filter = [];
+    	$this->rows = collect([]);
+
         foreach ($definition as $key => $value) {
             $this->$key = $value;
         }
@@ -39,10 +42,6 @@ class Facet extends Model
         if (is_null($this->options)) {
             $facetName = $this->getParamName();
             $subjectType = $this->subject_type;
-
-            if (is_null($this->rows)) {
-                throw new \Exception('This facet `'.$facetName.'` has no rows!');
-            }
 
             // find out totals of the values in this facet
             // *within* the current query / filter operation.
@@ -112,9 +111,8 @@ class Facet extends Model
 
         // if you must filter
         if ($selectedValues->isNotEmpty()) {
-            $query->whereHas('facetrows', function ($query) use ($selectedValues): void {
-                $query->select('id')->where('facet_slug', $this->getSlug())->whereIn('value', $selectedValues->toArray());
-            });
+        	$ids = $rows->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
+        	$query->whereIntegerInRaw('id', $ids);
         }
 
         return $query;
