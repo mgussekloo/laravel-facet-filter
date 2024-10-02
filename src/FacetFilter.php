@@ -29,8 +29,9 @@ class FacetFilter
             		return $facet->getSlug();
             	})->toArray();
 
+				// the wherein is slightly slower...
                 $rows = DB::table('facetrows')
-                ->whereIn('facet_slug', $slugs)
+                // ->whereIn('facet_slug', $slugs)
 				->select('facet_slug', 'subject_id', 'value')
 				->get()->groupBy('facet_slug');
 
@@ -104,7 +105,7 @@ class FacetFilter
      */
     public function getFilterFromArr($subjectType, $arr = []): array
     {
-        $emptyFilter = $subjectType::getFacets()->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
+        $emptyFilter = self::getEmptyFilter($subjectType);
 
         $arr = array_map(function ($item): array {
             if (! is_array($item)) {
@@ -124,7 +125,7 @@ class FacetFilter
      */
     public function getEmptyFilter(string $subjectType): array
     {
-        return $subjectType::getFilterFromArr($subjectType, []);
+    	return $subjectType::getFacets()->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
     }
 
     /**

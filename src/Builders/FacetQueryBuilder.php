@@ -17,8 +17,9 @@ class FacetQueryBuilder extends Builder
      */
     public function facetsMatchFilter($filter = [])
     {
-        $this->facetFilter = $filter;
         $this->facetSubjectType = $this->model::class;
+        $this->facetFilter = $this->facetSubjectType::getFilterFromArr($filter);
+
         return $this;
     }
 
