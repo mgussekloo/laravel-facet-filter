@@ -2,7 +2,8 @@
 
 namespace Mgussekloo\FacetFilter\Collections;
 
-use Illuminate\Support\Collection;
+// use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection;
 
 use Mgussekloo\FacetFilter\Indexer;
 
