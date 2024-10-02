@@ -61,18 +61,19 @@ class Facet extends Model
 
 			$values = array_count_values($rows->pluck('value')->filter()->toArray());
 
-            $selectedValues = [];
-            if (is_array($this->filter) && isset($this->filter[$facetName])) {
+            $selectedValues = false;
+            if (is_array($this->filter) && !empty($this->filter[$facetName])) {
                 $selectedValues = $this->filter[$facetName];
             }
 
             $options = collect([]);
 
             $slugBase = Str::slug($this->fieldname ?? $this->title);
+
             foreach ($values as $value => $total) {
                 $options->push((object) [
                     'value' => $value,
-                    'selected' => in_array($value, $selectedValues),
+                    'selected' => $selectedValues ? in_array($value, $selectedValues) : false,
                     'total' => $total,
                     'slug' => sprintf( '%s_%s', $slugBase, Str::slug($value) ),
                     'http_query' => $this->getHttpQuery($value),
@@ -100,18 +101,15 @@ class Facet extends Model
             ? collect($filter[$facetName])->values()
             : collect([]);
 
-		$rows = $this->rows ?? collect();
-
-        // if you have selected ALL, it is the same as selecting none
-        if ($selectedValues->isNotEmpty()) {
-	        $allValues = $rows->pluck('value')->filter()->unique()->values();
-	        if ($allValues->diff($selectedValues)->isEmpty()) {
-	            $selectedValues = collect([]);
-	        }
-	    }
+		$rows = $this->rows ?? collect([]);
 
         // if you must filter
         if ($selectedValues->isNotEmpty()) {
+			$allValues = $rows->pluck('value')->filter()->unique()->values();
+        	if ($allValues->diff($selectedValues)->isEmpty()) {
+	            $selectedValues = collect([]);
+	        }
+
             $query->whereHas('facetrows', function ($query) use ($selectedValues): void {
                 $query->select('id')->where('facet_slug', $this->getSlug())->whereIn('value', $selectedValues->toArray());
             });
@@ -123,17 +121,17 @@ class Facet extends Model
     public function getHttpQuery($value): string
     {
         $facetName = $this->getParamName();
-
         $arr = $this->filter;
-        if (isset($this->filter[$facetName])) {
-            $filter = collect($this->filter[$facetName]);
-            if ($filter->contains($value)) {
-                $filter->pull($filter->search($value));
-            } else {
-                $filter->push($value);
-            }
 
-            $arr = array_merge($this->filter, [$facetName => $filter->toArray()]);
+        if (isset($arr[$facetName])) {
+        	if (empty($arr[$facetName])) {
+        		$arr[$facetName][] = $value;
+        	// } elseif (count(array_intersect($arr[$facetName], [$value])) == 1) {
+        	} elseif (in_array($value, $arr[$facetName])) {
+        		$arr[$facetName] = array_diff($arr[$facetName], [$value]);
+        	} else {
+        		$arr[$facetName][] = $value;
+        	}
         }
 
         $arr = array_filter($arr);
