@@ -25,18 +25,7 @@ class FacetFilter
 
             // Should we preload the options?
             if ($load) {
-				// the wherein is slightly slower...
-                $rows = DB::table('facetrows')
-                // ->whereIn('facet_slug', $slugs)
-				->select('facet_slug', 'subject_id', 'value')
-				->get()->groupBy('facet_slug');
-
-                foreach ($facets as $facet) {
-                    $slug = $facet->getSlug();
-                    if (isset($rows[$slug])) {
-                        $facet->setRows($rows[$slug]);
-                    }
-                }
+                self::loadOptions($facets);
             }
 
             self::$facets[$subjectType] = $facets;
@@ -50,6 +39,21 @@ class FacetFilter
         return self::$facets[$subjectType];
     }
 
+    public function loadOptions($facets)
+    {
+		$rows = DB::table('facetrows')
+        ->whereIn('facet_slug', $facets->map->getSlug())
+		->select('facet_slug', 'subject_id', 'value')
+		->get()->groupBy('facet_slug');
+
+        foreach ($facets as $facet) {
+            $slug = $facet->getSlug();
+            if (isset($rows[$slug])) {
+                $facet->setRows($rows[$slug]);
+            }
+        }
+    }
+
     /**
      * Remember the last query for a model class, without eager loaded relations.
      * We use this query as basis to run queries for each facet, calculating the number
@@ -59,6 +63,15 @@ class FacetFilter
     {
         $newQuery = clone $query;
         $newQuery->withOnly([]);
+
+        $query = $newQuery->getQuery();
+        if ($query->limit > 0) {
+        	$newQuery->limit(null);
+        }
+        if ($query->offset > 0) {
+        	$newQuery->offset(null);
+        }
+		// $newQuery->skip(false);
         self::$lastQueries[$subjectType] = $newQuery;
         self::resetIdsInFilteredQuery($subjectType);
     }
@@ -84,6 +97,7 @@ class FacetFilter
 		$filterWithoutFacet = array_merge($facet->filter, [$facetName => []]);
 
     	$ids = self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet);
+
     	if ($ids === false) {
     		if ($lastQuery = self::getLastQuery($facet->subject_type)) {
     			$ids = $lastQuery->constrainQueryWithFilter($filterWithoutFacet, false, true);
@@ -133,8 +147,6 @@ class FacetFilter
             self::$idsInFilteredQuery[$subjectType] = [];
         }
 
-        // $filter = $subjectType::getFilterFromArr($subjectType, $filter);
-
         $cacheKey = self::getCacheKey($subjectType, $filter);
 
         if (! is_null($ids)) {
@@ -163,6 +175,7 @@ class FacetFilter
      */
     public static function getCacheKey(string $subjectType, $filter): string
     {
+        // return $subjectType . implode('_', array_values(array_filter(array_values($filter))));
         return implode('_', [$subjectType, json_encode($filter, JSON_THROW_ON_ERROR)]);
     }
 }

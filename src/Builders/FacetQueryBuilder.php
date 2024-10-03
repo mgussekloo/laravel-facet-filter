@@ -49,7 +49,7 @@ class FacetQueryBuilder extends Builder
         $result = parent::get($columns);
 
         // Save the ID's within the result in the cache
-        FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $this->facetFilter, $result->pluck('id')->toArray());
+        // FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $this->facetFilter, $result->pluck('id')->toArray());
 
         return $result;
     }
