@@ -63,6 +63,15 @@ class FacetFilter
     {
         $newQuery = clone $query;
         $newQuery->withOnly([]);
+
+        $query = $newQuery->getQuery();
+        if ($query->limit > 0) {
+        	$newQuery->limit(null);
+        }
+        if ($query->offset > 0) {
+        	$newQuery->offset(null);
+        }
+		// $newQuery->skip(false);
         self::$lastQueries[$subjectType] = $newQuery;
         self::resetIdsInFilteredQuery($subjectType);
     }
@@ -88,6 +97,7 @@ class FacetFilter
 		$filterWithoutFacet = array_merge($facet->filter, [$facetName => []]);
 
     	$ids = self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet);
+
     	if ($ids === false) {
     		if ($lastQuery = self::getLastQuery($facet->subject_type)) {
     			$ids = $lastQuery->constrainQueryWithFilter($filterWithoutFacet, false, true);
