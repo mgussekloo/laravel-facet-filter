@@ -51,8 +51,8 @@ class Facet extends Model
 
 			$idsInFilteredQuery = FacetFilter::getIdsInLastQueryWithoutFacet($this);
 
-            $rows = collect([]);
-			if ($idsInFilteredQuery) {
+            $rows = $this->rows;
+			if ($idsInFilteredQuery && !empty($this->filter[$facetName])) {
 				$rows = $this->rows->filter(function($row) use ($idsInFilteredQuery) {
 					return in_array($row->subject_id, $idsInFilteredQuery);
 				});

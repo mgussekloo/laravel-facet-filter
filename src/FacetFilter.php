@@ -25,18 +25,7 @@ class FacetFilter
 
             // Should we preload the options?
             if ($load) {
-				// the wherein is slightly slower...
-                $rows = DB::table('facetrows')
-                // ->whereIn('facet_slug', $slugs)
-				->select('facet_slug', 'subject_id', 'value')
-				->get()->groupBy('facet_slug');
-
-                foreach ($facets as $facet) {
-                    $slug = $facet->getSlug();
-                    if (isset($rows[$slug])) {
-                        $facet->setRows($rows[$slug]);
-                    }
-                }
+                self::loadOptions($facets);
             }
 
             self::$facets[$subjectType] = $facets;
@@ -48,6 +37,21 @@ class FacetFilter
         }
 
         return self::$facets[$subjectType];
+    }
+
+    public function loadOptions($facets)
+    {
+		$rows = DB::table('facetrows')
+        ->whereIn('facet_slug', $facets->map->getSlug())
+		->select('facet_slug', 'subject_id', 'value')
+		->get()->groupBy('facet_slug');
+
+        foreach ($facets as $facet) {
+            $slug = $facet->getSlug();
+            if (isset($rows[$slug])) {
+                $facet->setRows($rows[$slug]);
+            }
+        }
     }
 
     /**
@@ -133,8 +137,6 @@ class FacetFilter
             self::$idsInFilteredQuery[$subjectType] = [];
         }
 
-        // $filter = $subjectType::getFilterFromArr($subjectType, $filter);
-
         $cacheKey = self::getCacheKey($subjectType, $filter);
 
         if (! is_null($ids)) {
@@ -163,6 +165,7 @@ class FacetFilter
      */
     public static function getCacheKey(string $subjectType, $filter): string
     {
+        // return $subjectType . implode('_', array_values(array_filter(array_values($filter))));
         return implode('_', [$subjectType, json_encode($filter, JSON_THROW_ON_ERROR)]);
     }
 }
