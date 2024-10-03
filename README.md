@@ -178,17 +178,18 @@ class MyCustomIndexer extends \Mgussekloo\FacetFilter\Indexer {
 	public function buildValues($facet, $model) {
 		$values = parent::buildValues($facet, $model);
 
-		if ($facet->title == 'Exclusivity') {
+		if ($facet->fieldname == 'price') {
 
-			if ($model->id % 3 == 0) {
-				return 'Not very';
+			if ($model->price > 1000) {
+				return 'Expensive';
 			}
-			if ($model->id % 11 == 0) {
-				return 'Mildly';
+			if ($model->price > 500) {
+				return '500 - 1000';
 			}
-			if ($model->id % 17 == 0) {
-				return 'Exclusive';
+			if ($model->price > 250) {
+				return '250 - 500';
 			}
+			return '0 - 250';
 		}
 
 		return $values;
@@ -217,17 +218,16 @@ if ($products->hasMorePages()) {}
 
 ### Filtering collections
 
-Filtering collections without using an index, without the need to build one first. Fine for small datasets, much too slow for larger datasets.
+It's possible to get your models first, and apply facet filtering afterwards. This method builds the index "on the fly". This is much slower than using an index, so it's not recommended for most use cases.
 
 ``` php
 $products = Product::all(); // returns a "FacettableCollection"
-$selectedProducts = $products->indexlessFacetFilter($filter);
+$products = $products->indexlessFacetFilter($filter);
 
-// optionally you can provide your custom indexer to the method
+// the second (optional) parameter lets you specify which indexer to use when indexing values from models
 
-use App\MyCustomIndexer as Indexer;
-$products = Product::all()->indexlessFacetFilter($filter, new Indexer());
-$facets = Product::getFacets();
+$indexer = new App\MyCustomIndexer();
+$products = Product::all()->indexlessFacetFilter($filter, $indexer);
 ```
 
 ### Custom facets

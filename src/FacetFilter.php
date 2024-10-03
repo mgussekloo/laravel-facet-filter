@@ -25,10 +25,6 @@ class FacetFilter
 
             // Should we preload the options?
             if ($load) {
-            	$slugs = $facets->map(function($facet) {
-            		return $facet->getSlug();
-            	})->toArray();
-
 				// the wherein is slightly slower...
                 $rows = DB::table('facetrows')
                 // ->whereIn('facet_slug', $slugs)
