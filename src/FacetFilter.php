@@ -67,10 +67,11 @@ class FacetFilter
         $query = $newQuery->getQuery();
         if ($query->limit > 0) {
         	$newQuery->limit(null);
+        	$query->offset = null;
+
         }
-        if ($query->offset > 0) {
-        	$newQuery->offset(null);
-        }
+
+        // dd($query);
 		// $newQuery->skip(false);
         self::$lastQueries[$subjectType] = $newQuery;
         self::resetIdsInFilteredQuery($subjectType);
