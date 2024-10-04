@@ -7,6 +7,8 @@ use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
 class FacetQueryBuilder extends Builder
 {
+    public $useFacetCache = false;
+
     public $facetSubjectType = null;
 
     public $facetFilter = null;
@@ -15,7 +17,7 @@ class FacetQueryBuilder extends Builder
      * Remember the filter and the subject type (model class) and wait
      * until we need the results (get) before performing the query.
      */
-    public function facetsMatchFilter($filter = [])
+    public function facetFilter($filter = [])
     {
         $this->facetSubjectType = $this->model::class;
         $this->facetFilter = $this->facetSubjectType::getFilterFromArr($filter);
@@ -23,9 +25,19 @@ class FacetQueryBuilder extends Builder
         return $this;
     }
 
-    public function facetFilter($filter = [])
+    // Alias of facetfilter
+    public function facetsMatchFilter($filter = [])
     {
-    	return $this->facetsMatchFilter($filter);
+    	return $this->facetsFilter($filter);
+    }
+
+    /**
+     * By default, we perform new calculations to get facet row counts for every query.
+     * But, if you KNOW you're doing the same query anyway, you may override this.
+     */
+    public function withCache($cache=true) {
+    	$this->useFacetCache=$cache;
+    	return $this;
     }
 
     /**
@@ -47,9 +59,6 @@ class FacetQueryBuilder extends Builder
 
         // Get the result
         $result = parent::get($columns);
-
-        // Save the ID's within the result in the cache
-        // FacetFilter::cacheIdsInFilteredQuery($this->facetSubjectType, $this->facetFilter, $result->pluck('id')->toArray());
 
         return $result;
     }

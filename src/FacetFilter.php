@@ -27,7 +27,7 @@ class FacetFilter
 
             // Should we preload the options?
             if ($load) {
-                self::loadOptions($facets);
+                self::loadRows($subjectType, $facets);
             }
 
             self::$facets[$subjectType] = $facets;
@@ -41,18 +41,19 @@ class FacetFilter
         return self::$facets[$subjectType];
     }
 
-    public function loadOptions($facets)
+    /**
+     * Get all the rows for a number of facets. This is an expensive operation,
+     * because we may load 1000's of rows for each facet.
+     */
+    public function loadRows($subjectType, $facets)
     {
-    	$slugs = $facets->map->getSlug();
-    	$cacheKey = $slugs->implode('.');
-
-   		$rows = self::cache('facetRows', $cacheKey);
+   		$rows = self::cache('facetRows', $subjectType);
    		if ($rows === false) {
     		$rows = DB::table('facetrows')
-		        ->whereIn('facet_slug', $slugs)
+		        ->whereIn('facet_slug', $facets->map->getSlug())
 				->select('facet_slug', 'subject_id', 'value')
 				->get()->groupBy('facet_slug');
-			self::cache('facetRows', $cacheKey, $rows);
+			self::cache('facetRows', $subjectType, $rows);
 		}
 
         foreach ($facets as $facet) {
@@ -80,7 +81,10 @@ class FacetFilter
         }
 
         self::$lastQueries[$subjectType] = $newQuery;
-        self::resetIdsInFilteredQuery($subjectType);
+
+        if (!$newQuery->useFacetCache) {
+        	self::resetIdsInFilteredQuery($subjectType);
+        }
     }
 
     /**
