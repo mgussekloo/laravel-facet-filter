@@ -266,11 +266,9 @@ If you decide to use a persistent cache driver, please note the following:
 
 ```php
 	// using index-based facet filtering
-	Product::facetFilter($filter)->get();
 	Product::withCache()->facetFilter($filter)->get();
 
 	// using collection-based facet filtering
-	Projects::all()->indexlessFacetFilter($filter);
 	Projects::all()->withCache()->indexlessFacetFilter($filter);
 ```
 
