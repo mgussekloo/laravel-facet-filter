@@ -18,9 +18,8 @@ trait HasFacetCache
     }
 
     public function getCacheStoreFromConfig() {
-        // the 'default' fallback here is from the permission.php config file,
         // where 'default' means to use config(cache.default)
-        $cacheDriver = config('permission.cache.store', 'default');
+        $cacheDriver = config('facet-filter.cache.store', 'default');
 
         // when 'default' is specified, no action is required since we already have the default instance
         if ($cacheDriver === 'default') {
