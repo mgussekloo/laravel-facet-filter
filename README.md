@@ -249,6 +249,29 @@ public static function facetDefinitions()
 }
 ```
 
+## Configuration
+
+See config/facet-filter.php for config options. Most should be self explanatory.
+By default this package uses the simplest (array) cache store, which doesn't cache results between requests. You can try other stores for better performance (file, redis, etc.).
+
+``` php
+    'classes' => [
+        'facet' => Mgussekloo\FacetFilter\Models\Facet::class,
+        'facetrow' => Mgussekloo\FacetFilter\Models\FacetRow::class,
+    ],
+
+    'table_names' => [
+		'facetrows' => 'facetrows',
+	],
+
+    'cache' => [
+        'expiration_time' => \DateInterval::createFromDateString('24 hours'),
+        'key' => 'mgussekloo.facetfilter.cache',
+        'store' => 'array',
+    ],
+```
+
+
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
