@@ -3,12 +3,11 @@
 namespace Mgussekloo\FacetFilter\Collections;
 
 // use Illuminate\Support\Collection;
+use Mgussekloo\FacetFilter\Facades\FacetFilter;
+
 use Illuminate\Database\Eloquent\Collection;
 
 use Mgussekloo\FacetFilter\Indexer;
-
-use Mgussekloo\FacetFilter\Models\FacetRow;
-use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
 class FacettableCollection extends Collection
 {
@@ -17,6 +16,7 @@ class FacettableCollection extends Collection
      */
     public function indexlessFacetFilter($filter, $indexer=null)
     {
+
 		$subjectType = $this->first()::class;
 
 		$facets = FacetFilter::getFacets($subjectType, $filter, false);
@@ -33,20 +33,39 @@ class FacettableCollection extends Collection
 
 		$all_ids = $this->pluck('id')->toArray();
 
-    	foreach ($facets as $facet) {
-    		// build the facetrows
-    		$rows = collect([]);
-	    	foreach ($this as $model) {
-	    		$values = $indexer->buildValues($facet, $model);
-                if (!is_array($values)) {
-                	$values = [$values];
-                }
+		// build the facet rows
+		$slugs = $facets->map->getSlug();
+    	$cacheKey = $slugs->implode('.');
 
-	    		foreach ($values as $value) {
-	    			$arr = (object)$indexer->buildRow($facet, $model, $value);
-	    			$rows->push($arr);
-	    		}
-	    	}
+   		$all_rows = FacetFilter::cache('facetRows', $cacheKey);
+
+   		if ($all_rows === false) {
+    		$all_rows = [];
+
+	    	foreach ($facets as $facet) {
+	    		$_rows = [];
+	    		// build the facetrows
+		    	foreach ($this as $model) {
+		    		$values = $indexer->buildValues($facet, $model);
+	                if (!is_array($values)) {
+	                	$values = [$values];
+	                }
+
+		    		foreach ($values as $value) {
+		    			$arr = (object)$indexer->buildRow($facet, $model, $value);
+		    			$_rows[] = $arr;
+		    		}
+		    	}
+		    	$all_rows[$facet->getSlug()] = collect($_rows);
+		    }
+
+		    $all_rows = $all_rows;
+		    FacetFilter::cache('facetRows', $cacheKey, $all_rows);
+		}
+
+		// load the rows, the the options
+	    foreach ($facets as $facet) {
+	    	$rows = $all_rows[$facet->getSlug()];
 	    	$facet->setRows($rows);
 
 	    	// now start filtering
@@ -89,15 +108,15 @@ class FacettableCollection extends Collection
 
 	    	if (isset($filter[$facetName])) {
 	    		$filterWithoutFacet = array_merge($filter, [$facetName => []]);
-	    		if (false === FacetFilter::cacheIdsInFilteredQuery($subjectType, $filterWithoutFacet)) {
+	    		if (true || false === FacetFilter::cacheIdsInFilteredQuery($subjectType, $filterWithoutFacet)) {
 
 					$otherFacets = $facets->reject(function($f) use ($facetName) {
 			    		return $facetName == $f->getParamName();
 			    	});
 
-			    	$ids = [];
+			    	$ids = null;
 			    	foreach ($otherFacets as $f) {
-		    			$ids = (!empty($ids)) ? array_intersect($ids, $f->included_ids) : $f->included_ids;
+		    			$ids = (!is_null($ids)) ? array_intersect($ids, $f->included_ids) : $f->included_ids;
 			    	};
 
 		    		FacetFilter::cacheIdsInFilteredQuery($subjectType, array_merge($filter, [$facet->getParamName() => []]), $ids);

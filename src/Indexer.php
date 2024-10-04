@@ -3,24 +3,28 @@
 namespace Mgussekloo\FacetFilter;
 
 use DB;
-use Illuminate\Database\Eloquent\Model;
+
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
-use Mgussekloo\FacetFilter\Models\FacetRow;
 
 class Indexer
 {
     public $models;
+    public $facetClass;
+    public $facetRowClass;
 
     public function __construct($models = null)
     {
         $this->models = $models;
+        $this->facetClass = config('facet-filter.classes.facet');
+        $this->facetRowClass = config('facet-filter.classes.facetrow');
+
     }
 
     public function buildRow($facet, $model, $value)
     {
         return [
             'facet_slug' => $facet->getSlug(),
-            'subject_id' => $model->{$model->getKeyName()},
+            'subject_id' => $model->id,
             'value' => $value,
         ];
     }
@@ -54,7 +58,7 @@ class Indexer
 
     public function insertRows($rows)
     {
-        return FacetRow::insert(array_values($rows));
+        return $this->facetRowClass::insert(array_values($rows));
     }
 
     public function resetRows($models = null): self
@@ -64,20 +68,23 @@ class Indexer
         }
 
         foreach ($models as $model) {
-            FacetFilter::getFacets($model::class)->each(function ($facet) use ($model) {
-                DB::table('facetrows')
-                    ->where('subject_id', $model->{$model->getKeyName()})
-                    ->where('facet_slug', $facet->getSlug())
-                    ->delete();
+            FacetFilter::getFacets($model::class, false, false)->each(function ($facet) use ($model) {
+                $this->facetRowClass::where('subject_id', $model->id)
+                ->where('facet_slug', $facet->getSlug())
+                ->delete();
             });
         }
+
+		FacetFilter::forgetCache();
 
         return $this;
     }
 
     public function resetIndex()
     {
-        DB::table('facetrows')->truncate();
+        $this->facetRowClass::truncate();
+
+		FacetFilter::forgetCache();
 
         return $this;
     }
@@ -91,7 +98,7 @@ class Indexer
         if (! is_null($this->models) && $this->models->isNotEmpty()) {
             $subjectType = $this->models->first()::class;
 
-            $facets = FacetFilter::getFacets($subjectType);
+            $facets = FacetFilter::getFacets($subjectType, false, false);
 
             $now = now();
             $rows = [];
@@ -108,7 +115,7 @@ class Indexer
                             continue;
                         }
 
-                        $uniqueKey = implode('.', [$facet->getSlug(), $model->{$model->getKeyName()}, $value]);
+                        $uniqueKey = implode('.', [$facet->getSlug(), $model->id, $value]);
                         $row = $this->buildRow($facet, $model, $value);
                         $row = array_merge([
                             'created_at' => $now,

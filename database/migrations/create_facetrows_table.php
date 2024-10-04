@@ -13,7 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('facetrows', function (Blueprint $table) {
+    	$tableNames = config('facet-filter.table_names');
+        Schema::create($tableNames['facetrows'], function (Blueprint $table) {
             $table->id();
 
             $table->string('facet_slug');

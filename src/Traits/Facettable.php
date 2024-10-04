@@ -2,13 +2,13 @@
 
 namespace Mgussekloo\FacetFilter\Traits;
 
-use Illuminate\Support\Collection;
-use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
-use Mgussekloo\FacetFilter\Models\FacetRow;
-use Mgussekloo\FacetFilter\Models\Facet;
+
+use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
 
 use Mgussekloo\FacetFilter\Collections\FacettableCollection;
+use Illuminate\Support\Collection;
+
 
 trait Facettable
 {
@@ -36,10 +36,12 @@ trait Facettable
             $definitions = collect($definitions);
         }
 
-        $definitions = $definitions->map(function ($definition) use ($subjectType) {
+        $facetClass = config('facet-filter.classes.facet');
+
+        $definitions = $definitions->map(function ($definition) use ($subjectType, $facetClass) {
             return array_merge([
                 'subject_type' => $subjectType,
-                'facet_class' => Facet::class,
+                'facet_class' => $facetClass,
             ], $definition);
         })->filter();
 
@@ -60,7 +62,8 @@ trait Facettable
 
     public function facetrows()
     {
-        return $this->hasMany(FacetRow::class, 'subject_id');
+        $facetRowClass = config('facet-filter.classes.facetrow');
+        return $this->hasMany($facetRowClass, 'subject_id');
     }
 
     public function newEloquentBuilder($query): FacetQueryBuilder

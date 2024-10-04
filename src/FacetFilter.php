@@ -3,16 +3,18 @@
 namespace Mgussekloo\FacetFilter;
 
 use DB;
+
 use Illuminate\Support\Collection;
-use Mgussekloo\FacetFilter\Models\Facet;
+
+use Mgussekloo\FacetFilter\Traits\HasFacetCache;
 
 class FacetFilter
 {
+    use HasFacetCache;
+
     public static $facets = [];
 
     public static $lastQueries = [];
-
-    public static $idsInFilteredQuery = [];
 
     /**
      * Get the facets for a subjecttype, optionally setting the filter
@@ -41,10 +43,17 @@ class FacetFilter
 
     public function loadOptions($facets)
     {
-		$rows = DB::table('facetrows')
-        ->whereIn('facet_slug', $facets->map->getSlug())
-		->select('facet_slug', 'subject_id', 'value')
-		->get()->groupBy('facet_slug');
+    	$slugs = $facets->map->getSlug();
+    	$cacheKey = $slugs->implode('.');
+
+   		$rows = self::cache('facetRows', $cacheKey);
+   		if ($rows === false) {
+    		$rows = DB::table('facetrows')
+		        ->whereIn('facet_slug', $slugs)
+				->select('facet_slug', 'subject_id', 'value')
+				->get()->groupBy('facet_slug');
+			self::cache('facetRows', $cacheKey, $rows);
+		}
 
         foreach ($facets as $facet) {
             $slug = $facet->getSlug();
@@ -101,8 +110,9 @@ class FacetFilter
 
     	if ($ids === false) {
     		if ($lastQuery = self::getLastQuery($facet->subject_type)) {
-    			$ids = $lastQuery->constrainQueryWithFilter($filterWithoutFacet, false, true);
-    		}
+    			$lastQuery->constrainQueryWithFilter($filterWithoutFacet, false);
+				$ids  = self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet, $lastQuery->pluck('id')->toArray());
+			}
     	}
 
     	return $ids;
@@ -144,22 +154,8 @@ class FacetFilter
      */
     public function cacheIdsInFilteredQuery(string $subjectType, $filter, $ids = null)
     {
-        if (! isset(self::$idsInFilteredQuery[$subjectType])) {
-            self::$idsInFilteredQuery[$subjectType] = [];
-        }
-
-        $cacheKey = self::getCacheKey($subjectType, $filter);
-
-        if (! is_null($ids)) {
-            self::$idsInFilteredQuery[$subjectType][$cacheKey] = $ids;
-            return $ids;
-        }
-
-        if (isset(self::$idsInFilteredQuery[$subjectType][$cacheKey])) {
-            return self::$idsInFilteredQuery[$subjectType][$cacheKey];
-        }
-
-        return false;
+        $cacheKey = $subjectType . '.' . json_encode($filter, JSON_THROW_ON_ERROR);
+        return self::cache('idsInFilteredQuery', $cacheKey, $ids);
     }
 
     /**
@@ -168,15 +164,6 @@ class FacetFilter
      */
     public function resetIdsInFilteredQuery(string $subjectType): void
     {
-        unset(self::$idsInFilteredQuery[$subjectType]);
-    }
-
-    /**
-     * Build a cache key for the combination model class + filter
-     */
-    public static function getCacheKey(string $subjectType, $filter): string
-    {
-        // return $subjectType . implode('_', array_values(array_filter(array_values($filter))));
-        return implode('_', [$subjectType, json_encode($filter, JSON_THROW_ON_ERROR)]);
+    	self::forgetCache('idsInFilteredQuery');
     }
 }
