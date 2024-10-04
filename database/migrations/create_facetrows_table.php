@@ -34,6 +34,7 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('facetrows');
+    	$tableNames = config('facet-filter.table_names');
+        Schema::dropIfExists($tableNames['facetrows']);
     }
 };

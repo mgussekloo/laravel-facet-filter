@@ -2,7 +2,6 @@
 
 namespace Mgussekloo\FacetFilter\Collections;
 
-// use Illuminate\Support\Collection;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
 use Illuminate\Database\Eloquent\Collection;
@@ -92,8 +91,6 @@ class FacettableCollection extends Collection
 	    }
 
 	    // all facets are done, prepare the last query caches and correct option counts
-
-		// FacetFilter::resetIdsInFilteredQuery($subjectType);
 
 	    // if we have no filter, we are done early
 	    if (empty(array_filter(array_values($filter)))) {

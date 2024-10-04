@@ -77,11 +77,8 @@ class FacetFilter
         if ($query->limit > 0) {
         	$newQuery->limit(null);
         	$query->offset = null;
-
         }
 
-        // dd($query);
-		// $newQuery->skip(false);
         self::$lastQueries[$subjectType] = $newQuery;
         self::resetIdsInFilteredQuery($subjectType);
     }
@@ -154,6 +151,8 @@ class FacetFilter
      */
     public function cacheIdsInFilteredQuery(string $subjectType, $filter, $ids = null)
     {
+    	asort($filter);
+    	ksort($filter);
         $cacheKey = $subjectType . '.' . json_encode($filter, JSON_THROW_ON_ERROR);
         return self::cache('idsInFilteredQuery', $cacheKey, $ids);
     }
@@ -164,6 +163,7 @@ class FacetFilter
      */
     public function resetIdsInFilteredQuery(string $subjectType): void
     {
-    	self::forgetCache('idsInFilteredQuery');
+    	self::forgetCache('idsInFilteredQuery', $subjectType);
+
     }
 }

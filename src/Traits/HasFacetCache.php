@@ -34,10 +34,12 @@ trait HasFacetCache
         return Cache::store($cacheDriver);
     }
 
-    public function cache($key, $subkey, $toRemember = null, $expiration = null) {
-		$expiration = $expiration ?? $this->cacheExpirationTime;
-
+    public function cache($key, $subkey, $toRemember = null) {
     	$cacheKey = $this->cacheKey . '.' . $key;
+
+		if (is_null($subkey)) {
+    		return $this->cache->get($cacheKey);
+    	}
 
     	$arr = [];
 
@@ -47,13 +49,13 @@ trait HasFacetCache
 
     	if (!is_null($toRemember)) {
     		$arr[$subkey] = $toRemember;
-    		$this->cache->put($cacheKey, $arr, $expiration);
+    		$this->cache->put($cacheKey, $arr, $this->cacheExpirationTime);
 		}
 
 		return isset($arr[$subkey]) ? $arr[$subkey] : false;
 	}
 
-    public function forgetCache($key = null)
+    public function forgetCache($key = null, $subkey = null)
     {
     	$keys = [];
 
@@ -67,7 +69,20 @@ trait HasFacetCache
 
     	foreach ($keys as $key) {
     		$cacheKey = $this->cacheKey . '.' . $key;
-        	$this->cache->forget($cacheKey);
+
+    		if (is_null($subkey)) {
+        		$this->cache->forget($cacheKey);
+        	} else {
+        		$arr = $this->cache->get($cacheKey) ?? [];
+
+        		foreach ($arr as $index => $ids) {
+    				if (str_starts_with($index, $subkey)) {
+    					unset($arr[$index]);
+    				}
+    			}
+
+    			$this->cache->put($cacheKey, $arr, $this->cacheExpirationTime);
+        	}
         }
 
         return;
