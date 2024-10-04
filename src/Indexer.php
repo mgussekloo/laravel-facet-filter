@@ -58,7 +58,10 @@ class Indexer
 
     public function insertRows($rows)
     {
-        return $this->facetRowClass::insert(array_values($rows));
+    	$chunks = array_chunk($rows, 1000);
+    	foreach ($chunks as $chunk) {
+        	$this->facetRowClass::insert(array_values($chunk));
+        }
     }
 
     public function resetRows($models = null): self

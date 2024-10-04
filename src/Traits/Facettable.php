@@ -82,5 +82,9 @@ trait Facettable
     	return FacetFilter::filterCollection($models, $filter, $indexer);
     }
 
+    public static function forgetCache()
+    {
+    	return FacetFilter::forgetCache('idsInFilteredQuery', self::class);
+    }
 
 }

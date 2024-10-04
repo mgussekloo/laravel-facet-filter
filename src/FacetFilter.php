@@ -158,6 +158,7 @@ class FacetFilter
     	asort($filter);
     	ksort($filter);
         $cacheKey = $subjectType . '.' . json_encode($filter, JSON_THROW_ON_ERROR);
+
         return self::cache('idsInFilteredQuery', $cacheKey, $ids);
     }
 

@@ -249,10 +249,33 @@ public static function facetDefinitions()
 }
 ```
 
-## Configuration
+## Notes on caching
 
-See config/facet-filter.php for config options. Most should be self explanatory.
-By default this package uses the simplest (array) cache store, which doesn't cache results between requests. You can try other stores for better performance (file, redis, etc.).
+By default Facet Filter uses the non-persistent 'array' cache driver, with queries and calculations happening every request.
+You can configure the cache driver (as well as the expiration time and cachekey prefix) through config/facet-filter.php
+
+If you decide to use a persistent cache driver, please note the following:
+- Facet rows for a facet will be cached for the duration of the expiration time.
+- The default Indexer clears all caches by default. If you want to do this yourelf:
+
+```php
+	FacetFilter::forgetCache(); // all caches including facet rows
+	Product::forgetCache(); // all result counts for this facettable model
+```
+
+- Calls to facetFilter() or indexlessFacetFilter() always clear cached result counts to prevent running into problems with re-used queries, complex state (being logged in / out), etc. You can opt-out of this behaviour. Unless you have many facets selected you're unlikely to see real benefit from this.
+
+```php
+	// using index-based facet filtering
+	Product::facetFilter($filter)->get();
+	Product::facetFilter($filter)->withCache()->get();
+
+	// using collection-based facet filtering
+	Projects::all()->indexlessFacetFilter($filter);
+	Projects::all()->withCache()->indexlessFacetFilter($filter);
+```
+
+## Config
 
 ``` php
     'classes' => [
