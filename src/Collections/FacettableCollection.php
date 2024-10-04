@@ -112,7 +112,7 @@ class FacettableCollection extends Collection
 
 	    // all facets are done, prepare the last-query caches and correct option counts
 
-	    $included_ids_known = FacetFilter::cacheIdsInFilteredQuery($subjectType, $filterWithoutFacet);
+	    $included_ids_known = FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter);
 
 	    $included_ids = null;
 	    foreach ($facets as $facet) {
