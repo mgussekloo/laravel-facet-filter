@@ -33,6 +33,8 @@ class FacettableCollection extends Collection
 
 		if (is_null($indexer)) {
     		$indexer = new Indexer();
+    	} elseif (is_string($indexer)) {
+    		$indexer = new $indexer();
     	}
 
 	    $filter = $facets->first()->filter;
@@ -42,8 +44,6 @@ class FacettableCollection extends Collection
         }
 
 		// build the facet rows
-		$slugs = $facets->map->getSlug();
-
    		$all_rows = FacetFilter::cache('facetRows', $subjectType);
 
    		if ($all_rows === false) {
@@ -66,11 +66,10 @@ class FacettableCollection extends Collection
 		    	$all_rows[$facet->getSlug()] = collect($_rows);
 		    }
 
-		    $all_rows = $all_rows;
 		    FacetFilter::cache('facetRows', $subjectType, $all_rows);
 		}
 
-		// load the rows, the the options
+		// load the rows
 	    foreach ($facets as $facet) {
 	    	$rows = $all_rows[$facet->getSlug()];
 	    	$facet->setRows($rows);

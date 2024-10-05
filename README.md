@@ -216,20 +216,6 @@ if ($products->hasMorePages()) {}
 }
 ```
 
-### Filtering collections
-
-It's possible to get your models first, and apply facet filtering afterwards. This method builds the index "on the fly". This is much slower than using an index, so it's not recommended for most use cases.
-
-``` php
-$products = Product::all(); // returns a "FacettableCollection"
-$products = $products->indexlessFacetFilter($filter);
-
-// the second (optional) parameter lets you specify which indexer to use when indexing values from models
-
-$indexer = new App\MyCustomIndexer();
-$products = Product::all()->indexlessFacetFilter($filter, $indexer);
-```
-
 ### Custom facets
 
 Provide custom attributes and an optional custom [Facet class](src/Models/Facet.php) in the facet definitions.
@@ -249,27 +235,42 @@ public static function facetDefinitions()
 }
 ```
 
+### Filtering collections
+
+It's possible to apply facet filtering to a collection, without building an index. Models with the Facettable trait return a FacettableCollection which has an indexlessFacetFilter() method.
+It's slower than filtering with an index, though.
+
+``` php
+$products = Product::all(); // returns a "FacettableCollection"
+$products = $products->indexlessFacetFilter($filter);
+
+// the second (optional) parameter lets you specify which indexer to use when indexing values from models
+
+$indexer = new App\MyCustomIndexer();
+$products = Product::all()->indexlessFacetFilter($filter, $indexer);
+```
+
 ## Notes on caching
 
 By default Facet Filter uses the non-persistent 'array' cache driver, with queries and calculations happening every request.
 You can configure the cache driver (as well as the expiration time and cachekey prefix) through config/facet-filter.php
 
 If you decide to use a persistent cache driver, please note the following:
-- Facet rows for a facet are cached for the duration of the expiration time.
-- If you rebuild the index, you need to clear the cache. The default Indexer does this automatically.
+- Results counts and facet rows are cached per the "subject" class + the applied filter. Caching does not take into account other factors that might impact the result count, such as query constraints, users being logged in or not, etc.
+- That's why calls to facetFilter() or indexlessFacetFilter() always clear cached result counts before running. You can use the withCache() method to change this behaviour.
 
 ```php
-	FacetFilter::forgetCache(); // all caches, result counts for all facets, and facet rows
-```
-
-- Calls to facetFilter() or indexlessFacetFilter() always clear cached result counts to prevent running into problems with re-used queries, complex state (being logged in / out), etc. You can opt-out of this behaviour.
-
-```php
-	// using index-based facet filtering
+	// do not clear the result count cache before facet filtering (only useful if using a persistent caching driver)
 	Product::withCache()->facetFilter($filter)->get();
 
 	// using collection-based facet filtering
 	Projects::all()->withCache()->indexlessFacetFilter($filter);
+```
+
+- The default Indexer clears the cache automatically when rebuilding the index. To do it manually:
+
+```php
+	FacetFilter::forgetCache(); // clears all result counts for all facets, and all facet rows
 ```
 
 ## Config
