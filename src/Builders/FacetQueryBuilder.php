@@ -28,7 +28,7 @@ class FacetQueryBuilder extends Builder
     // Alias of facetfilter
     public function facetsMatchFilter($filter = [])
     {
-    	return $this->facetsFilter($filter);
+    	return $this->facetFilter($filter);
     }
 
     /**
