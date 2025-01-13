@@ -30,6 +30,8 @@ class FacetFilter
                 self::loadRows($subjectType, $facets);
             }
 
+			$filter = is_null($filter) ? [] : $filter;
+
             self::$facets[$subjectType] = $facets;
         }
 
@@ -81,10 +83,6 @@ class FacetFilter
         }
 
         self::$lastQueries[$subjectType] = $newQuery;
-
-        if (!$newQuery->useFacetCache) {
-        	self::resetIdsInFilteredQuery($subjectType);
-        }
     }
 
     /**

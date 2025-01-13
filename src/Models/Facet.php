@@ -21,10 +21,9 @@ class Facet extends Model
     ];
 
     public $rows = null;
-
     public $options = null;
-
     public $filter = null;
+    public $included_ids = null;
 
     public function __construct($definition)
     {
@@ -118,11 +117,37 @@ class Facet extends Model
         return $query;
     }
 
+    public function updateIncludedIdsForFilter($filter)
+    {
+    	// now start filtering
+    	$facetName = $this->getParamName();
+
+        $selectedValues = (isset($filter[$facetName]))
+            ? collect($filter[$facetName])->values()
+            : collect([]);
+
+        // if you have selected ALL, it is the same as selecting none
+		if ($selectedValues->isNotEmpty()) {
+	        $allValues = $this->rows->pluck('value')->filter()->unique()->values();
+	        if ($allValues->diff($selectedValues)->isEmpty()) {
+	            $selectedValues = collect([]);
+	        }
+	    }
+
+        // if you must filter
+        if ($selectedValues->isNotEmpty()) {
+        	$this->included_ids = $this->rows->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
+        } else {
+        	$this->included_ids = null;
+        }
+    }
+
     public function getHttpQuery($value): string
     {
         $facetName = $this->getParamName();
 
         $arr = $this->filter;
+
         if (isset($arr[$facetName])) {
         	if (empty($arr[$facetName])) {
         		$arr[$facetName][] = $value;

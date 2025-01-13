@@ -25,19 +25,19 @@ class FacettableCollection extends Collection
 
 		$subjectType = $this->first()::class;
 
-		$facets = FacetFilter::getFacets($subjectType, $filter, false);
+		$facets = FacetFilter::getFacets($subjectType, $filter);
 
 		if ($facets->isEmpty()) {
 			return $this;
 		}
+
+	    $filter = $facets->first()->filter;
 
 		if (is_null($indexer)) {
     		$indexer = new Indexer();
     	} elseif (is_string($indexer)) {
     		$indexer = new $indexer();
     	}
-
-	    $filter = $facets->first()->filter;
 
 		if (!$this->useFacetCache) {
         	FacetFilter::resetIdsInFilteredQuery($subjectType);
@@ -73,44 +73,20 @@ class FacettableCollection extends Collection
 	    foreach ($facets as $facet) {
 	    	$rows = $all_rows[$facet->getSlug()];
 	    	$facet->setRows($rows);
+	    	$facet->updateIncludedIdsForFilter($filter);
 	    }
 
-		$all_ids = FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter);
-    	if ($all_ids === false) {
-			$all_ids = $this->pluck('id')->toArray();
-    		FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter, $all_ids);
-		}
+		// $all_ids = FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter);
+    	// if ($all_ids === false) {
+		// 	$all_ids = $this->pluck('id')->toArray();
+    	// 	FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter, $all_ids);
+		// }
 
 	    if (empty(array_filter(array_values($filter)))) {
 	    	return $this;
     	}
 
-	    foreach ($facets as $facet) {
-	    	// now start filtering
-        	$facetName = $facet->getParamName();
-
-	        $selectedValues = (isset($filter[$facetName]))
-	            ? collect($filter[$facetName])->values()
-	            : collect([]);
-
-	        // if you have selected ALL, it is the same as selecting none
-			if ($selectedValues->isNotEmpty()) {
-		        $allValues = $rows->pluck('value')->filter()->unique()->values();
-		        if ($allValues->diff($selectedValues)->isEmpty()) {
-		            $selectedValues = collect([]);
-		        }
-		    }
-
-	        // if you must filter
-	        if ($selectedValues->isNotEmpty()) {
-	        	$facet->included_ids = $facet->rows->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
-	        } else {
-	        	$facet->included_ids = $all_ids;
-	        }
-	    }
-
 	    // all facets are done, prepare the last-query caches and correct option counts
-
 	    $included_ids_known = FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter);
 
 	    $included_ids = null;
@@ -127,7 +103,9 @@ class FacettableCollection extends Collection
 
 			    	$ids = null;
 			    	foreach ($otherFacets as $f) {
-		    			$ids = (!is_null($ids)) ? array_intersect($ids, $f->included_ids) : $f->included_ids;
+			    		if (!is_null($f->included_ids)) {
+		    				$ids = (!is_null($ids)) ? array_intersect($ids, $f->included_ids) : $f->included_ids;
+		    			}
 			    	};
 
 		    		FacetFilter::cacheIdsInFilteredQuery($subjectType, array_merge($filter, [$facet->getParamName() => []]), $ids);
@@ -135,7 +113,9 @@ class FacettableCollection extends Collection
 	    	}
 
 	    	if ($included_ids_known === false) {
-				$included_ids = (!is_null($included_ids)) ? array_intersect($included_ids, $facet->included_ids) : $facet->included_ids;
+	    		if (!is_null($facet->included_ids)) {
+					$included_ids = (!is_null($included_ids)) ? array_intersect($included_ids, $facet->included_ids) : $facet->included_ids;
+				}
 			}
 	    }
 

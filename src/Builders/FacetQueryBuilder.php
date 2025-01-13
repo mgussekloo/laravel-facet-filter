@@ -28,7 +28,7 @@ class FacetQueryBuilder extends Builder
     // Alias of facetfilter
     public function facetsMatchFilter($filter = [])
     {
-    	return $this->facetsFilter($filter);
+    	return $this->facetFilter($filter);
     }
 
     /**
@@ -53,6 +53,11 @@ class FacetQueryBuilder extends Builder
 
         // Save the unconstrained query
         FacetFilter::setLastQuery($this->facetSubjectType, $this);
+
+        // clear the cache
+		if (!$this->useFacetCache) {
+        	FacetFilter::resetIdsInFilteredQuery($this->facetSubjectType);
+        }
 
         // Constrain the query
         $this->constrainQueryWithFilter($this->facetFilter);
