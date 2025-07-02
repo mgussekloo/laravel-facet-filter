@@ -88,30 +88,15 @@ class FacetQueryBuilder extends Builder
     // because otherwise the paginator will not take the constraints into account
     // i assume it would be better to fix this in the Query/Builder instead of Eloquent/Builder,
     // but i couldn't find out how to do so elegantly
-	public function paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null, $total = null)
+	public function paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null)
     {
-        $page = $page ?: Paginator::resolveCurrentPage($pageName);
-
-        /* CHANGE FROM HERE... */
-        // $total = value($total) ?? $this->toBase()->getCountForPagination();
-        $total = value($total) ?? $this->getCountForPagination();
-        /* TO THERE */
-
-        $perPage = value($perPage, $total) ?: $this->model->getPerPage();
-
-        $results = $total
-            ? $this->forPage($page, $perPage)->get($columns)
-            : $this->model->newCollection();
-
-        return $this->paginator($results, $total, $perPage, $page, [
-            'path' => Paginator::resolveCurrentPath(),
-            'pageName' => $pageName,
-        ]);
+    	if (!$this->appliedConstraint) {
+	        $tempQuery = FacetFilter::cloneBaseQuery($this);
+	        $tempQuery->constrainQueryWithFilter($this->facetFilter);
+	        return $tempQuery->paginate($perPage, $columns, $pageName, $page);
+	    } else {
+	    	return parent::paginate($perPage, $columns, $pageName, $page);
+	    }
     }
 
-	public function getCountForPagination($columns = ['*']) {
-    	$tempQuery = FacetFilter::cloneBaseQuery($this);
-        $tempQuery->constrainQueryWithFilter($this->facetFilter);
-        return $tempQuery->count();
-    }
 }
