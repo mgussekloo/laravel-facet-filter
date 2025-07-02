@@ -5,6 +5,7 @@ namespace Mgussekloo\FacetFilter\Traits;
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
 use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
+// use Mgussekloo\FacetFilter\Builders\BaseFacetQueryBuilder;
 
 use Mgussekloo\FacetFilter\Collections\FacettableCollection;
 use Illuminate\Support\Collection;
@@ -65,6 +66,12 @@ trait Facettable
         $facetRowClass = config('facet-filter.classes.facetrow');
         return $this->hasMany($facetRowClass, 'subject_id');
     }
+
+    // protected function newBaseQueryBuilder()
+    // {
+    // 	$connection = $this->getConnection();
+    //     return new BaseFacetQueryBuilder($connection, $connection->getQueryGrammar(), $connection->getPostProcessor());
+    // }
 
     public function newEloquentBuilder($query): FacetQueryBuilder
     {

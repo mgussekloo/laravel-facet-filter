@@ -3,6 +3,7 @@
 namespace Mgussekloo\FacetFilter;
 
 use DB;
+use Log;
 
 use Illuminate\Support\Collection;
 
@@ -53,6 +54,10 @@ class FacetFilter
 		        ->whereIn('facet_slug', $facets->map->getSlug())
 				->select('facet_slug', 'subject_id', 'value')
 				->get()->groupBy('facet_slug');
+
+			if (count($rows) == 0) {
+				Log::warning(sprintf('No facet rows for %s! Did you forget to build an index?', $subjectType));
+			}
 			self::cache('facetRows', $subjectType, $rows);
 		}
 
@@ -64,14 +69,9 @@ class FacetFilter
         }
     }
 
-    /**
-     * Remember the last query for a model class, without eager loaded relations.
-     * We use this query as basis to run queries for each facet, calculating the number
-     * of results the facet options would have.
-     */
-    public function setLastQuery(string $subjectType, $query): void
+    public static function cloneBaseQuery($query)
     {
-        $newQuery = clone $query;
+		$newQuery = clone $query;
         $newQuery->withOnly([]);
 
         $query = $newQuery->getQuery();
@@ -80,6 +80,17 @@ class FacetFilter
         	$query->offset = null;
         }
 
+        return $newQuery;
+    }
+
+    /**
+     * Remember the last query for a model class, without eager loaded relations.
+     * We use this query as basis to run queries for each facet, calculating the number
+     * of results the facet options would have.
+     */
+    public function setLastQuery(string $subjectType, $query): void
+    {
+    	$newQuery = self::cloneBaseQuery($query);
         self::$lastQueries[$subjectType] = $newQuery;
 
         if (!$newQuery->useFacetCache) {
