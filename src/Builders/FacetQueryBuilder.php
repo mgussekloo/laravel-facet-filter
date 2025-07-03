@@ -5,7 +5,6 @@ namespace Mgussekloo\FacetFilter\Builders;
 use Illuminate\Database\Eloquent\Builder;
 
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
-use Illuminate\Pagination\Paginator;
 
 class FacetQueryBuilder extends Builder
 {
@@ -84,29 +83,11 @@ class FacetQueryBuilder extends Builder
         $this->appliedConstraint = true;
     }
 
-    // pagination fixes: all we need to fix is the total number of results,
-    // because otherwise the paginator will not take the constraints into account
-    // i assume it would be better to fix this in the Query/Builder instead of Eloquent/Builder,
-    // but i couldn't find out how to do so elegantly
-	public function paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null)
+    // paginator
+    protected function paginator($items, $total, $perPage, $currentPage, $options)
     {
-        $page = $page ?: Paginator::resolveCurrentPage($pageName);
-
-        /* CHANGE FROM HERE... */
-        // $total = value($total) ?? $this->toBase()->getCountForPagination();
-        $total = value($total) ?? $this->getCountForPagination();
-        /* TO THERE */
-
-        $perPage = value($perPage, $total) ?: $this->model->getPerPage();
-
-        $results = $total
-            ? $this->forPage($page, $perPage)->get($columns)
-            : $this->model->newCollection();
-
-        return $this->paginator($results, $total, $perPage, $page, [
-            'path' => Paginator::resolveCurrentPath(),
-            'pageName' => $pageName,
-        ]);
+    	$total = $this->getCountForPagination();
+    	return parent::paginator($items, $total, $perPage, $currentPage, $options);
     }
 
 	public function getCountForPagination($columns = ['*']) {
