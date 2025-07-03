@@ -88,7 +88,7 @@ class FacetQueryBuilder extends Builder
     // because otherwise the paginator will not take the constraints into account
     // i assume it would be better to fix this in the Query/Builder instead of Eloquent/Builder,
     // but i couldn't find out how to do so elegantly
-	public function paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null, $total = null)
+	public function paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null)
     {
         $page = $page ?: Paginator::resolveCurrentPage($pageName);
 
