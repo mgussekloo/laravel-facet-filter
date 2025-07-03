@@ -71,7 +71,7 @@ class FacettableCollection extends Collection
 
 		// load the rows
 	    foreach ($facets as $facet) {
-	    	$rows = $all_rows[$facet->getSlug()];
+	    	$rows = $all_rows[$facet->getSlug()]->sortBy('value');
 	    	$facet->setRows($rows);
 	    }
 
