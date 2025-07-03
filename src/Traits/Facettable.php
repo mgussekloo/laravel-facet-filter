@@ -16,7 +16,7 @@ trait Facettable
 {
     abstract public static function facetDefinitions();
 
-    public static function indexer() {
+    public static function indexerClass() {
     	return Indexer::class;
     }
 

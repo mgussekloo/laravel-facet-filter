@@ -12,7 +12,7 @@ This package provides simple facet filtering (sometimes called Faceted Search or
 
 ### Contributing
 
-Please contribute to this package, either by creating a pull request or reporting an issue.
+Please contribute to this package either by creating a pull request or reporting an issue.
 
 ### Installation
 
@@ -22,7 +22,7 @@ This package can be installed through [Composer](https://packagist.org/packages/
 composer require mgussekloo/laravel-facet-filter
 ```
 
-## Prepare your project
+## Get started
 
 ### Update your models
 
@@ -53,14 +53,13 @@ class Product extends Model
 			]
 		];
 	}
-
 }
 
 ```
 
 ### Build an index
 
-In most cases, you'll want to create an index so you can filter large datasets efficiently. (Don't want to build an index? Skip to [filtering collections](#filtering-collections).)
+In most cases you'll want to create an index to filter large datasets efficiently. (Don't want to build an index? Skip ahead to [filtering collections](#filtering-collections).)
 
 First, run the migrations:
 
@@ -69,7 +68,7 @@ php artisan vendor:publish --tag="facet-filter-migrations"
 php artisan migrate
 ```
 
-To build the index, create an Artisan command that queries your Facettable models. You can run it periodically
+To build the index, create an Artisan command that queries your Facettable models. Run it periodically or whenever your data changes.
 
 ``` php
 use Mgussekloo\FacetFilter\Indexer;
@@ -171,7 +170,7 @@ class MyCustomIndexer extends \Mgussekloo\FacetFilter\Indexer {
 }
 ```
 
-Overwrite the indexer() method on your Facettable model to make it use your custom indexer.
+Overwrite the indexerClass() method on your Facettable model to make it use your custom indexer.
 
 ```php
 use App\MyCustomIndexer;
@@ -181,13 +180,13 @@ class Product extends Model
 	use HasFactory;
 	use Facettable;
 
-	public static indexer() {
+	public static indexerClass() {
 		return MyCustomIndexer::class;
 	}
 }
 ```
 
-Example: Update a larger index over time
+### Updating a larger index over time
 
 ```php
 $indexer = new Indexer();
@@ -218,7 +217,7 @@ public static function facetDefinitions()
 		[
 			'title' => 'Main color',
 			'description' => 'The main color.', // optional custom attribute, you could use $facet->description when creating the frontend...
-            'related_id' => 23, // ... or use $facet->related_id with your custom indexer
+			'related_id' => 23, // ... or use $facet->related_id with your custom indexer
 			'fieldname' => 'color',
 			'facet_class' => CustomFacet::class // optional Facet class with custom logic
 		]
@@ -265,24 +264,22 @@ The default Indexer clears the cache automatically when rebuilding the index. To
 ## Config
 
 ``` php
-    'classes' => [
-        'facet' => Mgussekloo\FacetFilter\Models\Facet::class,
-        'facetrow' => Mgussekloo\FacetFilter\Models\FacetRow::class,
-    ],
+	'classes' => [
+		'facet' => Mgussekloo\FacetFilter\Models\Facet::class,
+		'facetrow' => Mgussekloo\FacetFilter\Models\FacetRow::class,
+	],
 
-    'table_names' => [
+	'table_names' => [
 		'facetrows' => 'facetrows',
 	],
 
-    'cache' => [
-        'expiration_time' => \DateInterval::createFromDateString('24 hours'),
-        'key' => 'mgussekloo.facetfilter.cache',
-        'store' => 'array',
-    ],
+	'cache' => [
+		'expiration_time' => \DateInterval::createFromDateString('24 hours'),
+		'key' => 'mgussekloo.facetfilter.cache',
+		'store' => 'array',
+	],
 ```
-
 
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
-

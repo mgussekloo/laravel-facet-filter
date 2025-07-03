@@ -36,7 +36,7 @@ class FacettableCollection extends Collection
 
 	public function getIndexer() {
 		$subjectType = $this->first()::class;
-		$indexerClass = $subjectType::indexer();
+		$indexerClass = $subjectType::indexerClass();
 		return new $indexerClass();
     }
 
