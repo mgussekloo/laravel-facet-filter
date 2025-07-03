@@ -174,4 +174,8 @@ class FacetFilter
     {
     	FacetCache::forgetCache('idsInFilteredQuery', $subjectType);
     }
+
+    public function cache($key, $subkey, $toRemember = null) {
+    	return FacetCache::cache($key, $subkey, $toRemember);
+    }
 }

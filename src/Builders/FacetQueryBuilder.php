@@ -5,7 +5,6 @@ namespace Mgussekloo\FacetFilter\Builders;
 use Illuminate\Database\Eloquent\Builder;
 
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
-use Mgussekloo\FacetFilter\Facades\FacetCache;
 
 class FacetQueryBuilder extends Builder
 {
@@ -98,11 +97,11 @@ class FacetQueryBuilder extends Builder
     }
 
 	public function getCountForPagination($columns = ['*']) {
-		$count = FacetCache::cache('count', $this->facetSubjectType);
+		$count = FacetFilter::cache('count', $this->facetSubjectType);
 		if ($count === false) {
 	    	$tempQuery = FacetFilter::cloneBaseQuery($this);
 	        $tempQuery->constrainQueryWithFilter($this->facetFilter);
-	        $count = FacetCache::cache('count', $this->facetSubjectType, $tempQuery->count());
+	        $count = FacetFilter::cache('count', $this->facetSubjectType, $tempQuery->count());
 		}
 		return $count;
     }
