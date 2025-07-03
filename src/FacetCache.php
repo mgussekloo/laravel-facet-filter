@@ -1,10 +1,10 @@
 <?php
 
-namespace Mgussekloo\FacetFilter\Traits;
+namespace Mgussekloo\FacetFilter;
 
 use Cache;
 
-trait HasFacetCache
+class FacetCache
 {
 
 	public $cache;
@@ -34,12 +34,9 @@ trait HasFacetCache
         return Cache::store($cacheDriver);
     }
 
+    // get from cache: key.subkey, optionally also store toRemember
     public function cache($key, $subkey, $toRemember = null) {
     	$cacheKey = $this->cacheKey . '.' . $key;
-
-		if (is_null($subkey)) {
-    		return $this->cache->get($cacheKey);
-    	}
 
     	$arr = [];
 

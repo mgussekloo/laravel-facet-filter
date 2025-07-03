@@ -6,13 +6,10 @@ use DB;
 use Log;
 
 use Illuminate\Support\Collection;
-
-use Mgussekloo\FacetFilter\Traits\HasFacetCache;
+use Mgussekloo\FacetFilter\Facades\FacetCache;
 
 class FacetFilter
 {
-    use HasFacetCache;
-
     public static $facets = [];
 
     public static $lastQueries = [];
@@ -48,7 +45,7 @@ class FacetFilter
      */
     public function loadRows($subjectType, $facets)
     {
-   		$rows = self::cache('facetRows', $subjectType);
+   		$rows = FacetCache::cache('facetRows', $subjectType);
    		if ($rows === false) {
     		$rows = DB::table('facetrows')
 		        ->whereIn('facet_slug', $facets->map->getSlug())
@@ -58,7 +55,7 @@ class FacetFilter
 			if (count($rows) == 0) {
 				Log::warning(sprintf('No facet rows for %s! Did you forget to build an index?', $subjectType));
 			}
-			self::cache('facetRows', $subjectType, $rows);
+			FacetCache::cache('facetRows', $subjectType, $rows);
 		}
 
         foreach ($facets as $facet) {
@@ -92,10 +89,6 @@ class FacetFilter
     {
     	$newQuery = self::cloneBaseQuery($query);
         self::$lastQueries[$subjectType] = $newQuery;
-
-        if (!$newQuery->useFacetCache) {
-        	self::resetIdsInFilteredQuery($subjectType);
-        }
     }
 
     /**
@@ -170,7 +163,7 @@ class FacetFilter
     	ksort($filter);
         $cacheKey = $subjectType . '.' . json_encode($filter, JSON_THROW_ON_ERROR);
 
-        return self::cache('idsInFilteredQuery', $cacheKey, $ids);
+        return FacetCache::cache('idsInFilteredQuery', $cacheKey, $ids);
     }
 
     /**
@@ -179,7 +172,6 @@ class FacetFilter
      */
     public function resetIdsInFilteredQuery(string $subjectType): void
     {
-    	self::forgetCache('idsInFilteredQuery', $subjectType);
-
+    	FacetCache::forgetCache('idsInFilteredQuery', $subjectType);
     }
 }

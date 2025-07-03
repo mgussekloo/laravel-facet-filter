@@ -18,5 +18,6 @@ class FacetFilterServiceProvider extends PackageServiceProvider
     public function registeringPackage(): void
     {
         $this->app->bind('facetfilter', fn () => new FacetFilter());
+        $this->app->bind('facetcache', fn () => new FacetCache());
     }
 }

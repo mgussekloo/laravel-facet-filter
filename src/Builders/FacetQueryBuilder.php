@@ -5,6 +5,7 @@ namespace Mgussekloo\FacetFilter\Builders;
 use Illuminate\Database\Eloquent\Builder;
 
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
+use Mgussekloo\FacetFilter\Facades\FacetCache;
 
 class FacetQueryBuilder extends Builder
 {
@@ -54,8 +55,14 @@ class FacetQueryBuilder extends Builder
             return parent::get($columns);
         }
 
-        // Save the unconstrained query
-        FacetFilter::setLastQuery($this->facetSubjectType, $this);
+		// Save the unconstrained query
+        if (!$this->appliedConstraint) {
+        	FacetFilter::setLastQuery($this->facetSubjectType, $this);
+
+        	if (!$this->useFacetCache) {
+        		FacetFilter::resetIdsInFilteredQuery($this->facetSubjectType);
+        	}
+        }
 
         // Constrain the query
         $this->constrainQueryWithFilter($this->facetFilter);
@@ -83,16 +90,20 @@ class FacetQueryBuilder extends Builder
         $this->appliedConstraint = true;
     }
 
-    // paginator
-    protected function paginator($items, $total, $perPage, $currentPage, $options)
+    // paginate
+    public function paginate($perPage = null, $columns = ['*'], $pageName = 'page', $page = null, $total = null)
     {
     	$total = $this->getCountForPagination();
-    	return parent::paginator($items, $total, $perPage, $currentPage, $options);
+        return parent::paginate($perPage, $columns, $pageName, $page, $total);
     }
 
 	public function getCountForPagination($columns = ['*']) {
-    	$tempQuery = FacetFilter::cloneBaseQuery($this);
-        $tempQuery->constrainQueryWithFilter($this->facetFilter);
-        return $tempQuery->count();
+		$count = FacetCache::cache('count', $this->facetSubjectType);
+		if ($count === false) {
+	    	$tempQuery = FacetFilter::cloneBaseQuery($this);
+	        $tempQuery->constrainQueryWithFilter($this->facetFilter);
+	        $count = FacetCache::cache('count', $this->facetSubjectType, $tempQuery->count());
+		}
+		return $count;
     }
 }
