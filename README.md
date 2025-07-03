@@ -89,7 +89,7 @@ $products = Product::facetFilter($filter)->get();
 
 ### Basic frontend example
 
-Here's a simple [demo project](https://github.com/mgussekloo/Facet-Demo) that demonstrates a basic frontend. You could implement this also in Livewire ([see gist](https://gist.github.com/mgussekloo/85f1901baceb8e0e244c4860c37dae1f).
+Here's a simple [demo project](https://github.com/mgussekloo/Facet-Demo) that demonstrates a basic frontend. To see an example of a Livewire implementation, [see this gist](https://gist.github.com/mgussekloo/85f1901baceb8e0e244c4860c37dae1f).
 
 ``` html
 <div class="flex">
