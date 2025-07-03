@@ -3,6 +3,7 @@
 namespace Mgussekloo\FacetFilter\Traits;
 
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
+use Mgussekloo\FacetFilter\Indexer;
 
 use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
 // use Mgussekloo\FacetFilter\Builders\BaseFacetQueryBuilder;
@@ -14,6 +15,10 @@ use Illuminate\Support\Collection;
 trait Facettable
 {
     abstract public static function facetDefinitions();
+
+    public static function indexer() {
+    	return Indexer::class;
+    }
 
 	public function newCollection(array $models = [])
     {

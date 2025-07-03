@@ -6,8 +6,6 @@ use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
 use Illuminate\Database\Eloquent\Collection;
 
-use Mgussekloo\FacetFilter\Indexer;
-
 class FacettableCollection extends Collection
 {
 	public $useFacetCache = false;
@@ -17,27 +15,45 @@ class FacettableCollection extends Collection
     	return $this;
     }
 
+    public function getFacets($filter = null, $load = true)
+    {
+    	$subjectType = $this->first()::class;
+    	return FacetFilter::getFacets($subjectType, $filter, $load);
+    }
+
+    public function buildIndex($reset = true) {
+    	$indexer = $this->getIndexer();
+    	if ($reset) {
+    		$indexer->resetRows($this);
+    	}
+    	$indexer->buildIndex($this);
+    }
+
+    public function resetIndex() {
+    	$indexer = $this->getIndexer();
+    	$indexer->resetRows($this);
+    }
+
+	public function getIndexer() {
+		$subjectType = $this->first()::class;
+		$indexerClass = $subjectType::indexer();
+		return new $indexerClass();
+    }
+
 	/**
      * Experimental: Filter a collection, bypassing the database index entirely
      */
     public function indexlessFacetFilter($filter, $indexer=null)
     {
-
 		$subjectType = $this->first()::class;
-
 		$facets = FacetFilter::getFacets($subjectType, $filter, false);
 
 		if ($facets->isEmpty()) {
 			return $this;
 		}
 
-		if (is_null($indexer)) {
-    		$indexer = new Indexer();
-    	} elseif (is_string($indexer)) {
-    		$indexer = new $indexer();
-    	}
-
 	    $filter = $facets->first()->filter;
+		$indexer = $this->getIndexer();
 
 		if (!$this->useFacetCache) {
         	FacetFilter::resetIdsInFilteredQuery($subjectType);
@@ -147,4 +163,6 @@ class FacettableCollection extends Collection
 
 	    return $this->whereIn('id', $included_ids);
     }
+
+
 }
