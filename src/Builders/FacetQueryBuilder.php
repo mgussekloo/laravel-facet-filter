@@ -102,11 +102,11 @@ class FacetQueryBuilder extends Builder
     }
 
 	public function getCountForPagination($columns = ['*']) {
-		$count = FacetFilter::cache('count', $this->facetSubjectType);
+		$count = FacetFilter::cache('countForPagination', $this->facetSubjectType);
 		if ($count === false) {
 	    	$tempQuery = FacetFilter::cloneBaseQuery($this);
 	        $tempQuery->constrainQueryWithFilter($this->facetFilter);
-	        $count = FacetFilter::cache('count', $this->facetSubjectType, $tempQuery->count());
+	        $count = FacetFilter::cache('countForPagination', $this->facetSubjectType, $tempQuery->count());
 		}
 		return $count;
     }

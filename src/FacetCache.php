@@ -52,7 +52,7 @@ class FacetCache
     	$keys = [];
 
 		if (is_null($key)) {
-			$keys = ['facetRows', 'idsInFilteredQuery', 'count'];
+			$keys = ['facetRows', 'idsInFilteredQuery', 'countForPagination'];
     	}
 
     	if (is_string($key)) {
