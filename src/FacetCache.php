@@ -38,11 +38,7 @@ class FacetCache
     public function cache($key, $subkey, $toRemember = null) {
     	$cacheKey = $this->cacheKey . '.' . $key;
 
-    	$arr = [];
-
-    	if ($this->cache->has($cacheKey)) {
-			$arr = $this->cache->get($cacheKey);
-		}
+		$arr = $this->cache->get($cacheKey) ?? [];
 
     	if (!is_null($toRemember)) {
     		$arr[$subkey] = $toRemember;
@@ -72,8 +68,8 @@ class FacetCache
         	} else {
         		$arr = $this->cache->get($cacheKey) ?? [];
 
-        		foreach ($arr as $index => $ids) {
-    				if (str_starts_with($index, $subkey)) {
+        		foreach ($arr as $index => $value) {
+    				if ($index == $subkey) {
     					unset($arr[$index]);
     				}
     			}
