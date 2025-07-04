@@ -126,7 +126,6 @@ class Facet extends Model
         if (isset($arr[$facetName])) {
         	if (empty($arr[$facetName])) {
         		$arr[$facetName][] = $value;
-        	// } elseif (count(array_intersect($arr[$facetName], [$value])) == 1) {
         	} elseif (in_array($value, $arr[$facetName])) {
         		$arr[$facetName] = array_diff($arr[$facetName], [$value]);
         	} else {
