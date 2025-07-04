@@ -69,7 +69,8 @@ class FacetCache
         		$arr = $this->cache->get($cacheKey) ?? [];
 
         		foreach ($arr as $index => $value) {
-    				if ($index == $subkey) {
+        			// using starts with so you can target model classes
+    				if (str_starts_with($index, $subkey)) {
     					unset($arr[$index]);
     				}
     			}
