@@ -243,14 +243,13 @@ $pagination = $products->appends(request()->input())->links();
 
 ## Notes on caching
 
-By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. You can configure a peristent cache driver through `config/facet-filter.php`. If you also want the model ids cached for any particular filter, use the withCache() method when querying.
+By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. We cache relevant models for a query based on the filter, not the query specifics, because we assume that you do only one facet filtering query for any model. If this is not the case, be sure to use the ->withoutCache() method when querying.
 
 ```php
-	// get the model ids for any query from the cache (only useful if using a persistent caching driver)
-	Product::withCache()->facetFilter($filter)->get();
-
-	// using collection-based facet filtering
-	Projects::all()->withCache()->indexlessFacetFilter($filter);
+    // if you have two facet filter queries on the same model running...
+    Product::where('published', true)->facetFilter($filter)->get();
+    // ... use withoutCache() to prevent incorrect results
+	Product::where('published', false)->withoutCache()->facetFilter($filter)->get();	
 ```
 
 The default Indexer clears the FacetFilter related cache automatically when rebuilding the index. To do it manually:
@@ -261,7 +260,7 @@ The default Indexer clears the FacetFilter related cache automatically when rebu
 
 ## Config
 
-Publish using 
+You can configure a peristent cache driver through `config/facet-filter.php`. Be aware of any caching related issues, e.g. if you have any user specific results this may be problematic.
 
 ``` bash
 php artisan vendor:publish --tag=facet-filter-config
