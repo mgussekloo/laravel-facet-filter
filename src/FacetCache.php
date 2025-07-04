@@ -6,7 +6,6 @@ use Cache;
 
 class FacetCache
 {
-
 	public $cache;
     public $cacheKey;
     public $cacheExpirationTime;

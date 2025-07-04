@@ -8,19 +8,18 @@ use Illuminate\Database\Eloquent\Collection;
 
 class FacettableCollection extends Collection
 {
-	public $useFacetCache = false;
-
-	public function withCache($cache=true) {
-    	$this->useFacetCache=$cache;
-    	return $this;
-    }
-
+	// get the facets for this collection's model
     public function getFacets($filter = null, $load = true)
     {
     	$subjectType = $this->first()::class;
     	return FacetFilter::getFacets($subjectType, $filter, $load);
     }
 
+	/**
+     * Indexing
+     */
+
+    // add rows to the index table for these models
     public function buildIndex($reset = true) {
     	$indexer = $this->getIndexer();
     	if ($reset) {
@@ -29,11 +28,13 @@ class FacettableCollection extends Collection
     	$indexer->buildIndex($this);
     }
 
+    // reset the rows in the index for these models
     public function resetIndex() {
     	$indexer = $this->getIndexer();
     	$indexer->resetRows($this);
     }
 
+    // get the indexer class that is specified for the models in this collection
 	public function getIndexer() {
 		$subjectType = $this->first()::class;
 		$indexerClass = $subjectType::indexerClass();
@@ -46,18 +47,16 @@ class FacettableCollection extends Collection
     public function indexlessFacetFilter($filter, $indexer=null)
     {
 		$subjectType = $this->first()::class;
-		$facets = FacetFilter::getFacets($subjectType, $filter, false);
+		$filter = FacetFilter::getFilterFromArr($subjectType, $filter);
+
+		// get the facets but do not load the options
+		$facets = $this->getFacets($filter, false);
 
 		if ($facets->isEmpty()) {
 			return $this;
 		}
 
-	    $filter = $facets->first()->filter;
 		$indexer = $this->getIndexer();
-
-		if (!$this->useFacetCache) {
-        	FacetFilter::resetIdsInFilteredQuery($subjectType);
-        }
 
 		// build the facet rows
    		$all_rows = FacetFilter::cache('facetRows', $subjectType);
@@ -67,7 +66,7 @@ class FacettableCollection extends Collection
 
 	    	foreach ($facets as $facet) {
 	    		$_rows = [];
-	    		// build the facetrows
+
 		    	foreach ($this as $model) {
 		    		$values = $indexer->buildValues($facet, $model);
 	                if (!is_array($values)) {
@@ -91,18 +90,14 @@ class FacettableCollection extends Collection
 	    	$facet->setRows($rows);
 	    }
 
-		$all_ids = FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter);
-    	if ($all_ids === false) {
-			$all_ids = $this->pluck('id')->toArray();
-    		FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter, $all_ids);
-		}
+	    // if (empty(array_filter(array_values($filter)))) {
+	    // 	return $this;
+    	// }
 
-	    if (empty(array_filter(array_values($filter)))) {
-	    	return $this;
-    	}
+	    $all_ids = null;
 
 	    foreach ($facets as $facet) {
-	    	// now start filtering
+	    	// let each facet know which model id is selected
         	$facetName = $facet->getParamName();
 
 	        $selectedValues = (isset($filter[$facetName]))
@@ -115,12 +110,11 @@ class FacettableCollection extends Collection
 		        if ($allValues->diff($selectedValues)->isEmpty()) {
 		            $selectedValues = collect([]);
 		        }
-		    }
-
-	        // if you must filter
-	        if ($selectedValues->isNotEmpty()) {
 	        	$facet->included_ids = $facet->rows->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
 	        } else {
+	        	if (is_null($all_ids)) {
+					$all_ids = $this->pluck('id')->toArray();
+	        	}
 	        	$facet->included_ids = $all_ids;
 	        }
 	    }
@@ -135,8 +129,8 @@ class FacettableCollection extends Collection
 
 	    	if (isset($filter[$facetName])) {
 	    		$filterWithoutFacet = array_merge($filter, [$facetName => []]);
-	    		if (false === FacetFilter::cacheIdsInFilteredQuery($subjectType, $filterWithoutFacet)) {
 
+	    		if (false === FacetFilter::cacheIdsInFilteredQuery($subjectType, $filterWithoutFacet)) {
 					$otherFacets = $facets->reject(function($f) use ($facetName) {
 			    		return $facetName == $f->getParamName();
 			    	});
@@ -146,7 +140,7 @@ class FacettableCollection extends Collection
 		    			$ids = (!is_null($ids)) ? array_intersect($ids, $f->included_ids) : $f->included_ids;
 			    	};
 
-		    		FacetFilter::cacheIdsInFilteredQuery($subjectType, array_merge($filter, [$facet->getParamName() => []]), $ids);
+		    		FacetFilter::cacheIdsInFilteredQuery($subjectType, $filterWithoutFacet, $ids);
 	    		}
 	    	}
 
@@ -163,6 +157,4 @@ class FacettableCollection extends Collection
 
 	    return $this->whereIn('id', $included_ids);
     }
-
-
 }

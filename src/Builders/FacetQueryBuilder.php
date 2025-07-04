@@ -64,7 +64,7 @@ class FacetQueryBuilder extends Builder
         	FacetFilter::setLastQuery($this->facetSubjectType, $this);
 
         	if (!$this->useFacetCache) {
-        		FacetFilter::resetIdsInFilteredQuery($this->facetSubjectType);
+        		FacetFilter::forgetCache('idsInFilteredQuery', $this->facetSubjectType);
         	}
         }
 

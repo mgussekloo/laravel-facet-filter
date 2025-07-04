@@ -23,7 +23,7 @@ class FacetFilter
         if (! isset(self::$facets[$subjectType])) {
             $facets = $subjectType::makeFacets();
 
-            // Should we preload the options?
+            // Should we preload the options (only do this if we want to show the options)
             if ($load) {
                 self::loadRows($subjectType, $facets);
             }
@@ -164,15 +164,6 @@ class FacetFilter
         $cacheKey = $subjectType . '.' . json_encode($filter, JSON_THROW_ON_ERROR);
 
         return FacetCache::cache('idsInFilteredQuery', $cacheKey, $ids);
-    }
-
-    /**
-     * Forget the model id's that were in a filtered query, so we can
-     * start fresh.
-     */
-    public function resetIdsInFilteredQuery(string $subjectType): void
-    {
-    	FacetCache::forgetCache('idsInFilteredQuery', $subjectType);
     }
 
     // Convenience
