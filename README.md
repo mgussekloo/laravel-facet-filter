@@ -246,16 +246,16 @@ $pagination = $products->appends(request()->input())->links();
 By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. We cache relevant models for a query based on the filter, not the query specifics, because we assume that you do only one facet filtering query for any model. If this is not the case, be sure to use the ->withoutCache() method when querying.
 
 ```php
-    // if you have two facet filter queries on the same model running...
-    Product::where('published', true)->facetFilter($filter)->get();
-    // ... use withoutCache() to prevent incorrect results
-	Product::where('published', false)->withoutCache()->facetFilter($filter)->get();	
+// if you have two facet filter queries on the same model running...
+Product::where('published', true)->facetFilter($filter)->get();
+// ... use withoutCache() to prevent incorrect results
+Product::where('published', false)->withoutCache()->facetFilter($filter)->get();
 ```
 
 The default Indexer clears the FacetFilter related cache automatically when rebuilding the index. To do it manually:
 
 ```php
-	FacetFilter::forgetCache(); // clears cache for facet rows, result counts, model ids for a query, pagination queries
+FacetFilter::forgetCache(); // clears cache for facet rows, result counts, model ids for a query, pagination queries
 ```
 
 ## Config
@@ -267,20 +267,20 @@ php artisan vendor:publish --tag=facet-filter-config
 ```
 
 ``` php
-	'classes' => [
-		'facet' => Mgussekloo\FacetFilter\Models\Facet::class,
-		'facetrow' => Mgussekloo\FacetFilter\Models\FacetRow::class,
-	],
+'classes' => [
+	'facet' => Mgussekloo\FacetFilter\Models\Facet::class,
+	'facetrow' => Mgussekloo\FacetFilter\Models\FacetRow::class,
+],
 
-	'table_names' => [
-		'facetrows' => 'facetrows',
-	],
+'table_names' => [
+	'facetrows' => 'facetrows',
+],
 
-	'cache' => [
-		'expiration_time' => \DateInterval::createFromDateString('24 hours'),
-		'key' => 'mgussekloo.facetfilter.cache',
-		'store' => 'array',
-	],
+'cache' => [
+	'expiration_time' => \DateInterval::createFromDateString('24 hours'),
+	'key' => 'mgussekloo.facetfilter.cache',
+	'store' => 'array',
+],
 ```
 
 ## License
