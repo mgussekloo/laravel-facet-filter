@@ -8,7 +8,7 @@ use Mgussekloo\FacetFilter\Facades\FacetFilter;
 
 class FacetQueryBuilder extends Builder
 {
-    public $useFacetCache = false;
+    public $useFacetCache = true;
 
     public $facetSubjectType = null;
 
@@ -35,11 +35,16 @@ class FacetQueryBuilder extends Builder
     }
 
     /**
-     * By default, we perform new calculations to get facet row counts for every query.
-     * But, if you KNOW you're doing the same query anyway, you may override this.
+     * We cache relevant models for a query based on the filter, not the query specifics, because we assume that you do only one facet filtering query for any model.
+     * If this is not the case, be sure to use the ->withoutCache() method when querying.
      */
     public function withCache($cache=true) {
     	$this->useFacetCache=$cache;
+    	return $this;
+    }
+
+    public function withoutCache($cache=true) {
+    	$this->useFacetCache=!$cache;
     	return $this;
     }
 
