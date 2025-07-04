@@ -63,19 +63,14 @@ class Indexer
         }
     }
 
-    public function resetRows($models = null): self
+    public function resetRows($models): self
     {
-        if (is_null($models) || $models->isEmpty()) {
-            return $this->resetIndex();
-        }
+        $subjectType = $models->first()::class;
+        $slugs = $models->first()->getFacets()->map->getSlug();
 
         foreach ($models as $model) {
-            FacetFilter::getFacets($model::class, false, false)->each(function ($facet) use ($model) {
-                $this->facetRowClass::where('subject_id', $model->id)
-                ->where('facet_slug', $facet->getSlug())
-                ->delete();
-            });
-        }
+        	$this->facetRowClass::where('subject_id', $model->id)->whereIn('facet_slug', $slugs)->delete();
+		}
 
 		FacetFilter::forgetCache();
 
