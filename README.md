@@ -71,8 +71,6 @@ php artisan migrate
 To build the index, create an Artisan command that queries your Facettable models. Run it periodically or whenever your data changes.
 
 ``` php
-use Mgussekloo\FacetFilter\Indexer;
-
 $products = Product::with(['sizes'])->get(); // get some products
 $products->buildIndex(); // build the index
 ```
@@ -227,7 +225,7 @@ public static function facetDefinitions()
 
 ### Filtering collections
 
-It's possible to apply facet filtering to a collection without building an index. Facettable models return a FacettableCollection, which has an indexlessFacetFilter() method.
+It's possible to apply facet filtering to a collection without building an index. Facettable models return a [FacettableCollection](src/Collections/FacettableCollection.php), which provides an indexlessFacetFilter() method.
 
 ``` php
 $products = Product::all(); // returns a "FacettableCollection"
@@ -245,20 +243,20 @@ $pagination = $products->appends(request()->input())->links();
 
 ## Notes on caching
 
-By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. You can configure a peristent cache driver through `config/facet-filter.php`. If you not only want to cache facet retrieval from the db, but also the actual models being retrieved for a particular filter, use the withCache() method.
+By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. You can configure a peristent cache driver through `config/facet-filter.php`. If you also want the model ids cached for any particular filter, use the withCache() method when querying.
 
 ```php
-	// do not clear the result count cache before facet filtering (only useful if using a persistent caching driver)
+	// get the model ids for any query from the cache (only useful if using a persistent caching driver)
 	Product::withCache()->facetFilter($filter)->get();
 
 	// using collection-based facet filtering
 	Projects::all()->withCache()->indexlessFacetFilter($filter);
 ```
 
-The default Indexer clears the cache automatically when rebuilding the index. To do it manually:
+The default Indexer clears the FacetFilter related cache automatically when rebuilding the index. To do it manually:
 
 ```php
-	FacetFilter::forgetCache(); // clears all result counts for all facets, and all facet rows
+	FacetFilter::forgetCache(); // clears cache for facet rows, result counts, model ids for a query, pagination queries
 ```
 
 ## Config
