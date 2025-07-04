@@ -263,6 +263,12 @@ The default Indexer clears the cache automatically when rebuilding the index. To
 
 ## Config
 
+Publish using 
+
+``` bash
+php artisan vendor:publish --tag=facet-filter-config
+```
+
 ``` php
 	'classes' => [
 		'facet' => Mgussekloo\FacetFilter\Models\Facet::class,
