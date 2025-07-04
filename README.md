@@ -255,6 +255,7 @@ Product::where('published', false)->withoutCache()->facetFilter($filter)->get();
 The default Indexer clears the FacetFilter related cache automatically when rebuilding the index. To do it manually:
 
 ```php
+use Mgussekloo\FacetFilter\Facades\FacetFilter;
 FacetFilter::forgetCache(); // clears cache for facet rows, result counts, model ids for a query, pagination queries
 ```
 
