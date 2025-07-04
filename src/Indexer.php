@@ -17,7 +17,6 @@ class Indexer
         $this->models = $models;
         $this->facetClass = config('facet-filter.classes.facet');
         $this->facetRowClass = config('facet-filter.classes.facetrow');
-
     }
 
     public function buildRow($facet, $model, $value)
