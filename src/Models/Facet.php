@@ -77,15 +77,20 @@ class Facet extends Model
 
     // get all values
 	public function getAllValues() {
-		$rows = $this->rows;
+		$allValues = [];
 
-		if (!is_null($this->idsInFilter)) {
-			$rows = $rows->filter(function($row) {
-				return in_array($row->subject_id, $this->idsInFilter);
-			});
+		foreach ($this->rows as $row) {
+			if (!isset($allValues[$row->value])) {
+				$allValues[$row->value] = 0;
+			}
+
+			if (is_null($this->idsInFilter) || in_array($row->subject_id, $this->idsInFilter)) {
+				$allValues[$row->value]++;
+			}
 		}
 
-		$allValues = $rows->pluck('value')->filter()->countBy();
+		$allValues = collect($allValues);
+
     	return $allValues;
     }
 
@@ -100,7 +105,7 @@ class Facet extends Model
 
         // if you have selected ALL, it is the same as selecting none
         if ($selectedValues->isNotEmpty()) {
-	        $allValues = $this->getAllValues()->keys();
+	        $allValues = $this->rows->pluck('value')->unique();
 	        if ($allValues->diff($selectedValues)->isEmpty()) {
 	            $selectedValues = collect([]);
 	        }

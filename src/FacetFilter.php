@@ -84,22 +84,36 @@ class FacetFilter
     }
 
     public function getRows($subjectType, $facets) {
-        $facetRowsTable = config('facet-filter.table_names.facetrows');
 
    		$rows = FacetCache::cache('facetRows', $subjectType);
    		if ($rows === false) {
-    		$rows = DB::table($facetRowsTable)
-		        ->whereIn('facet_slug', $facets->map->getSlug())
-				->select('facet_slug', 'subject_id', 'value')
-				->get()->groupBy('facet_slug');
+    		$rows = self::getRowQuery($subjectType, $facets)->get()->groupBy('facet_slug');
 
 			if (count($rows) == 0) {
 				Log::warning(sprintf('No facet rows for %s! Did you forget to build an index?', $subjectType));
 			}
+
 			FacetCache::cache('facetRows', $subjectType, $rows);
 		}
 
 		return $rows;
+    }
+
+    public function getRowQuery($subjectType, $facets) {
+        $facetRowsTable = config('facet-filter.table_names.facetrows');
+
+		if (method_exists($facets, 'getSlug')) {
+			$facets = collect( [ $facets ] );
+		}
+
+		$query = DB::table($facetRowsTable)->select('facet_slug', 'subject_id', 'value');
+		if ($facets->count() == 1) {
+			$query->where('facet_slug', $facets->first()->getSlug());
+		} else {
+			$query->whereIn('facet_slug', $facets->map->getSlug());
+		}
+
+		return $query;
     }
 
     /**

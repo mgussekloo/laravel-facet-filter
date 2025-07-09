@@ -19,7 +19,7 @@ class FacettableCollection extends Collection
     }
 
 	// Manual cache postfix to differentiate queries with the same model class
-	public function withCacheKey($str) {
+	public function facetCache($str) {
 		$this->facetCachePostfix = $str;
 		return $this;
 	}
@@ -29,25 +29,13 @@ class FacettableCollection extends Collection
      */
 
     // add rows to the index table for these models
-    public function buildIndex($reset = true) {
-    	$indexer = $this->getIndexer();
-    	if ($reset) {
-    		$indexer->resetRows($this);
-    	}
-    	$indexer->buildIndex($this);
+    public function buildIndex() {
+    	$this->first()->indexer()->buildIndex($this);
     }
 
     // reset the rows in the index for these models
     public function resetIndex() {
-    	$indexer = $this->getIndexer();
-    	$indexer->resetRows($this);
-    }
-
-    // get the indexer class that is specified for the models in this collection
-	public function getIndexer() {
-		$subjectType = $this->first()::class;
-		$indexerClass = $subjectType::indexerClass();
-		return new $indexerClass();
+    	$this->first()->indexer()->resetRows($this);
     }
 
 	/**
@@ -67,7 +55,7 @@ class FacettableCollection extends Collection
 			return $this;
 		}
 
-		$indexer = $this->getIndexer();
+		$indexer = $this->first()->indexer();
 
 		// build the facet rows
    		$allRows = FacetCache::cache('facetRows', $subjectType);
@@ -146,7 +134,10 @@ class FacettableCollection extends Collection
 		});
 
 		if ($mustFilter) {
-			$ids = collect($ids)->flatten()->filter()->unique()->toArray();
+			$ids = collect($ids)->filter()->reduce(function($c, $v, $i) {
+				return ($c === false) ? collect($v) : $c->intersect($v);
+			}, false)
+			->flatten()->toArray();
 		    return $this->whereIn('id', $ids);
 		}
 

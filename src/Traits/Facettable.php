@@ -17,8 +17,8 @@ trait Facettable
 {
     abstract public static function facetDefinitions();
 
-    public function indexerClass() {
-    	return Indexer::class;
+    public static function indexer() {
+    	return new Indexer();
     }
 
 	public function newCollection(array $models = [])
@@ -88,7 +88,6 @@ trait Facettable
     {
         return FacetFilter::getFilterFromArr(self::class, $arr);
     }
-
 
 	public static function filterCollection($models, $filter, $indexer=null)
     {

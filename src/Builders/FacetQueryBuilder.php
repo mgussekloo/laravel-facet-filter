@@ -33,7 +33,7 @@ class FacetQueryBuilder extends Builder
 	}
 
 	// Manual cache postfix to differentiate queries with the same model class
-	public function withCacheKey($str) {
+	public function facetCache($str) {
 		$this->facetCachePostfix = $str;
 		return $this;
 	}
@@ -69,42 +69,53 @@ class FacetQueryBuilder extends Builder
 
 		$this->appliedConstraint = true;
 
+		$cacheSubkey = [$this->facetSubjectType, $this->facetCachePostfix];
 		$facets = FacetFilter::getFacets($this->facetSubjectType, $filter);
 
-		$cacheSubkey = [$this->facetSubjectType, $this->facetCachePostfix];
-		$rowClass = config('facet-filter.classes.facetrow');
-
 		// get the ids of the models included in this filter
-		$ids = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
+		$idsByFacet = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
 
-		if ($ids === false) {
-			$rows = FacetFilter::getRows($this->facetSubjectType, $facets);
+		if ($idsByFacet === false) {
+			$idsByFacet = [];
 
-			$ids = [];
-
-			// $rowClass::where('facet_slug', $facetSlug)->whereIn('value', $selectedValues)->pluck('subject_id')->toArray()
 			foreach ($facets as $facet) {
 				$facetSlug = $facet->getSlug();
 
 				// by default, you don't have to filter this
-				$ids[$facetSlug] = null;
+				$idsByFacet[$facetSlug] = null;
 
 				// unless you've selected any values in the filter for this facet
 				$selectedValues = $facet->getSelectedValues();
 				if ($selectedValues->isNotEmpty()) {
-					// $ids[$facetSlug] = $rows[$facetSlug]->where('facet_slug', $facetSlug)->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
-					$ids[$facetSlug] = $rowClass::where('facet_slug', $facetSlug)->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
+					$idsByFacet[$facetSlug] = FacetFilter::getRowQuery($this->facetSubjectType, $facet)->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
 				}
 			}
 
-			FacetFilter::cacheIdsInFilter($cacheSubkey, $filter, $ids);
+			FacetFilter::cacheIdsInFilter($cacheSubkey, $filter, $idsByFacet);
 		}
 
-		// load the facets with the ids
+		// if there is something to filter
+		$mustFilter = collect($idsByFacet)->some(function($ids) {
+			return !is_null($ids);
+		});
+
+		if ($mustFilter) {
+			$ids = collect($idsByFacet)->filter()->reduce(function($c, $v, $i) {
+				return ($c === false) ? collect($v) : $c->intersect($v);
+			}, false)
+			->flatten()->toArray();
+
+		    $this->whereIntegerInRaw('id', $ids);
+		}
+
+		// load the facets, set the ids
+		$tempQuery = self::cloneBaseQuery($this);
+		$idsInQuery = $tempQuery->pluck('id')->toArray();
+
 		foreach ($facets as $facet) {
 			$facetSlug = $facet->getSlug();
 
-			$idsWithoutFacet = collect(array_merge($ids, [$facetSlug => null]));
+			$idsWithoutFacet = collect(array_merge($idsByFacet, [$facetSlug => null]));
 
 			// if there is something to filter
 			$mustFilter = $idsWithoutFacet->some(function($ids) {
@@ -112,19 +123,16 @@ class FacetQueryBuilder extends Builder
 			});
 
 			if ($mustFilter) {
-				$idsWithoutFacet = collect($idsWithoutFacet)->flatten()->filter()->unique()->toArray();
-				$facet->setIdsInFilter($idsWithoutFacet);
+				$idsInQuery = collect($idsWithoutFacet)->filter()->reduce(function($c, $v, $i) {
+					return ($c === false) ? collect($v) : $c->intersect($v);
+				}, false)
+				->flatten()
+				->intersect($idsInQuery)
+				->toArray();
 			}
-		}
 
-		// if there is something to filter
-		$mustFilter = collect($ids)->some(function($ids) {
-			return !is_null($ids);
-		});
+			$facet->setIdsInFilter($idsInQuery);
 
-		if ($mustFilter) {
-			$ids = collect($ids)->flatten()->filter()->unique()->toArray();
-		    return $this->whereIntegerInRaw('id', $ids);
 		}
 	}
 
