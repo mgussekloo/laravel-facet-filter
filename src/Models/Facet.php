@@ -25,6 +25,7 @@ class Facet extends Model
     public $options = null;
 
     public $filter = null;
+    public $idsInFilter = null;
 
     public function __construct($definition)
     {
@@ -40,43 +41,26 @@ class Facet extends Model
     public function getOptions(): Collection
     {
         if (is_null($this->options)) {
+            $slugBase = Str::slug($this->fieldname ?? $this->title);
             $facetName = $this->getParamName();
-            $subjectType = $this->subject_type;
-
-            // find out totals of the values in this facet
-            // *within* the current query / filter operation.
-            // in short: apply all the filters EXCEPT the one involving this facet.
-
-            // https://stackoverflow.com/questions/27550841/calculating-product-counts-efficiently-in-faceted-search-with-php-mysql
-
-			$idsInFilteredQuery = FacetFilter::getIdsInLastQueryWithoutFacet($this);
 
             $rows = $this->rows;
-			if ($idsInFilteredQuery) {
-				$rows = $this->rows->filter(function($row) use ($idsInFilteredQuery) {
-					return in_array($row->subject_id, $idsInFilteredQuery);
-				});
+
+            $allValues = $selectedValues = collect([]);
+            if ($this->rows->isNotEmpty()) {
+				$allValues = $this->getAllValues();
+				$selectedValues = $this->getSelectedValues();
 			}
 
-			$values = array_count_values($rows->pluck('value')->filter()->toArray());
-
-            $selectedValues = false;
-            if (!empty($this->filter[$facetName])) {
-                $selectedValues = $this->filter[$facetName];
-            }
-
-            $options = collect([]);
-
-            $slugBase = Str::slug($this->fieldname ?? $this->title);
-            foreach ($values as $value => $total) {
-                $options->push((object) [
+            $options = $allValues->map(function($total, $value) use ($selectedValues, $slugBase) {
+                return (object)[
                     'value' => $value,
-                    'selected' => ($selectedValues) ? in_array($value, $selectedValues) : false,
+                    'selected' => ($selectedValues) ? $selectedValues->contains($value) : false,
                     'total' => $total,
                     'slug' => sprintf( '%s_%s', $slugBase, Str::slug($value) ),
                     'http_query' => $this->getHttpQuery($value),
-                ]);
-            }
+                ];
+            });
 
             $this->options = $options;
         }
@@ -84,39 +68,46 @@ class Facet extends Model
         return $this->options;
     }
 
+
     // return the options objects, but remove the ones leading to zero results
     public function getNonMissingOptions(): Collection
     {
         return $this->getOptions()->filter(fn ($value) => $value->total);
     }
 
-    // constrain the given query to this facet's filtered values
-    public function constrainQueryWithFilter($query, $filter): FacetQueryBuilder
+    // get all values
+	public function getAllValues() {
+		$rows = $this->rows;
+
+		if (!is_null($this->idsInFilter)) {
+			$rows = $rows->filter(function($row) {
+				return in_array($row->subject_id, $this->idsInFilter);
+			});
+		}
+
+		$allValues = $rows->pluck('value')->filter()->countBy();
+    	return $allValues;
+    }
+
+    // get selected values
+    public function getSelectedValues($allValues = null)
     {
         $facetName = $this->getParamName();
 
-        $selectedValues = (isset($filter[$facetName]))
-            ? collect($filter[$facetName])->values()
+        $selectedValues = (isset($this->filter[$facetName]))
+            ? collect($this->filter[$facetName])->values()
             : collect([]);
-
-		$rows = $this->rows ?? collect();
 
         // if you have selected ALL, it is the same as selecting none
         if ($selectedValues->isNotEmpty()) {
-	        $allValues = $rows->pluck('value')->filter()->unique()->values();
+	        $allValues = $this->getAllValues()->keys();
 	        if ($allValues->diff($selectedValues)->isEmpty()) {
 	            $selectedValues = collect([]);
 	        }
 	    }
 
-        // if you must filter
-        if ($selectedValues->isNotEmpty()) {
-        	$ids = $rows->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
-        	$query->whereIntegerInRaw('id', $ids);
-        }
-
-        return $query;
-    }
+	    return $selectedValues;
+	}
 
     public function getHttpQuery($value): string
     {
@@ -156,9 +147,15 @@ class Facet extends Model
         $this->filter = $filter;
     }
 
+    public function setIdsInFilter($arr) {
+    	$this->idsInFilter = $arr;
+    }
+
     // set the facetrows for this facet
     public function setRows($rows)
     {
         $this->rows = $rows;
     }
+
+
 }

@@ -11,7 +11,6 @@ use Mgussekloo\FacetFilter\Facades\FacetCache;
 class FacetFilter
 {
     public static $facets = [];
-
     public static $lastQueries = [];
 
     /**
@@ -37,6 +36,35 @@ class FacetFilter
         }
 
         return self::$facets[$subjectType];
+    }
+
+     /**
+     * Get a filter array that has the facet parameters for a certain subject (model) as keys
+     * merged with $arr.
+     */
+    public function getFilterFromArr($subjectType, $arr = []): array
+    {
+        $emptyFilter = self::getEmptyFilter($subjectType);
+
+        $arr = array_map(function ($item): array {
+            if (! is_array($item)) {
+                return [$item];
+            }
+
+            return $item;
+        }, (array) $arr);
+
+        $filter = array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
+
+        return $filter;
+    }
+
+ 	/**
+     * Empty filter
+     */
+    public function getEmptyFilter(string $subjectType): array
+    {
+    	return $subjectType::getFacets()->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
     }
 
     /**
@@ -66,112 +94,20 @@ class FacetFilter
         }
     }
 
-    public static function cloneBaseQuery($query)
-    {
-		$newQuery = clone $query;
-        $newQuery->withOnly([]);
-
-        $query = $newQuery->getQuery();
-        if ($query->limit > 0) {
-        	$newQuery->limit(null);
-        	$query->offset = null;
-        }
-
-        return $newQuery;
-    }
-
-    /**
-     * Remember the last query for a model class, without eager loaded relations.
-     * We use this query as basis to run queries for each facet, calculating the number
-     * of results the facet options would have.
-     */
-    public function setLastQuery(string $subjectType, $query): void
-    {
-    	$newQuery = self::cloneBaseQuery($query);
-        self::$lastQueries[$subjectType] = $newQuery;
-    }
-
-    /**
-     * Retrieve the last query for a model class or return false.
-     */
-    public function getLastQuery(string $subjectType)
-    {
-        if (isset(self::$lastQueries[$subjectType])) {
-            return clone self::$lastQueries[$subjectType];
-        }
-
-        return false;
-    }
-
-	/**
-     * Retrieve the ids in the last query for a model class, without filter set for a single facet
-     */
-    public function getIdsInLastQueryWithoutFacet($facet)
-    {
-    	$facetName = $facet->getParamName();
-		$filterWithoutFacet = array_merge($facet->filter, [$facetName => []]);
-
-    	$ids = self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet);
-
-    	if ($ids === false) {
-    		if ($lastQuery = self::getLastQuery($facet->subject_type)) {
-    			$lastQuery->constrainQueryWithFilter($filterWithoutFacet, false);
-				$ids  = self::cacheIdsInFilteredQuery($facet->subject_type, $filterWithoutFacet, $lastQuery->pluck('id')->toArray());
-			}
-    	}
-
-    	return $ids;
-    }
-
-    /**
-     * Get a filter array that has the facet parameters for a certain subject (model) as keys
-     * merged with $arr.
-     */
-    public function getFilterFromArr($subjectType, $arr = []): array
-    {
-        $emptyFilter = self::getEmptyFilter($subjectType);
-
-        $arr = array_map(function ($item): array {
-            if (! is_array($item)) {
-                return [$item];
-            }
-
-            return $item;
-        }, (array) $arr);
-
-        $filter = array_replace($emptyFilter, array_intersect_key(array_filter($arr), $emptyFilter));
-
-        return $filter;
-    }
-
-    /**
-     * Same as above, but the values are empty.
-     */
-    public function getEmptyFilter(string $subjectType): array
-    {
-    	return $subjectType::getFacets()->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
-    }
-
     /**
      * Remember which model id's were in a filtered query for the combination
      * "model class" and "filter". This should avoid running the same query
      * twice when calculating the number of results for each facet.
      */
-    public function cacheIdsInFilteredQuery(string $subjectType, $filter, $ids = null)
+    public function cacheIdsInFilter($cacheSubkey, $filter, $ids = null)
     {
     	asort($filter);
     	ksort($filter);
-        $cacheKey = $subjectType . '.' . json_encode($filter, JSON_THROW_ON_ERROR);
-
-        return FacetCache::cache('idsInFilteredQuery', $cacheKey, $ids);
+    	if (is_array($cacheSubkey)) {
+    		$cacheSubkey = implode('.', $cacheSubkey);
+    	}
+        $cacheSubkey = implode('.', [$cacheSubkey, json_encode($filter, JSON_THROW_ON_ERROR)]);
+        return FacetCache::cache('idsInFilteredQuery', $cacheSubkey, $ids);
     }
 
-    // Convenience
-    public function cache($key, $subkey, $toRemember = null) {
-    	return FacetCache::cache($key, $subkey, $toRemember);
-    }
-
-    public function forgetCache($key = null, $subkey = null) {
-    	return FacetCache::forgetCache($key, $subkey);
-    }
 }

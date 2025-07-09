@@ -3,6 +3,7 @@
 namespace Mgussekloo\FacetFilter\Traits;
 
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
+use Mgussekloo\FacetFilter\Facades\FacetCache;
 use Mgussekloo\FacetFilter\Indexer;
 
 use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
@@ -94,9 +95,9 @@ trait Facettable
     	return FacetFilter::filterCollection($models, $filter, $indexer);
     }
 
-    public static function forgetCache()
+    public static function forgetCache($cachePostfix = '')
     {
-    	return FacetFilter::forgetCache('idsInFilteredQuery', self::class);
+		FacetCache::forgetCache(null, [self::class, $cachePostfix]);
     }
 
 }

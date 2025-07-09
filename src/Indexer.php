@@ -72,7 +72,7 @@ class Indexer
         	$this->facetRowClass::where('subject_id', $model->id)->whereIn('facet_slug', $slugs)->delete();
 		}
 
-		FacetFilter::forgetCache();
+		FacetCache::forgetCache();
 
         return $this;
     }
@@ -81,7 +81,7 @@ class Indexer
     {
         $this->facetRowClass::truncate();
 
-		FacetFilter::forgetCache();
+		FacetCache::forgetCache();
 
         return $this;
     }
