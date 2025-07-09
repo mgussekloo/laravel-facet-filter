@@ -70,6 +70,7 @@ class FacetQueryBuilder extends Builder
 		$this->appliedConstraint = true;
 
 		$facets = FacetFilter::getFacets($this->facetSubjectType, $filter);
+
 		$cacheSubkey = [$this->facetSubjectType, $this->facetCachePostfix];
 		$rowClass = config('facet-filter.classes.facetrow');
 
@@ -77,8 +78,11 @@ class FacetQueryBuilder extends Builder
 		$ids = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
 
 		if ($ids === false) {
+			$rows = FacetFilter::getRows($this->facetSubjectType, $facets);
+
 			$ids = [];
 
+			// $rowClass::where('facet_slug', $facetSlug)->whereIn('value', $selectedValues)->pluck('subject_id')->toArray()
 			foreach ($facets as $facet) {
 				$facetSlug = $facet->getSlug();
 
@@ -88,6 +92,7 @@ class FacetQueryBuilder extends Builder
 				// unless you've selected any values in the filter for this facet
 				$selectedValues = $facet->getSelectedValues();
 				if ($selectedValues->isNotEmpty()) {
+					// $ids[$facetSlug] = $rows[$facetSlug]->where('facet_slug', $facetSlug)->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
 					$ids[$facetSlug] = $rowClass::where('facet_slug', $facetSlug)->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
 				}
 			}

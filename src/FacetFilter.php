@@ -73,9 +73,22 @@ class FacetFilter
      */
     public function loadRows($subjectType, $facets)
     {
+        $rows = self::getRows($subjectType, $facets);
+
+        foreach ($facets as $facet) {
+            $slug = $facet->getSlug();
+            if (isset($rows[$slug])) {
+                $facet->setRows($rows[$slug]);
+            }
+        }
+    }
+
+    public function getRows($subjectType, $facets) {
+        $facetRowsTable = config('facet-filter.table_names.facetrows');
+
    		$rows = FacetCache::cache('facetRows', $subjectType);
    		if ($rows === false) {
-    		$rows = DB::table('facetrows')
+    		$rows = DB::table($facetRowsTable)
 		        ->whereIn('facet_slug', $facets->map->getSlug())
 				->select('facet_slug', 'subject_id', 'value')
 				->get()->groupBy('facet_slug');
@@ -86,12 +99,7 @@ class FacetFilter
 			FacetCache::cache('facetRows', $subjectType, $rows);
 		}
 
-        foreach ($facets as $facet) {
-            $slug = $facet->getSlug();
-            if (isset($rows[$slug])) {
-                $facet->setRows($rows[$slug]);
-            }
-        }
+		return $rows;
     }
 
     /**
