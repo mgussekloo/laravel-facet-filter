@@ -102,7 +102,7 @@ class FacettableCollection extends Collection
 				$ids[$facetSlug] = null;
 
 				// unless you've selected any values in the filter for this facet
-				$selectedValues = $facet->getSelectedValues();
+				$selectedValues = $facet->getFilterValues();
 				if ($selectedValues->isNotEmpty()) {
 					$ids[$facetSlug] =  $facet->rows->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
 				}
