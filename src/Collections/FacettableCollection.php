@@ -114,7 +114,7 @@ class FacettableCollection extends Collection
 				if ($mustFilter) {
 					$idsByFacet[$facetSlug] = self::intersectEach($idsWithoutFacet);
 				} else {
-					$idsByFacet[$facetSlug] = $_idsByFacet[$facetSlug];
+					$idsByFacet[$facetSlug] = $this->pluck('id')->toArray();
 				}
 			}
 
@@ -123,7 +123,9 @@ class FacettableCollection extends Collection
 
 		foreach ($facets as $facet) {
 			$facetSlug = $facet->getSlug();
-			$facet->setIdsInFilter($idsByFacet[$facetSlug]);
+			if (isset($idsByFacet[$facetSlug])) {
+				$facet->setIdsInFilter($idsByFacet[$facetSlug]);
+			}
 		}
 
 		// ===
