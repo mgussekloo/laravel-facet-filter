@@ -70,16 +70,19 @@ class FacetQueryBuilder extends Builder
 		$this->appliedConstraint = true;
 
 		$cacheSubkey = [$this->facetSubjectType, $this->facetCachePostfix];
-		$facets = FacetFilter::getFacets($this->facetSubjectType, $filter, true);
+		$facets = FacetFilter::getFacets($this->facetSubjectType, $filter, false);
 
 		// ===
 
 		$idsByFacet = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
 		if ($idsByFacet === false) {
+			$idsByFacet = [];
+
 			$tempQuery = self::cloneBaseQuery($this);
 			$idsInQuery = $tempQuery->pluck('id')->toArray();
 
-			$idsByFacet = [];
+			$rowQuery = FacetFilter::getRowQuery($facets)->whereIn('subject_id', $idsInQuery);
+			FacetFilter::loadRows($facets, $rowQuery);
 
 			foreach ($facets as $facet) {
 				$facetName = $facet->getParamName();
@@ -87,15 +90,10 @@ class FacetQueryBuilder extends Builder
 
 				$idsByFacet[$facetSlug] = null;
 
-				// if ($facet->getFilterValues()->isNotEmpty()) {
-					// $idsByFacet[$facetSlug] = $facet->rows
-					// // ->whereIn('subject_id', $idsInQuery)
-					// ->whereIn('value', $facet->filter[$facetName])
-					// ->pluck('subject_id')->toArray();
-
 				if ($facet->getFilterValues()->isNotEmpty()) {
 					$idsByFacet[$facetSlug] = FacetFilter::getRowQuery($facet)
 					->whereIn('value', $facet->getFilterValues())
+					->whereIn('subject_id', $idsInQuery)
 					->pluck('subject_id')->toArray();
 				}
 			}
@@ -109,13 +107,8 @@ class FacetQueryBuilder extends Builder
 				});
 
 				if ($mustFilter) {
-					$ids = collect($idsWithoutFacet)->filter()->reduce(function($c, $v, $i) {
-						return (is_null($c)) ? collect($v) : $c->intersect($v);
-					}, null)->toArray();
-
+					$ids = self::intersectEach($idsWithoutFacet);
 					$facet->setIdsInFilter($ids);
-				} else {
-					// $facet->setIdsInFilter($idsInQuery);
 				}
 			}
 
@@ -129,10 +122,7 @@ class FacetQueryBuilder extends Builder
 		});
 
 		if ($mustFilter) {
-			$ids = collect($idsByFacet)->filter()->reduce(function($c, $v, $i) {
-				return (is_null($c)) ? collect($v) : $c->intersect($v);
-			}, null)->toArray();
-
+			$ids = self::intersectEach($idsByFacet);
 	    	$this->whereIntegerInRaw('id', $ids);
 	    }
 	}
@@ -169,5 +159,17 @@ class FacetQueryBuilder extends Builder
         $newQuery->withOnly([]);
 
         return $newQuery;
+    }
+
+    public static function intersectEach($arr) {
+    	$values = array_values($arr);
+    	$intersect = null;
+    	foreach ($values as $value) {
+    		if (is_null($value)) {
+    			continue;
+    		}
+    		$intersect = is_null($intersect) ? $value : array_intersect($intersect, $value);
+    	}
+    	return $intersect;
     }
 }
