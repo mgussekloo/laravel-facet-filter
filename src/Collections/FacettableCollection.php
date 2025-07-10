@@ -134,7 +134,7 @@ class FacettableCollection extends Collection
 
 		if ($mustFilter) {
 			$ids = self::intersectEach($idsByFacet);
-	    	$this->whereIn('id', $ids);
+	    	return $this->whereIn('id', $ids);
 	    }
 
 		return $this;
