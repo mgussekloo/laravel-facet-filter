@@ -81,8 +81,8 @@ class FacetQueryBuilder extends Builder
 			$tempQuery = self::cloneBaseQuery($this);
 			$idsInQuery = $tempQuery->pluck('id')->toArray();
 
-			$rowQuery = FacetFilter::getRowQuery($facets)->whereIn('subject_id', $idsInQuery);
-			FacetFilter::loadRows($facets, $rowQuery);
+			// $rowQuery = FacetFilter::getRowQuery($facets)->whereIn('subject_id', $idsInQuery);
+			// FacetFilter::loadRows($facets, $rowQuery);
 
 			foreach ($facets as $facet) {
 				$facetName = $facet->getParamName();
