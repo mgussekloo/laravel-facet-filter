@@ -50,7 +50,6 @@ class FacettableCollection extends Collection
 		$facets = $this->getFacets($filter, false);
 		$cacheSubkey = [$subjectType, $this->facetCachePostfix];
 
-
 		if ($facets->isEmpty()) {
 			return $this;
 		}
@@ -86,61 +85,70 @@ class FacettableCollection extends Collection
 		    FacetCache::cache('facetRows', $subjectType, $allRows);
 		}
 
-		$ids = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
-
-		if ($ids === false) {
-			$ids = [];
+		$idsByFacet = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
+		if ($idsByFacet === false) {
+			$idsByFacet = $_idsByFacet = [];
 
 			foreach ($facets as $facet) {
 				$facetSlug = $facet->getSlug();
+				$facetName = $facet->getParamName();
 
-				// add the rows
-		    	$rows = $allRows[$facetSlug]->sortBy('value');
-	    		$facet->setRows($rows);
+				$_idsByFacet[$facetSlug] = null;
 
-				// by default, you don't have to filter this
-				$ids[$facetSlug] = null;
-
-				// unless you've selected any values in the filter for this facet
-				$selectedValues = $facet->getFilterValues();
-				if ($selectedValues->isNotEmpty()) {
-					$ids[$facetSlug] =  $facet->rows->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
+				if ($facet->getFilterValues()->isNotEmpty()) {
+					$_idsByFacet[$facetSlug] = $facet->rows
+					->whereIn('value', $facet->getFilterValues())
+					->whereIn('subject_id', $this->pluck('id')->toArray())
+					->pluck('subject_id')->toArray();
 				}
 			}
 
-			FacetFilter::cacheIdsInFilter($cacheSubkey, $filter, $ids);
+			foreach ($facets as $facet) {
+				$facetSlug = $facet->getSlug();
+				$idsWithoutFacet = array_merge($_idsByFacet, [$facetSlug => null]);
+
+				$mustFilter = collect($idsWithoutFacet)->some(function($ids) {
+					return !is_null($ids);
+				});
+
+				if ($mustFilter) {
+					$idsByFacet[$facetSlug] = self::intersectEach($idsWithoutFacet);
+				} else {
+					$idsByFacet[$facetSlug] = $_idsByFacet[$facetSlug];
+				}
+			}
+
+			FacetFilter::cacheIdsInFilter($cacheSubkey, $filter, $idsByFacet);
 		}
 
-		// load the facets with the ids
 		foreach ($facets as $facet) {
 			$facetSlug = $facet->getSlug();
-
-			$idsWithoutFacet = collect(array_merge($ids, [$facetSlug => null]));
-
-			// if there is something to filter
-			$mustFilter = $idsWithoutFacet->some(function($ids) {
-				return !is_null($ids);
-			});
-
-			if ($mustFilter) {
-				$idsWithoutFacet = collect($idsWithoutFacet)->flatten()->filter()->unique()->toArray();
-				$facet->setIdsInFilter($idsWithoutFacet);
-			}
+			$facet->setIdsInFilter($idsByFacet[$facetSlug]);
 		}
 
-		// if there is something to filter
-		$mustFilter = collect($ids)->some(function($ids) {
+		// ===
+
+		$mustFilter = collect($idsByFacet)->some(function($ids) {
 			return !is_null($ids);
 		});
 
 		if ($mustFilter) {
-			$ids = collect($ids)->filter()->reduce(function($c, $v, $i) {
-				return ($c === false) ? collect($v) : $c->intersect($v);
-			}, false)
-			->flatten()->toArray();
-		    return $this->whereIn('id', $ids);
-		}
+			$ids = self::intersectEach($idsByFacet);
+	    	$this->whereIn('id', $ids);
+	    }
 
 		return $this;
+    }
+
+	public static function intersectEach($arr) {
+    	$values = array_values($arr);
+    	$intersect = null;
+    	foreach ($values as $value) {
+    		if (is_null($value)) {
+    			continue;
+    		}
+    		$intersect = is_null($intersect) ? $value : array_intersect($intersect, $value);
+    	}
+    	return $intersect;
     }
 }

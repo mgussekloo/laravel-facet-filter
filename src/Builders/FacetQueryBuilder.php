@@ -76,7 +76,7 @@ class FacetQueryBuilder extends Builder
 
 		$idsByFacet = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
 		if ($idsByFacet === false) {
-			$idsByFacet = [];
+			$idsByFacet = $_idsByFacet = [];
 
 			$tempQuery = self::cloneBaseQuery($this);
 			$idsInQuery = $tempQuery->pluck('id')->toArray();
@@ -85,13 +85,13 @@ class FacetQueryBuilder extends Builder
 			// FacetFilter::loadRows($facets, $rowQuery);
 
 			foreach ($facets as $facet) {
-				$facetName = $facet->getParamName();
 				$facetSlug = $facet->getSlug();
+				$facetName = $facet->getParamName();
 
-				$idsByFacet[$facetSlug] = null;
+				$_idsByFacet[$facetSlug] = null;
 
 				if ($facet->getFilterValues()->isNotEmpty()) {
-					$idsByFacet[$facetSlug] = $facet->rows
+					$_idsByFacet[$facetSlug] = $facet->rows
 					->whereIn('value', $facet->getFilterValues())
 					->whereIn('subject_id', $idsInQuery)
 					->pluck('subject_id')->toArray();
@@ -105,19 +105,27 @@ class FacetQueryBuilder extends Builder
 
 			foreach ($facets as $facet) {
 				$facetSlug = $facet->getSlug();
-				$idsWithoutFacet = array_merge($idsByFacet, [$facetSlug => null]);
+				$idsWithoutFacet = array_merge($_idsByFacet, [$facetSlug => null]);
 
 				$mustFilter = collect($idsWithoutFacet)->some(function($ids) {
 					return !is_null($ids);
 				});
 
 				if ($mustFilter) {
-					$ids = self::intersectEach($idsWithoutFacet);
-					$facet->setIdsInFilter($ids);
+					$idsByFacet[$facetSlug] = self::intersectEach($_idsWithoutFacet);
+				} else {
+					$idsByFacet[$facetSlug] = $_idsByFacet[$facetSlug];
 				}
 			}
 
 			FacetFilter::cacheIdsInFilter($cacheSubkey, $filter, $idsByFacet);
+		}
+
+		// ===
+
+		foreach ($facets as $facet) {
+			$facetSlug = $facet->getSlug();
+			$facet->setIdsInFilter($idsByFacet[$facetSlug]);
 		}
 
 		// ===
