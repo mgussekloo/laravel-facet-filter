@@ -90,14 +90,10 @@ class FacetQueryBuilder extends Builder
 
 				$idsByFacet[$facetSlug] = null;
 
-				$filterValues = $facet->getFilterValues()->toArray();
-
-				if (!empty($filterValues)) {
+				if ($facet->getFilterValues()->isNotEmpty()) {
 					$idsByFacet[$facetSlug] = $facet->rows
-					->filter(function($row) use ($filterValues, $idsInQuery) {
-						return in_array($row->subject_id, $idsInQuery)
-							&& in_array($row->value, $filterValues);
-					})
+					->whereIn('value', $facet->getFilterValues())
+					->whereIn('subject_id', $idsInQuery)
 					->pluck('subject_id')->toArray();
 
 					// $idsByFacet[$facetSlug] = FacetFilter::getRowQuery($facet)
