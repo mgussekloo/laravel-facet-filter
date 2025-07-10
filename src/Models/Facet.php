@@ -21,9 +21,7 @@ class Facet extends Model
     ];
 
     public $rows = null;
-
     public $options = null;
-
     public $filter = null;
     public $idsInFilter = null;
 
@@ -44,18 +42,16 @@ class Facet extends Model
             $slugBase = Str::slug($this->fieldname ?? $this->title);
             $facetName = $this->getParamName();
 
-            $rows = $this->rows;
-
-            $allValues = $selectedValues = collect([]);
+            $valueTotals = $filterValues = collect([]);
             if ($this->rows->isNotEmpty()) {
-				$allValues = $this->getAllValues();
-				$selectedValues = $this->getSelectedValues();
+				$valueTotals = $this->getValueTotals();
+				$filterValues = $this->getFilterValues();
 			}
 
-            $options = $allValues->map(function($total, $value) use ($selectedValues, $slugBase) {
+            $options = $valueTotals->map(function($total, $value) use ($filterValues, $slugBase) {
                 return (object)[
                     'value' => $value,
-                    'selected' => ($selectedValues) ? $selectedValues->contains($value) : false,
+                    'selected' => $filterValues ? $filterValues->contains($value) : false,
                     'total' => $total,
                     'slug' => sprintf( '%s_%s', $slugBase, Str::slug($value) ),
                     'http_query' => $this->getHttpQuery($value),
@@ -76,42 +72,43 @@ class Facet extends Model
     }
 
     // get all values
-	public function getAllValues() {
-		$allValues = [];
+	public function getValueTotals() {
+    	$valueTotals = [];
 
 		foreach ($this->rows as $row) {
-			if (!isset($allValues[$row->value])) {
-				$allValues[$row->value] = 0;
+			if (!isset($valueTotals[$row->value])) {
+				$valueTotals[$row->value] = 0;
 			}
 
-			if (is_null($this->idsInFilter) || in_array($row->subject_id, $this->idsInFilter)) {
-				$allValues[$row->value]++;
+			if (!is_array($this->idsInFilter) || in_array($row->subject_id, $this->idsInFilter)) {
+				$valueTotals[$row->value]++;
 			}
 		}
 
-		$allValues = collect($allValues);
+		$valueTotals = collect($valueTotals);
 
-    	return $allValues;
+    	return $valueTotals;
     }
 
     // get selected values
-    public function getSelectedValues($allValues = null)
+    public function getFilterValues()
     {
         $facetName = $this->getParamName();
 
-        $selectedValues = (isset($this->filter[$facetName]))
+        $filterValues = (isset($this->filter[$facetName]))
             ? collect($this->filter[$facetName])->values()
             : collect([]);
 
-        // if you have selected ALL, it is the same as selecting none
-        if ($selectedValues->isNotEmpty()) {
-	        $allValues = $this->rows->pluck('value')->unique();
-	        if ($allValues->diff($selectedValues)->isEmpty()) {
-	            $selectedValues = collect([]);
+    	if ($filterValues->isNotEmpty()) {
+        	$allValues = $this->rows->pluck('value');
+
+	        // if you have selected ALL, it is the same as selecting none
+	        if ($allValues->diff($filterValues)->isEmpty()) {
+	            $filterValues = collect([]);
 	        }
 	    }
 
-	    return $selectedValues;
+	    return $filterValues;
 	}
 
     public function getHttpQuery($value): string

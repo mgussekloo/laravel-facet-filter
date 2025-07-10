@@ -24,7 +24,8 @@ class FacetFilter
 
             // Should we preload the options (only do this if we want to show the options)
             if ($load) {
-                self::loadRows($subjectType, $facets);
+                // this is an expensive operation
+   				self::loadRows($facets);
             }
 
             self::$facets[$subjectType] = $facets;
@@ -71,9 +72,16 @@ class FacetFilter
      * Get all the rows for a number of facets. This is an expensive operation,
      * because we may load 1000's of rows for each facet.
      */
-    public function loadRows($subjectType, $facets)
+    public function loadRows($facets, $rowQuery=null)
     {
-        $rows = self::getRows($subjectType, $facets);
+    	if (is_null($rowQuery)) {
+    		$rowQuery = self::getRowQuery($facets);
+    	}
+
+    	$rows = $rowQuery->get()->groupBy('facet_slug');
+		if (count($rows) == 0) {
+			Log::warning(sprintf('No facet rows for %s! Did you forget to build an index?', $subjectType));
+		}
 
         foreach ($facets as $facet) {
             $slug = $facet->getSlug();
@@ -83,28 +91,12 @@ class FacetFilter
         }
     }
 
-    public function getRows($subjectType, $facets) {
-
-   		$rows = FacetCache::cache('facetRows', $subjectType);
-   		if ($rows === false) {
-    		$rows = self::getRowQuery($subjectType, $facets)->get()->groupBy('facet_slug');
-
-			if (count($rows) == 0) {
-				Log::warning(sprintf('No facet rows for %s! Did you forget to build an index?', $subjectType));
-			}
-
-			FacetCache::cache('facetRows', $subjectType, $rows);
-		}
-
-		return $rows;
-    }
-
-    public function getRowQuery($subjectType, $facets) {
+    public function getRowQuery($facets) {
         $facetRowsTable = config('facet-filter.table_names.facetrows');
 
-		if (method_exists($facets, 'getSlug')) {
-			$facets = collect( [ $facets ] );
-		}
+        if (method_exists($facets, 'getSlug')) {
+        	$facets = collect([$facets]);
+        }
 
 		$query = DB::table($facetRowsTable)->select('facet_slug', 'subject_id', 'value');
 		if ($facets->count() == 1) {
