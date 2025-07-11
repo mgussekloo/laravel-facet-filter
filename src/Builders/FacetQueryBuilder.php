@@ -114,7 +114,7 @@ class FacetQueryBuilder extends Builder
 				if ($mustFilter) {
 					$idsByFacet[$facetSlug] = self::intersectEach($idsWithoutFacet);
 				} else {
-					$idsByFacet[$facetSlug] = $_idsByFacet[$facetSlug];
+					$idsByFacet[$facetSlug] = $idsInQuery;
 				}
 			}
 
