@@ -67,6 +67,10 @@ class FacetFilter
      */
     public function loadRows($facets, $rowQuery=null)
     {
+        if (method_exists($facets, 'getSlug')) {
+        	$facets = collect([$facets]);
+        }
+
     	if (is_null($rowQuery)) {
     		$rowQuery = self::getRowQuery($facets);
     	}
