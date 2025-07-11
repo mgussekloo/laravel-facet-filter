@@ -81,8 +81,8 @@ class FacetQueryBuilder extends Builder
 			$tempQuery = self::cloneBaseQuery($this);
 			$idsInQuery = $tempQuery->pluck('id')->toArray();
 
-			// $rowQuery = FacetFilter::getRowQuery($facets)->whereIn('subject_id', $idsInQuery);
-			// FacetFilter::loadRows($facets, $rowQuery);
+			$rowQuery = FacetFilter::getRowQuery($facets)->whereIntegerInRaw('subject_id', $idsInQuery);
+			FacetFilter::loadRows($facets, $rowQuery);
 
 			foreach ($facets as $facet) {
 				$facetSlug = $facet->getSlug();
@@ -97,8 +97,8 @@ class FacetQueryBuilder extends Builder
 					->pluck('subject_id')->toArray();
 
 					// $idsByFacet[$facetSlug] = FacetFilter::getRowQuery($facet)
-					// ->whereIn('value', $facet->getFilterValues())
-					// ->whereIn('subject_id', $idsInQuery)
+					// ->whereIntegerInRaw('value', $facet->getFilterValues())
+					// ->whereIntegerInRaw('subject_id', $idsInQuery)
 					// ->pluck('subject_id')->toArray();
 				}
 			}
@@ -112,7 +112,7 @@ class FacetQueryBuilder extends Builder
 				});
 
 				if ($mustFilter) {
-					$idsByFacet[$facetSlug] = self::intersectEach($_idsWithoutFacet);
+					$idsByFacet[$facetSlug] = self::intersectEach($idsWithoutFacet);
 				} else {
 					$idsByFacet[$facetSlug] = $_idsByFacet[$facetSlug];
 				}

@@ -20,20 +20,20 @@ class FacetFilter
     public function getFacets(string $subjectType, $filter = null, $load = true): Collection
     {
         if (! isset(self::$facets[$subjectType])) {
-            $facets = $subjectType::makeFacets();
+            self::$facets[$subjectType] = $subjectType::makeFacets();
 
             // Should we preload the options (only do this if we want to show the options)
-            if ($load) {
-                // this is an expensive operation
-   				self::loadRows($facets);
-            }
-
-            self::$facets[$subjectType] = $facets;
+			if ($load) {
+				// this is an expensive operation
+				self::loadRows(self::$facets[$subjectType]);
+			}
         }
+
+        $facets = self::$facets[$subjectType];
 
         if (is_array($filter)) {
             $filter = $subjectType::getFilterFromArr($filter);
-            self::$facets[$subjectType]->map->setFilter($filter);
+            $facets->map->setFilter($filter);
         }
 
         return self::$facets[$subjectType];
@@ -65,7 +65,7 @@ class FacetFilter
      */
     public function getEmptyFilter(string $subjectType): array
     {
-    	return $subjectType::getFacets()->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
+    	return self::getFacets($subjectType, null, false)->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
     }
 
     /**
@@ -89,6 +89,8 @@ class FacetFilter
                 $facet->setRows($rows[$slug]);
             }
         }
+
+        return $rows;
     }
 
     public function getRowQuery($facets) {

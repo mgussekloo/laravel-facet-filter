@@ -14,8 +14,7 @@ class FacettableCollection extends Collection
 	// get the facets for this collection's model
     public function getFacets($filter = null, $load = true)
     {
-    	$subjectType = $this->first()::class;
-    	return FacetFilter::getFacets($subjectType, $filter, $load);
+    	return $this->first()->getFacets($filter, $load);
     }
 
 	// Manual cache postfix to differentiate queries with the same model class
