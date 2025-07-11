@@ -55,7 +55,7 @@ class FacettableCollection extends Collection
 		$indexer = $this->first()->indexer();
 
 		// build the facet rows
-   		$allRows = FacetCache::cache('facetRows', $subjectType);
+   		$allRows = FacetCache::cache('facetRows', $cacheSubkey);
 
    		if ($allRows === false) {
     		$allRows = [];
@@ -80,7 +80,7 @@ class FacettableCollection extends Collection
 		    	$allRows[$facetSlug] = collect($_rows);
 		    }
 
-		    FacetCache::cache('facetRows', $subjectType, $allRows);
+		    FacetCache::cache('facetRows', $cacheSubkey, $allRows);
 		}
 
 		$idsByFacet = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
