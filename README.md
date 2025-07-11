@@ -246,13 +246,13 @@ $pagination = $products->appends(request()->input())->links();
 
 ## Notes on caching
 
-By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. If you perform a facetfilter query, the cache key will be based on the model class and the filter, not the query specifics. So in the odd case you're doing more than one facet filtering query per model class, be sure to use the ->withCachekey() method to differentiate your queries.
+By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. Caches are based on the model and filter, not the query bindings or specifics. Use a cacheTag to distinguish between queries.
 
 ```php
 // if you have two facet filter queries on the same model running...
-Product::where('published', true)->facetFilter($filter)->get();
-// ... use withCachekey() to differentiate
-Product::where('published', false)->withCacheKey('unpublished-products')->facetFilter($filter)->get();
+Product::where('published', false)->facetFilter($filter)->get();
+// ...make sure to distinguish between queries
+Product::where('published', true)->cacheTag('published')->facetFilter($filter)->get();
 ```
 
 The default Indexer clears the FacetFilter related cache (including your custom cache keys) automatically when rebuilding the index. To do it manually:

@@ -12,7 +12,7 @@ class FacetQueryBuilder extends Builder
 	public $facetSubjectType = null;
 	public $facetFilter = null;
 	public $appliedConstraint = false;
-	public $facetCachePostfix = '';
+	public $facetCacheTag = '';
 
 	/**
 	 * Remember the filter and the subject type (model class) and wait
@@ -33,8 +33,8 @@ class FacetQueryBuilder extends Builder
 	}
 
 	// Manual cache postfix to differentiate queries with the same model class
-	public function facetCache($str) {
-		$this->facetCachePostfix = $str;
+	public function cacheTag($str) {
+		$this->facetCacheTag = $str;
 		return $this;
 	}
 
@@ -69,7 +69,7 @@ class FacetQueryBuilder extends Builder
 
 		$this->appliedConstraint = true;
 
-		$cacheSubkey = [$this->facetSubjectType, $this->facetCachePostfix];
+		$cacheSubkey = [$this->facetSubjectType, $this->facetCacheTag];
 		$facets = FacetFilter::getFacets($this->facetSubjectType, $filter);
 
 		// ===
@@ -148,7 +148,7 @@ class FacetQueryBuilder extends Builder
 	}
 
 	public function getCountForPagination($columns = ['*']) {
-		$cacheSubkey = [$this->facetSubjectType, $this->facetCachePostfix];
+		$cacheSubkey = [$this->facetSubjectType, $this->facetCacheTag];
 
 		$count = FacetCache::cache('countForPagination', $cacheSubkey);
 		if ($count === false) {
