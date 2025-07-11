@@ -15,18 +15,11 @@ class FacetFilter
 
     /**
      * Get the facets for a subjecttype, optionally setting the filter
-     * and preloading the available options.
      */
-    public function getFacets(string $subjectType, $filter = null, $load = true): Collection
+    public function getFacets(string $subjectType, $filter = null): Collection
     {
         if (! isset(self::$facets[$subjectType])) {
             self::$facets[$subjectType] = $subjectType::makeFacets();
-
-            // Should we preload the options (only do this if we want to show the options)
-			if ($load) {
-				// this is an expensive operation
-				self::loadRows(self::$facets[$subjectType]);
-			}
         }
 
         $facets = self::$facets[$subjectType];
@@ -65,7 +58,7 @@ class FacetFilter
      */
     public function getEmptyFilter(string $subjectType): array
     {
-    	return self::getFacets($subjectType, null, false)->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
+    	return self::getFacets($subjectType)->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
     }
 
     /**

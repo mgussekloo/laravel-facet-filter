@@ -95,8 +95,7 @@ class Indexer
 
         if (! is_null($this->models) && $this->models->isNotEmpty()) {
             $subjectType = $this->models->first()::class;
-
-            $facets = FacetFilter::getFacets($subjectType, false, false);
+            $facets = FacetFilter::getFacets($subjectType);
 
             $now = now();
             $rows = [];

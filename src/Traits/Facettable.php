@@ -62,9 +62,9 @@ trait Facettable
     }
 
     // get the facet models
-    public static function getFacets($filter = null, $load = true): Collection
+    public static function getFacets($filter = null): Collection
     {
-        return FacetFilter::getFacets(self::class, $filter, $load);
+        return FacetFilter::getFacets(self::class, $filter);
     }
 
     public function facetrows()

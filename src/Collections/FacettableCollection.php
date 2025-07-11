@@ -14,7 +14,7 @@ class FacettableCollection extends Collection
 	// get the facets for this collection's model
     public function getFacets($filter = null, $load = true)
     {
-    	return $this->first()->getFacets($filter, $load);
+    	return $this->first()->getFacets($filter);
     }
 
 	// Manual cache postfix to differentiate queries with the same model class
@@ -46,7 +46,7 @@ class FacettableCollection extends Collection
 		$filter = FacetFilter::getFilterFromArr($subjectType, $filter);
 
 		// get the facets but do not load the options
-		$facets = $this->getFacets($filter, false);
+		$facets = $this->getFacets($filter);
 		$cacheSubkey = [$subjectType, $this->facetCachePostfix];
 
 		if ($facets->isEmpty()) {

@@ -70,7 +70,7 @@ class FacetQueryBuilder extends Builder
 		$this->appliedConstraint = true;
 
 		$cacheSubkey = [$this->facetSubjectType, $this->facetCachePostfix];
-		$facets = FacetFilter::getFacets($this->facetSubjectType, $filter, false);
+		$facets = FacetFilter::getFacets($this->facetSubjectType, $filter);
 
 		// ===
 
