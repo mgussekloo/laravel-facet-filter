@@ -61,35 +61,6 @@ class FacetFilter
     	return self::getFacets($subjectType)->mapWithKeys(fn ($facet) => [$facet->getParamName() => []])->toArray();
     }
 
-    /**
-     * Get all the rows for a number of facets. This is an expensive operation,
-     * because we may load 1000's of rows for each facet.
-     */
-    public function loadRows($facets, $rowQuery=null)
-    {
-        if (method_exists($facets, 'getSlug')) {
-        	$facets = collect([$facets]);
-        }
-
-    	if (is_null($rowQuery)) {
-    		$rowQuery = self::getRowQuery($facets);
-    	}
-
-    	$rows = $rowQuery->get()->groupBy('facet_slug');
-		if (count($rows) == 0) {
-			Log::warning(sprintf('No facet rows for %s! Did you forget to build an index?', $subjectType));
-		}
-
-        foreach ($facets as $facet) {
-            $slug = $facet->getSlug();
-            if (isset($rows[$slug])) {
-                $facet->setRows($rows[$slug]);
-            }
-        }
-
-        return $rows;
-    }
-
     public function getRowQuery($facets) {
         $facetRowsTable = config('facet-filter.table_names.facetrows');
 

@@ -83,6 +83,11 @@ class FacettableCollection extends Collection
 		    FacetCache::cache('facetRows', $cacheSubkey, $allRows);
 		}
 
+		foreach ($facets as $facet) {
+			$facetSlug = $facet->getSlug();
+			$facet->setRows($allRows[$facetSlug]);
+		}
+
 		$idsByFacet = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
 		if ($idsByFacet === false) {
 			$idsByFacet = [];
@@ -92,8 +97,6 @@ class FacettableCollection extends Collection
 				$facetName = $facet->getParamName();
 
 				$idsByFacet[$facetSlug] = null;
-
-				$facet->setRows($allRows[$facetSlug]);
 
 				if ($facet->getFilterValues()->isNotEmpty()) {
 					$idsByFacet[$facetSlug] = $facet->rows
@@ -121,7 +124,6 @@ class FacettableCollection extends Collection
 
 			FacetFilter::cacheIdsInFilter($cacheSubkey, $filter, $idsByFacet);
 		}
-
 
 		foreach ($facets as $facet) {
 			$facetSlug = $facet->getSlug();

@@ -74,15 +74,24 @@ class FacetQueryBuilder extends Builder
 
 		// ===
 
+		$tempQuery = self::cloneBaseQuery($this);
+		$idsInQuery = $tempQuery->pluck('id')->toArray();
+
+		$allRows = FacetCache::cache('facetRows', $cacheSubkey);
+   		if ($allRows === false) {
+			$rowQuery = FacetFilter::getRowQuery($facets)->whereIntegerInRaw('subject_id', $idsInQuery);
+			$allRows = $rowQuery->get()->groupBy('facet_slug');
+		    FacetCache::cache('facetRows', $cacheSubkey, $allRows);
+		}
+
+		foreach ($facets as $facet) {
+			$facetSlug = $facet->getSlug();
+			$facet->setRows($allRows[$facetSlug]);
+		}
+
 		$idsByFacet = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
 		if ($idsByFacet === false) {
 			$idsByFacet = $_idsByFacet = [];
-
-			$tempQuery = self::cloneBaseQuery($this);
-			$idsInQuery = $tempQuery->pluck('id')->toArray();
-
-			$rowQuery = FacetFilter::getRowQuery($facets)->whereIntegerInRaw('subject_id', $idsInQuery);
-			FacetFilter::loadRows($facets, $rowQuery);
 
 			foreach ($facets as $facet) {
 				$facetSlug = $facet->getSlug();
