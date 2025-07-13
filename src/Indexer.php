@@ -5,6 +5,7 @@ namespace Mgussekloo\FacetFilter;
 use DB;
 
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
+use Mgussekloo\FacetFilter\Facades\FacetCache;
 
 class Indexer
 {
@@ -72,7 +73,7 @@ class Indexer
         	$this->facetRowClass::where('subject_id', $model->id)->whereIn('facet_slug', $slugs)->delete();
 		}
 
-		FacetFilter::forgetCache();
+		FacetCache::forgetCache();
 
         return $this;
     }
@@ -81,7 +82,7 @@ class Indexer
     {
         $this->facetRowClass::truncate();
 
-		FacetFilter::forgetCache();
+		FacetCache::forgetCache();
 
         return $this;
     }
@@ -94,8 +95,7 @@ class Indexer
 
         if (! is_null($this->models) && $this->models->isNotEmpty()) {
             $subjectType = $this->models->first()::class;
-
-            $facets = FacetFilter::getFacets($subjectType, false, false);
+            $facets = FacetFilter::getFacets($subjectType);
 
             $now = now();
             $rows = [];

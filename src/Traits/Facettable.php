@@ -3,6 +3,7 @@
 namespace Mgussekloo\FacetFilter\Traits;
 
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
+use Mgussekloo\FacetFilter\Facades\FacetCache;
 use Mgussekloo\FacetFilter\Indexer;
 
 use Mgussekloo\FacetFilter\Builders\FacetQueryBuilder;
@@ -16,8 +17,8 @@ trait Facettable
 {
     abstract public static function facetDefinitions();
 
-    public static function indexerClass() {
-    	return Indexer::class;
+    public static function indexer() {
+    	return new Indexer();
     }
 
 	public function newCollection(array $models = [])
@@ -61,9 +62,9 @@ trait Facettable
     }
 
     // get the facet models
-    public static function getFacets($filter = null, $load = true): Collection
+    public static function getFacets($filter = null): Collection
     {
-        return FacetFilter::getFacets(self::class, $filter, $load);
+        return FacetFilter::getFacets(self::class, $filter);
     }
 
     public function facetrows()
@@ -88,15 +89,14 @@ trait Facettable
         return FacetFilter::getFilterFromArr(self::class, $arr);
     }
 
-
 	public static function filterCollection($models, $filter, $indexer=null)
     {
     	return FacetFilter::filterCollection($models, $filter, $indexer);
     }
 
-    public static function forgetCache()
+    public static function forgetCache($cacheTag = '')
     {
-    	return FacetFilter::forgetCache('idsInFilteredQuery', self::class);
+		FacetCache::forgetCache(null, [self::class, $cacheTag]);
     }
 
 }

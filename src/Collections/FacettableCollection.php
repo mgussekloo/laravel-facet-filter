@@ -3,68 +3,66 @@
 namespace Mgussekloo\FacetFilter\Collections;
 
 use Mgussekloo\FacetFilter\Facades\FacetFilter;
+use Mgussekloo\FacetFilter\Facades\FacetCache;
 
 use Illuminate\Database\Eloquent\Collection;
 
 class FacettableCollection extends Collection
 {
+	public $facetCacheTag = '';
+
 	// get the facets for this collection's model
-    public function getFacets($filter = null, $load = true)
+    public function getFacets($filter = null)
     {
-    	$subjectType = $this->first()::class;
-    	return FacetFilter::getFacets($subjectType, $filter, $load);
+    	return $this->first()->getFacets($filter);
     }
+
+	// Manual cache postfix to differentiate queries with the same model class
+	public function cacheTag($str) {
+		$this->facetCacheTag = $str;
+		return $this;
+	}
 
 	/**
      * Indexing
      */
 
     // add rows to the index table for these models
-    public function buildIndex($reset = true) {
-    	$indexer = $this->getIndexer();
-    	if ($reset) {
-    		$indexer->resetRows($this);
-    	}
-    	$indexer->buildIndex($this);
+    public function buildIndex() {
+    	$this->first()->indexer()->buildIndex($this);
     }
 
     // reset the rows in the index for these models
     public function resetIndex() {
-    	$indexer = $this->getIndexer();
-    	$indexer->resetRows($this);
-    }
-
-    // get the indexer class that is specified for the models in this collection
-	public function getIndexer() {
-		$subjectType = $this->first()::class;
-		$indexerClass = $subjectType::indexerClass();
-		return new $indexerClass();
+    	$this->first()->indexer()->resetRows($this);
     }
 
 	/**
      * Experimental: Filter a collection, bypassing the database index entirely
      */
-    public function indexlessFacetFilter($filter, $indexer=null)
+    public function indexlessFacetFilter($filter)
     {
 		$subjectType = $this->first()::class;
-		$filter = FacetFilter::getFilterFromArr($subjectType, $filter);
+		$facets = FacetFilter::getFacets($subjectType, $filter);
 
 		// get the facets but do not load the options
-		$facets = $this->getFacets($filter, false);
+		$cacheSubkey = [$subjectType, $this->facetCacheTag];
 
 		if ($facets->isEmpty()) {
 			return $this;
 		}
 
-		$indexer = $this->getIndexer();
+		$indexer = $this->first()->indexer();
 
 		// build the facet rows
-   		$all_rows = FacetFilter::cache('facetRows', $subjectType);
+   		$allRows = FacetCache::cache('facetRows', $cacheSubkey);
 
-   		if ($all_rows === false) {
-    		$all_rows = [];
+   		if ($allRows === false) {
+    		$allRows = [];
 
 	    	foreach ($facets as $facet) {
+				$facetSlug = $facet->getSlug();
+
 	    		$_rows = [];
 
 		    	foreach ($this as $model) {
@@ -78,83 +76,85 @@ class FacettableCollection extends Collection
 		    			$_rows[] = $arr;
 		    		}
 		    	}
-		    	$all_rows[$facet->getSlug()] = collect($_rows);
+
+		    	$allRows[$facetSlug] = collect($_rows);
 		    }
 
-		    FacetFilter::cache('facetRows', $subjectType, $all_rows);
+		    FacetCache::cache('facetRows', $cacheSubkey, $allRows);
 		}
 
-		// load the rows
-	    foreach ($facets as $facet) {
-	    	$rows = $all_rows[$facet->getSlug()]->sortBy('value');
-	    	$facet->setRows($rows);
-	    }
+		foreach ($facets as $facet) {
+			$facetSlug = $facet->getSlug();
+			$facet->setRows($allRows[$facetSlug]);
+		}
 
-	    // if (empty(array_filter(array_values($filter)))) {
-	    // 	return $this;
-    	// }
+		$idsByFacet = FacetFilter::cacheIdsInFilter($cacheSubkey, $filter);
+		if ($idsByFacet === false) {
+			$idsByFacet = [];
 
-	    $all_ids = null;
+			foreach ($facets as $facet) {
+				$facetSlug = $facet->getSlug();
+				$facetName = $facet->getParamName();
 
-	    foreach ($facets as $facet) {
-	    	// let each facet know which model id is selected
-        	$facetName = $facet->getParamName();
+				$idsByFacet[$facetSlug] = null;
 
-	        $selectedValues = (isset($filter[$facetName]))
-	            ? collect($filter[$facetName])->values()
-	            : collect([]);
-
-	        // if you have selected ALL, it is the same as selecting none
-			if ($selectedValues->isNotEmpty()) {
-		        $allValues = $rows->pluck('value')->filter()->unique()->values();
-		        if ($allValues->diff($selectedValues)->isEmpty()) {
-		            $selectedValues = collect([]);
-		        }
-	        	$facet->included_ids = $facet->rows->whereIn('value', $selectedValues)->pluck('subject_id')->toArray();
-	        } else {
-	        	if (is_null($all_ids)) {
-					$all_ids = $this->pluck('id')->toArray();
-	        	}
-	        	$facet->included_ids = $all_ids;
-	        }
-	    }
-
-	    // all facets are done, prepare the last-query caches and correct option counts
-
-	    $included_ids_known = FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter);
-
-	    $included_ids = null;
-	    foreach ($facets as $facet) {
-	    	$facetName = $facet->getParamName();
-
-	    	if (isset($filter[$facetName])) {
-	    		$filterWithoutFacet = array_merge($filter, [$facetName => []]);
-
-	    		if (false === FacetFilter::cacheIdsInFilteredQuery($subjectType, $filterWithoutFacet)) {
-					$otherFacets = $facets->reject(function($f) use ($facetName) {
-			    		return $facetName == $f->getParamName();
-			    	});
-
-			    	$ids = null;
-			    	foreach ($otherFacets as $f) {
-		    			$ids = (!is_null($ids)) ? array_intersect($ids, $f->included_ids) : $f->included_ids;
-			    	};
-
-		    		FacetFilter::cacheIdsInFilteredQuery($subjectType, $filterWithoutFacet, $ids);
-	    		}
-	    	}
-
-	    	if ($included_ids_known === false) {
-				$included_ids = (!is_null($included_ids)) ? array_intersect($included_ids, $facet->included_ids) : $facet->included_ids;
+				if ($facet->getFilterValues()->isNotEmpty()) {
+					$idsByFacet[$facetSlug] = $facet->rows
+					->whereIn('value', $facet->getFilterValues())
+					->whereIn('subject_id', $this->pluck('id')->toArray())
+					->pluck('subject_id')->toArray();
+				}
 			}
+
+			$allIds = $this->pluck('id')->toArray();
+			foreach ($facets as $facet) {
+				$facetSlug = $facet->getSlug();
+				$idsWithoutFacet = array_merge($idsByFacet, [$facetSlug => null]);
+
+				$mustFilter = collect($idsWithoutFacet)->some(function($ids) {
+					return !is_null($ids);
+				});
+
+				if ($mustFilter) {
+					$idsByFacet[$facetSlug] = self::intersectEach($idsWithoutFacet);
+				} else {
+					$idsByFacet[$facetSlug] = $allIds;
+				}
+			}
+
+			FacetFilter::cacheIdsInFilter($cacheSubkey, $filter, $idsByFacet);
+		}
+
+		foreach ($facets as $facet) {
+			$facetSlug = $facet->getSlug();
+			if (isset($idsByFacet[$facetSlug])) {
+				$facet->setIdsInFilter($idsByFacet[$facetSlug]);
+			}
+		}
+
+		// ===
+
+		$mustFilter = collect($idsByFacet)->some(function($ids) {
+			return !is_null($ids);
+		});
+
+		if ($mustFilter) {
+			$ids = self::intersectEach($idsByFacet);
+	    	return $this->whereIn('id', $ids);
 	    }
 
-	    if ($included_ids_known === false) {
-    		FacetFilter::cacheIdsInFilteredQuery($subjectType, $filter, $included_ids);
-    	} else {
-    		$included_ids = $included_ids_known;
-    	}
+		return $this;
+    }
 
-	    return $this->whereIn('id', $included_ids);
+	public static function intersectEach($arr) {
+    	$values = array_values($arr);
+    	$intersect = null;
+    	foreach ($values as $value) {
+    		if (is_null($value)) {
+    			continue;
+    		}
+    		$intersect = is_null($intersect) ? $value : array_intersect($intersect, $value);
+    	}
+    	return $intersect;
     }
 }

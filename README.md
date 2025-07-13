@@ -246,20 +246,22 @@ $pagination = $products->appends(request()->input())->links();
 
 ## Notes on caching
 
-By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. We cache relevant models for a query based on the filter, not the query specifics, because we assume that you do only one facet filtering query for any model. If this is not the case, be sure to use the ->withoutCache() method when querying.
+By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. Caches are based on the model and filter, not the query bindings or specifics. Use a cacheTag to distinguish between queries.
 
 ```php
 // if you have two facet filter queries on the same model running...
-Product::where('published', true)->facetFilter($filter)->get();
-// ... use withoutCache() to prevent incorrect results
-Product::where('published', false)->withoutCache()->facetFilter($filter)->get();
+Product::where('published', false)->facetFilter($filter)->get();
+// ...make sure to distinguish between queries
+Product::where('published', true)->cacheTag('published')->facetFilter($filter)->get();
 ```
 
-The default Indexer clears the FacetFilter related cache automatically when rebuilding the index. To do it manually:
+The default Indexer clears the FacetFilter related cache (including your custom cache keys) automatically when rebuilding the index. To do it manually:
 
 ```php
-use Mgussekloo\FacetFilter\Facades\FacetFilter;
-FacetFilter::forgetCache(); // clears cache for facet rows, result counts, model ids for a query, pagination queries
+Product::forgetCache('unpublished-products');
+
+use Mgussekloo\FacetFilter\Facades\FacetCache;
+FacetCache::forgetCache(); // clears cache for facet rows, result counts, model ids for a query, pagination queries
 ```
 
 ## Config
