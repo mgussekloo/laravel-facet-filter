@@ -189,8 +189,8 @@ class Product extends Model
 ```
 
 ```php
-	$products = Products::get();
-	$products->buildIndex(); // uses MyCustomIndexer
+$products = Products::get();
+$products->buildIndex(); // uses MyCustomIndexer
 ```
 
 ### Updating a larger index over time
