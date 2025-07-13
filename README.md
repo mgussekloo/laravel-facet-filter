@@ -255,19 +255,20 @@ $pagination = $products->appends(request()->input())->links();
 By default Facet Filter caches some heavy operations through the non-persistent 'array' cache driver. Caches are based on the model and filter, not the query bindings or specifics. Use a cacheTag to distinguish between queries.
 
 ```php
-// if you have two facet filter queries on the same model running...
-Product::where('published', false)->facetFilter($filter)->get();
+// if you have two facet filter queries on the same model...
+Product::where('published', false)->cacheTag('unpublished')->facetFilter($filter)->get();
 // ...make sure to distinguish between queries
 Product::where('published', true)->cacheTag('published')->facetFilter($filter)->get();
 ```
 
-The default Indexer clears the FacetFilter related cache (including all cache tags) automatically when rebuilding the index. To do it manually:
+The default Indexer clears the cache for all models when rebuilding the index. You can do it manually:
 
 ```php
-Product::forgetCache('unpublished-products');
+Product::forgetCache(); // clears cache for all cache tags
+Product::forgetCache('unpublished'); // clears cache for only this cachetag
 
 use Mgussekloo\FacetFilter\Facades\FacetCache;
-FacetCache::forgetCache(); // clears cache for facet rows, result counts, model ids for a query, pagination queries
+FacetCache::forgetCache(); // clears cache for all models and cache tags
 ```
 
 ## Config
