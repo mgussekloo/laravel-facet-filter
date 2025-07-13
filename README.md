@@ -171,7 +171,7 @@ class MyCustomIndexer extends \Mgussekloo\FacetFilter\Indexer {
 }
 ```
 
-Overwrite the indexerClass() method on your Facettable model to make it use your custom indexer.
+You may overwrite the indexer() method on your Facettable model to return an instance of your custom indexer:
 
 ```php
 use App\MyCustomIndexer;
@@ -181,10 +181,16 @@ class Product extends Model
 	use HasFactory;
 	use Facettable;
 
-	public static indexerClass() {
-		return MyCustomIndexer::class;
+	public static function indexer()
+	{
+		return new MyCustomIndexer();
 	}
 }
+```
+
+```php
+	$products = Products::get();
+	$products->buildIndex(); // uses MyCustomIndexer
 ```
 
 ### Updating a larger index over time
@@ -255,7 +261,7 @@ Product::where('published', false)->facetFilter($filter)->get();
 Product::where('published', true)->cacheTag('published')->facetFilter($filter)->get();
 ```
 
-The default Indexer clears the FacetFilter related cache (including your custom cache keys) automatically when rebuilding the index. To do it manually:
+The default Indexer clears the FacetFilter related cache (including all cache tags) automatically when rebuilding the index. To do it manually:
 
 ```php
 Product::forgetCache('unpublished-products');
