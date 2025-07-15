@@ -9,7 +9,6 @@ use Mgussekloo\FacetFilter\Facades\FacetCache;
 
 class FacetQueryBuilder extends Builder
 {
-	public $facetSubjectType = null;
 	public $facetFilter = null;
 	public $appliedConstraint = false;
 	public $facetCacheTag = '';
@@ -20,8 +19,8 @@ class FacetQueryBuilder extends Builder
 	 */
 	public function facetFilter($filter = [])
 	{
-		$this->facetSubjectType = $this->model::class;
-		$this->facetFilter = $this->facetSubjectType::getFilterFromArr($filter);
+		$facetSubjectType = $this->model::class;
+		$this->facetFilter = $facetSubjectType::getFilterFromArr($filter);
 
 		return $this;
 	}
@@ -69,8 +68,9 @@ class FacetQueryBuilder extends Builder
 
 		$this->appliedConstraint = true;
 
-		$cacheSubkey = [$this->facetSubjectType, $this->facetCacheTag];
-		$facets = FacetFilter::getFacets($this->facetSubjectType, $filter);
+		$facetSubjectType = $this->model::class;
+		$cacheSubkey = [$facetSubjectType, $this->facetCacheTag];
+		$facets = FacetFilter::getFacets($facetSubjectType, $filter);
 
 		// ===
 
@@ -157,7 +157,8 @@ class FacetQueryBuilder extends Builder
 	}
 
 	public function getCountForPagination($columns = ['*']) {
-		$cacheSubkey = [$this->facetSubjectType, $this->facetCacheTag];
+		$facetSubjectType = $this->model::class;
+		$cacheSubkey = [$facetSubjectType, $this->facetCacheTag];
 
 		$count = FacetCache::cache('countForPagination', $cacheSubkey);
 		if ($count === false) {
