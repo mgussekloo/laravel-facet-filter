@@ -14,19 +14,17 @@ class FacetQueryBuilder extends Builder
 	public $facetCacheTag = '';
 
 	/**
-	 * Remember the filter and the subject type (model class) and wait
-	 * until we need the results (get) before performing the query.
+	 * Remember the filter, wait until we need the results (get) before performing the query.
 	 */
-	public function facetFilter($filter = [])
+	public function facetFilter($filter = null)
 	{
-		$facetSubjectType = $this->model::class;
-		$this->facetFilter = $facetSubjectType::getFilterFromArr($filter);
+		$this->facetFilter = $filter;
 
 		return $this;
 	}
 
 	// Alias of facetfilter
-	public function facetsMatchFilter($filter = [])
+	public function facetsMatchFilter($filter = null)
 	{
 		return $this->facetFilter($filter);
 	}
@@ -43,20 +41,13 @@ class FacetQueryBuilder extends Builder
 	 */
 	public function get($columns = ['*'])
 	{
-		// If we're not doing any facet filtering, just bail.
-		if (is_null($this->facetFilter)) {
-			return parent::get($columns);
-		}
-
 		if (!$this->appliedConstraint) {
 			// Constrain the query
 			$this->constrainQueryWithFilter($this->facetFilter);
 		}
 
 		// Get the result
-		$result = parent::get($columns);
-
-		return $result;
+		return parent::get($columns);
 	}
 
 	// Constrain the query with the facets and filter
@@ -69,6 +60,8 @@ class FacetQueryBuilder extends Builder
 		$this->appliedConstraint = true;
 
 		$facetSubjectType = $this->model::class;
+		$filter = $facetSubjectType::getFilterFromArr($filter);
+
 		$cacheSubkey = [$facetSubjectType, $this->facetCacheTag];
 		$facets = FacetFilter::getFacets($facetSubjectType, $filter);
 
