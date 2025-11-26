@@ -68,7 +68,7 @@ class FacetQueryBuilder extends Builder
 		// ===
 
 		$tempQuery = self::cloneBaseQuery($this);
-		$idsInQuery = $tempQuery->pluck('id')->toArray();
+		$idsInQuery = $tempQuery->get()->pluck('id')->toArray();
 
 		$allRows = FacetCache::cache('facetRows', $cacheSubkey);
    		if ($allRows === false) {
