@@ -101,12 +101,12 @@ class FacettableCollection extends Collection
 				if ($facet->getFilterValues()->isNotEmpty()) {
 					$idsByFacet[$facetSlug] = $facet->rows
 					->whereIn('value', $facet->getFilterValues())
-					->whereIn('subject_id', $this->pluck('id')->toArray())
+					->whereIn('subject_id', $this->pluck($this->first()->getKeyName())->toArray())
 					->pluck('subject_id')->toArray();
 				}
 			}
 
-			$allIds = $this->pluck('id')->toArray();
+			$allIds = $this->pluck($this->first()->getKeyName())->toArray();
 			foreach ($facets as $facet) {
 				$facetSlug = $facet->getSlug();
 				$idsWithoutFacet = array_merge($idsByFacet, [$facetSlug => null]);
@@ -140,7 +140,7 @@ class FacettableCollection extends Collection
 
 		if ($mustFilter) {
 			$ids = self::intersectEach($idsByFacet);
-	    	return $this->whereIn('id', $ids);
+	    	return $this->whereIn($this->first()->getKeyName(), $ids);
 	    }
 
 		return $this;

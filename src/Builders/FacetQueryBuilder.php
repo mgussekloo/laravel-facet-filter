@@ -74,11 +74,12 @@ class FacetQueryBuilder extends Builder
 		// ===
 
 		$tempQuery = self::cloneBaseQuery($this);
-		$idsInQuery = $tempQuery->get()->pluck('id')->toArray();
+		$keyName = $this->model->getKeyName();
+		$idsInQuery = $tempQuery->get()->pluck($keyName)->toArray();
 
 		$allRows = FacetCache::cache('facetRows', $cacheSubkey);
    		if ($allRows === false) {
-			$rowQuery = FacetFilter::getRowQuery($facets)->whereIntegerInRaw('subject_id', $idsInQuery);
+			$rowQuery = FacetFilter::getRowQuery($facets)->whereIn('subject_id', $idsInQuery);
 			$allRows = $rowQuery->get()->groupBy('facet_slug');
 		    FacetCache::cache('facetRows', $cacheSubkey, $allRows);
 		}
@@ -144,7 +145,7 @@ class FacetQueryBuilder extends Builder
 
 		if ($mustFilter) {
 			$ids = self::intersectEach($idsByFacet);
-	    	$this->whereIntegerInRaw('id', $ids);
+	    	$this->whereIn($this->model->getKeyName(), $ids);
 	    }
 	}
 

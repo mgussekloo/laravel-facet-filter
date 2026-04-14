@@ -24,7 +24,7 @@ class Indexer
     {
         return [
             'facet_slug' => $facet->getSlug(),
-            'subject_id' => $model->id,
+            'subject_id' => $model->getKey(),
             'value' => $value,
         ];
     }
@@ -70,7 +70,7 @@ class Indexer
         $slugs = $models->first()->getFacets()->map->getSlug();
 
         foreach ($models as $model) {
-        	$this->facetRowClass::where('subject_id', $model->id)->whereIn('facet_slug', $slugs)->delete();
+        	$this->facetRowClass::where('subject_id', $model->getKey())->whereIn('facet_slug', $slugs)->delete();
 		}
 
 		FacetCache::forgetCache();
@@ -112,7 +112,7 @@ class Indexer
                             continue;
                         }
 
-                        $uniqueKey = implode('.', [$facet->getSlug(), $model->id, $value]);
+                        $uniqueKey = implode('.', [$facet->getSlug(), $model->getKey(), $value]);
                         $row = $this->buildRow($facet, $model, $value);
                         $row = array_merge([
                             'created_at' => $now,
