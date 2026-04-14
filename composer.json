@@ -16,6 +16,11 @@
             "Mgussekloo\\FacetFilter\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Mgussekloo\\FacetFilter\\Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "Martijn Gussekloo",
@@ -32,6 +37,9 @@
                 "Mgussekloo\\FacetFilter\\FacetFilterServiceProvider"
             ]
         }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,

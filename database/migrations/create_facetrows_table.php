@@ -18,7 +18,7 @@ return new class extends Migration
             $table->id();
 
             $table->string('facet_slug');
-            $table->foreignId('subject_id');
+            $table->foreignUlid('subject_id');
             $table->string('value')->nullable();
 
             $table->timestamps();
