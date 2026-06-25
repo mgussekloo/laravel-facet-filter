@@ -59,11 +59,9 @@ class FacetQueryBuilder extends Builder
 
 		$this->appliedConstraint = true;
 
-		if (is_null($filter) || empty(array_filter($filter))) {
+		if (is_null($filter)) {
 			return;
 		}
-
-		return;
 
 		$facetSubjectType = $this->model::class;
 		$filter = $facetSubjectType::getFilterFromArr($filter);
